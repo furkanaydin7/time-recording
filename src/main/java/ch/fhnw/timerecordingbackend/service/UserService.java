@@ -1,4 +1,4 @@
-package service;
+package ch.fhnw.timerecordingbackend.service;
 
 /**
  * Implementierung UserService
