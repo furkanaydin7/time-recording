@@ -1,4 +1,4 @@
-package model.enums;
+package ch.fhnw.timerecordingbackend.model.enums;
 
 /**
  * Status für Benutzer

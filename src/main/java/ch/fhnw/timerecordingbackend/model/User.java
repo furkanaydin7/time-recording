@@ -1,7 +1,7 @@
-package model;
+package ch.fhnw.timerecordingbackend.model;
 
 import jakarta.persistence.*;
-import model.enums.UserStatus;
+import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 
 import javax.management.relation.Role;
 import java.time.LocalDateTime;
