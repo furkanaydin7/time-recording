@@ -38,7 +38,7 @@ public class User {
     /**
      * Verknüpfung von Benutzer mit Rollen
      * Mehrere Benutzer können mehrere Rollen haben
-     * Mit Hilfe von Quelle: chatgpt.com
+     * @Source ChatGPT.com
      */
     @ManyToMany(fetch = FetchType.EAGER)// zeitgleiches laden
     @JoinTable(
@@ -66,7 +66,7 @@ public class User {
 
     /**
      * Absenzen und Zeiteinträge von Benutzern
-     * Mit Hilfe von Quelle: chatgpt.com
+     * @Source ChatGPT.com
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TimeEntry> timeEntries = new HashSet<>();
