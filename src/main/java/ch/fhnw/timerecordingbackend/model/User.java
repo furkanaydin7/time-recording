@@ -3,7 +3,7 @@ package ch.fhnw.timerecordingbackend.model;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 import jakarta.persistence.*;
 
-import javax.management.relation.Role;
+import ch.fhnw.timerecordingbackend.model.Role;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -14,7 +14,6 @@ import java.util.Set;
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
  * @version 1.0
  */
-
 @Entity
 @Table(name = "users")
 public class User {
