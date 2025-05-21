@@ -1,0 +1,22 @@
+<!--@author EK-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Login – Time Recording</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="container login-container">
+    <h1>Time Recording</h1>
+    <form id="login-form">
+        <input type="text" id="username" placeholder="Benutzername" required />
+        <input type="password" id="password" placeholder="Passwort" required />
+        <button type="submit">Login</button>
+    </form>
+    <p id="error-msg" class="error hidden"></p>
+</div>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

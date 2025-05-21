@@ -1,0 +1,30 @@
+<!--@author EK-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<nav>
+  <a href="time-entry.html">Zeiterfassung</a>
+  <a href="admin.html" id="admin-link" class="hidden">Adminbereich</a>
+  <button onclick="logout()">Logout</button>
+</nav>
+<main>
+  <h2>Übersicht Arbeitszeiten</h2>
+  <table id="time-table">
+    <thead>
+    <tr>
+      <th>Datum</th><th>Geplant</th><th>Ist</th><th>Differenz</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
