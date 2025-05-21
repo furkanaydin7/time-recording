@@ -14,6 +14,7 @@ import java.util.Optional;
  * Repository für User Entitäten und CRUD Operationen
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -59,7 +60,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param searchTerm Suchbegriff
      * @return Liste mit gefundenen Usern
      */
-    @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :serchTerm, '%'))")
+    @Query("SELECT u FROM User u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<User> searchUsers(@Param("searchTerm") String searchTerm);
 
 }

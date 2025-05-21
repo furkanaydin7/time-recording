@@ -12,6 +12,7 @@ import java.util.Set;
  * Entität Klasse für Benutzer (Mitarbeiter/ Administratoren)
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
  */
 
 @Entity

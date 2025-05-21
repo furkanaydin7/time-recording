@@ -12,6 +12,7 @@ import java.util.Optional;
  * Geschöftslogik und Operationen der Benutzerverwaltung
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
  */
 public interface UserService {
 
