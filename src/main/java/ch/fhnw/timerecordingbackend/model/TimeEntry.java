@@ -12,7 +12,7 @@ import java.util.Set;
  * Entität Klasse für Zeiteinträge
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - doppelte Getter und Setter entfernt
  */
 @Entity
 @Table(name = "time_entries")
@@ -147,14 +147,6 @@ public class TimeEntry {
 
     public void setEndTimes(Set<LocalTime> endTimes) {
         this.endTimes = endTimes;
-    }
-
-    public Set<Break> getBreaks() {
-        return breaks;
-    }
-
-    public void setBreaks(Set<Break> breaks) {
-        this.breaks = breaks;
     }
 
     public Set<Break> getBreaks() {
