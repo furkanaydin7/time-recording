@@ -1,8 +1,10 @@
 package ch.fhnw.timerecordingbackend.service;
 
+import ch.fhnw.timerecordingbackend.dto.ChangePasswordRequest;
 import ch.fhnw.timerecordingbackend.model.Role;
 import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +68,18 @@ public interface UserService {
      * @return true, wenn Passwort aktualisiert wurde, sonst false
      */
     boolean updatePassword (Long id, String oldPassword, String newPassword);
+
+    /**
+     * Ändert das Passwort für den angemeldeten User.
+     * @param request enthält userId, altes und neues Passwort
+     */
+    void changePassword(ChangePasswordRequest request);
+
+    /**
+     * Schickt einen Reset-Link an die angegebene E-Mail.
+     * @param email Zieladresse
+     */
+    void sendPasswordResetLink(String email);
 
     /**
      * User deaktivieren
