@@ -1,16 +1,31 @@
 package ch.fhnw.timerecordingbackend.dto;
 
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Anfrageobjekt für das Erstellen oder Aktualisieren eines Zeiteintrags
+ * Enthält Datum, Start-/Endzeiten, optionale Pausen und Projekt-ID
+ * @author FA
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ */
 public class TimeEntryRequest {
+
+    @NotNull
     private LocalDate date;
+
+    @NotNull
     private List<String> startTimes;
+
+    @NotNull
     private List<String> endTimes;
+
     private List<BreakTime> breaks;
+
     private Long projectId;
 
-    // Getters and setters
+    // Getter und Setter
     public LocalDate getDate() {
         return date;
     }
@@ -51,11 +66,15 @@ public class TimeEntryRequest {
         this.projectId = projectId;
     }
 
+    /**
+     * Innere statische Klasse zur Darstellung einer Pause innerhalb eines Zeiteintrags
+     * Jede Pause besteht aus einem Start- und einem Endzeitpunkt (Format: HH:mm)
+     */
     public static class BreakTime {
         private String start;
         private String end;
 
-        // Getters and setters
+        // Getter und Setter
         public String getStart() {
             return start;
         }

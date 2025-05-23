@@ -2,15 +2,22 @@ package ch.fhnw.timerecordingbackend.dto;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * Datenmodell für Login-Anfragen mit E-Mail und Passwort
+ * @author FA
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ */
 public class LoginRequest {
+    // Feld darf nicht leer sein und muss ein gültiges E-Mail-Format haben
     @NotBlank
     @Email
     private String email;
 
+    // Passwort darf nicht leer sein
     @NotBlank
     private String password;
 
-    // Getters and setters
+    // Getter und Setter
     public String getEmail() {
         return email;
     }

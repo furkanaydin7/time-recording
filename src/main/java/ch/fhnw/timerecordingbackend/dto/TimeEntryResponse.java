@@ -1,9 +1,19 @@
 package ch.fhnw.timerecordingbackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Antwortobjekt für Zeiteinträge mit Arbeitszeiten, Pausen, Projekt- und Benutzerdaten.
+ * Optionale Felder werden nur bei Bedarf serialisiert (@JsonInclude)
+ * @author FA
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TimeEntryResponse {
+
     private Long id;
     private LocalDate date;
     private List<String> startTimes;
@@ -13,8 +23,10 @@ public class TimeEntryResponse {
     private String plannedHours;
     private String difference;
     private ProjectDto project;
+    private Long userId;
+    private String user;
 
-    // Getters and setters
+    // Getter und Setter
     public Long getId() {
         return id;
     }
@@ -87,12 +99,29 @@ public class TimeEntryResponse {
         this.project = project;
     }
 
-    // Inner classes
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    /**
+     * Innere Klasse zur Darstellung einer einzelnen Pause mit Start- und Endzeit
+     */
     public static class BreakTime {
         private String start;
         private String end;
 
-        // Getters and setters
         public String getStart() {
             return start;
         }
@@ -110,6 +139,9 @@ public class TimeEntryResponse {
         }
     }
 
+    /**
+     * Innere Klasse zur kompakten Darstellung von Projektdetails in der Antwort
+     */
     public static class ProjectDto {
         private Long id;
         private String name;
@@ -119,13 +151,20 @@ public class TimeEntryResponse {
             this.name = name;
         }
 
-        // Getters
         public Long getId() {
             return id;
         }
 
+        public void setId(Long id) {
+            this.id = id;
+        }
+
         public String getName() {
             return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 }
