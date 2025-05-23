@@ -71,6 +71,7 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
      * @param userId
      * @param date
      * @return true, wenn der Benutzer einen bestimmten Tag abwesend war, sonst false
+     * Quelle: ChatGPT.com
      */
     @Query("SELECT COUNT(a) > 0 FROM Absence a WHERE a.user.id = :userId AND :date BETWEEN a.startDate AND a.endDate AND a.approved = true")
     boolean hasApprovedAbsenceOnDate(@Param("userId") Long userId, @Param("date") LocalDate date);
@@ -82,6 +83,7 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
      * @param startDate
      * @param endDate
      * @return Long mit der Summe der genehmigten Abwesenheiten eines Benutzers für einen bestimmten Zeitraum.
+     * Quelle: ChatGPT.com
      */
     @Query("SELECT SUM(FUNCTION('DATEDIFF', FUNCTION('GREATEST', a.endDate, :startDate), FUNCTION('LEAST', a.startDate, :endDate)) + 1) FROM Absence a WHERE a.user.id = :userId AND a.type = :type AND a.approved = true AND ((a.startDate BETWEEN :startDate AND :endDate) OR (a.endDate BETWEEN :startDate AND :endDate) OR (:startDate BETWEEN a.startDate AND a.endDate))")
     Long sumAbsenceDaysByUserIdAndTypeAndDateRange(@Param("userId") Long userId, @Param("type") AbsenceType type, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
@@ -91,6 +93,7 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
      * @param userId
      * @param today
      * @return Liste mit aktuellen und zukünftigen Abwesenheiten eines Benutzers.
+     * Quelle: ChatGPT.com
      */
     @Query("SELECT a FROM Absence a WHERE a.user.id = :userId AND a.endDate >= :today ORDER BY a.startDate ASC")
     List<Absence> findCurrentAndFutureAbsencesByUserId(@Param("userId") Long userId, @Param("today") LocalDate today);
