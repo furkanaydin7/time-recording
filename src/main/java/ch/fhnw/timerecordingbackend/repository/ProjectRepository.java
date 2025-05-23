@@ -13,7 +13,7 @@ import java.util.Optional;
  * Repository für Projekt Entität
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - Quellenbezeichnung angepasst
  */
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
@@ -56,7 +56,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * Sucht Projekte mit Suchbegriff
      * @param searchTerm Suchbegriff
      * @return Liste mit gefundenen Projekten
-     * @source ChatGPT.com
+     * Quelle: ChatGPT.com
      */
     @Query("SELECT p FROM Project p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', searchTerm, '%'))")
     List<Project> searchProjects(@Param("searchTerm") String searchTerm);
@@ -65,7 +65,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * Sucht Projekten mit User ID
      * @param userId
      * @return Liste mit gefundenen Projekten
-     * @source ChatGPT.com
+     * Quelle: ChatGPT.com
     */
     @Query("SELECT DISTINCT p FROM Project p JOIN p.timeEntries t WHERE t.user.id = :userId")
     List<Project> findProjectsByUserId(@Param("userId") Long userId);
@@ -74,7 +74,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * Sucht aktive Projekten mit User ID
      * @param userId
      * @return Liste mit gefundenen aktiven Projekten
-     * @source ChatGPT.com
+     * Quelle: ChatGPT.com
     */
     @Query("SELECT DISTINCT p FROM Project p JOIN p.timeEntries t WHERE t.user.id = :userId AND p.active = true")
     List<Project> findActiveProjectsByUserId(@Param("userId") Long userId);

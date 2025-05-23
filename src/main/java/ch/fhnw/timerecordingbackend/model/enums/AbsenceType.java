@@ -4,7 +4,7 @@ package ch.fhnw.timerecordingbackend.model.enums;
  * Abwesenheitsarten
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - Quellenbezeichnung angepasst
  */
 public enum AbsenceType {
     VACATION("Urlaub"),
@@ -17,7 +17,7 @@ public enum AbsenceType {
     OTHER("Sonstige");
 
     /**String für Anzeigenamen
-     * @Source https://coderanch.com/t/469226/java/Java-enums-space-display-values
+     * Quelle: https://coderanch.com/t/469226/java/Java-enums-space-display-values
      */
     private final String displayName;
 

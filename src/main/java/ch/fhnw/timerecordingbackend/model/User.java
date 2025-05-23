@@ -12,7 +12,7 @@ import java.util.Set;
  * Entität Klasse für Benutzer (Mitarbeiter/ Administratoren)
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - Quellenbezeichnung angepasst
  */
 @Entity
 @Table(name = "users")
@@ -37,7 +37,7 @@ public class User {
     /**
      * Verknüpfung von Benutzer mit Rollen
      * Mehrere Benutzer können mehrere Rollen haben
-     * @Source ChatGPT.com
+     * Quelle: ChatGPT.com
      */
     @ManyToMany(fetch = FetchType.EAGER)// zeitgleiches laden
     @JoinTable(
@@ -65,7 +65,7 @@ public class User {
 
     /**
      * Absenzen und Zeiteinträge von Benutzern
-     * @Source ChatGPT.com
+     * Quelle: ChatGPT.com
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TimeEntry> timeEntries = new HashSet<>();
