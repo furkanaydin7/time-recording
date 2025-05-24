@@ -1,7 +1,7 @@
 package ch.fhnw.timerecordingbackend.controller;
 
-import ch.fhnw.timerecordingbackend.dto.ChangePasswordRequest;
-import ch.fhnw.timerecordingbackend.dto.ResetPasswordRequest;
+import ch.fhnw.timerecordingbackend.dto.authentication.ChangePasswordRequest;
+import ch.fhnw.timerecordingbackend.dto.authentication.ResetPasswordRequest;
 import ch.fhnw.timerecordingbackend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

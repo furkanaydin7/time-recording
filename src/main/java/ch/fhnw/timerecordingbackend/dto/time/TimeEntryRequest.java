@@ -1,4 +1,4 @@
-package ch.fhnw.timerecordingbackend.dto;
+package ch.fhnw.timerecordingbackend.dto.time;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;

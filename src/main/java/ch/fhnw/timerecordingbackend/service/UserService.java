@@ -1,10 +1,9 @@
 package ch.fhnw.timerecordingbackend.service;
 
-import ch.fhnw.timerecordingbackend.dto.ChangePasswordRequest;
+import ch.fhnw.timerecordingbackend.dto.authentication.ChangePasswordRequest;
 import ch.fhnw.timerecordingbackend.model.Role;
 import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
-import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;

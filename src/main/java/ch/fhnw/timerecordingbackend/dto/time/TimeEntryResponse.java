@@ -1,4 +1,4 @@
-package ch.fhnw.timerecordingbackend.dto;
+package ch.fhnw.timerecordingbackend.dto.time;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

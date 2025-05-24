@@ -1,4 +1,4 @@
-package ch.fhnw.timerecordingbackend.dto;
+package ch.fhnw.timerecordingbackend.dto.authentication;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -1,4 +1,4 @@
-package ch.fhnw.timerecordingbackend.dto;
+package ch.fhnw.timerecordingbackend.dto.authentication;
 
 /**
  * Antwortobjekt für den Login-Vorgang mit Token und Benutzerinfos.
