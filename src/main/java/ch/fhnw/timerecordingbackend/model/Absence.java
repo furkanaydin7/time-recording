@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Entität Klasse für Abwesenheiten
@@ -24,7 +25,7 @@ public class Absence {
     private User user;
 
     @Column(name = "start_date", nullable = false)
-    private LocalDate date;
+    private LocalDate startDate;
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
@@ -51,9 +52,9 @@ public class Absence {
      */
     public Absence() {}
 
-    public Absence(User user, LocalDate date, LocalDate endDate, AbsenceType type) {
+    public Absence(User user, LocalDate startDate, LocalDate endDate, AbsenceType type) {
         this.user = user;
-        this.date = date;
+        this.startDate = startDate;
         this.endDate = endDate;
         this.type = type;
         this.createdAt = LocalDateTime.now();
@@ -87,6 +88,17 @@ public class Absence {
     }
 
     /**
+     * Anzahl der Abwesenheitstage berechnen
+     * @return Anzahl der Tage
+     */
+    public long getDurationInDays() {
+        if (startDate == null || endDate == null) {
+            return 0;
+        }
+        return ChronoUnit.DAYS.between(startDate, endDate) + 1;
+    }
+
+    /**
      * Getter und Setter
      */
     public Long getId() {
@@ -105,12 +117,12 @@ public class Absence {
         this.user = user;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setStartDate(LocalDate date) {
+        this.startDate = date;
     }
 
     public LocalDate getEndDate() {
@@ -166,7 +178,7 @@ public class Absence {
         return "Absence{" +
                 "id=" + id +
                 ", user=" + user +
-                ", date=" + date +
+                ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", type=" + type +
                 ", approved=" + approved +

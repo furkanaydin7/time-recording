@@ -36,21 +36,21 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * Gibt alle aktiven Projekte zurück
      * @return Liste mit aktiven Projekten
      */
-    List<Project> findAllByActiveTrue();
+    List<Project> findByActiveTrue();
 
     /**
      * Gibt alle Projekte eines Manager zurück
      * @param id
      * @return Liste mit Projekten eines Managers
      */
-    List<Project> findAllByManagerId(Long id);
+    List<Project> findByManagerId(Long id);
 
     /**
      * Gibt alle aktiven Projekte eines Manager zurück
      * @param id
      * @return Liste mit aktiven Projekten eines Managers
      */
-    List<Project> findAllByManagerIdAndActiveTrue(Long id);
+    List<Project> findByManagerIdAndActiveTrue(Long id);
 
     /**
      * Sucht Projekte mit Suchbegriff
@@ -78,4 +78,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     */
     @Query("SELECT DISTINCT p FROM Project p JOIN p.timeEntries t WHERE t.user.id = :userId AND p.active = true")
     List<Project> findActiveProjectsByUserId(@Param("userId") Long userId);
+
+    /**
+     * Zählt Benutzer die an einem Projekt gearbeitet haben
+     * @param projectId
+     * @return
+     */
+    @Query("SELECT COUNT(DISTINCT t.user.id) FROM TimeEntry t WHERE t.project.id = :projectId")
+    long countUsersByProjectId(@Param("projectId") Long projectId);
 }

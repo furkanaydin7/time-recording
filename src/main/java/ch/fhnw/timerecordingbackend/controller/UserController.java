@@ -8,6 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST Controller für Benutzer
+ * @author PD
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -19,7 +25,7 @@ public class UserController {
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(request);
         return ResponseEntity.ok().body(
-                java.util.Map.of("message", "Passwort erfolgreich geändert")
+                java.util.Map.of("message", "Passwort geändert")
         );
     }
 
@@ -29,8 +35,6 @@ public class UserController {
         userService.sendPasswordResetLink(email);
         return ResponseEntity.ok().body(
                 java.util.Map.of(
-                        "message", "Reset-Link gesendet"
-                )
-        );
+                        "message", "Reset-Link gesendet"));
     }
 }

@@ -13,6 +13,12 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST Controller für Zeiteinträge
+ * @author PD
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/time-entries")
 public class TimeEntryController {
@@ -30,14 +36,14 @@ public class TimeEntryController {
             @PathVariable Long id,
             @Valid @RequestBody TimeEntryRequest timeEntryRequest) {
         timeEntryService.updateTimeEntry(id, timeEntryRequest);
-        return ResponseEntity.ok().body(Map.of("message", "Entry updated"));
+        return ResponseEntity.ok().body(Map.of("message", "Eintrag aktualisiert"));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteTimeEntry(@PathVariable Long id) {
         timeEntryService.deleteTimeEntry(id);
-        return ResponseEntity.ok().body(Map.of("message", "Entry deleted"));
+        return ResponseEntity.ok().body(Map.of("message", "Eintrag gelöscht"));
     }
 
     @GetMapping
@@ -47,7 +53,7 @@ public class TimeEntryController {
     }
 
     /**
-     * Zeiteinträge eines beliebigen Users abrufen (nur Admin).
+     * Zeiteinträge eines beliebigen Users abrufen
      */
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -73,7 +79,6 @@ public class TimeEntryController {
             @RequestBody Map<String, Long> requestBody) {
         timeEntryService.assignProject(id, requestBody.get("projectId"));
         return ResponseEntity.ok().body(Map.of(
-                "message", "Zeiteintrag zu Projekt erfolgreich zugewiesen"
-        ));
+                "message", "Zeiteintrag zu Projekt zugewiesen"));
     }
 }

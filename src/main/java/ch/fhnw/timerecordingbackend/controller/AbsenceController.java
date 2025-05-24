@@ -1,0 +1,313 @@
+package ch.fhnw.timerecordingbackend.controller;
+
+import ch.fhnw.timerecordingbackend.dto.absence.AbsenceRequest;
+import ch.fhnw.timerecordingbackend.dto.absence.AbsenceResponse;
+import ch.fhnw.timerecordingbackend.model.Absence;
+import ch.fhnw.timerecordingbackend.model.User;
+import ch.fhnw.timerecordingbackend.service.AbsenceService;
+import ch.fhnw.timerecordingbackend.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/absences")
+public class AbsenceController {
+
+    private final AbsenceService absenceService;
+    private final UserService userService;
+
+    @Autowired
+    public AbsenceController(AbsenceService absenceService, UserService userService) {
+        this.absenceService = absenceService;
+        this.userService = userService;
+    }
+
+    /**
+     * Neue Abwesenheit erstellen
+     * POST /api/absences
+     */
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createAbsence(@Valid @RequestBody AbsenceRequest request) {
+        // Aktuellen Benutzer ermitteln
+        User currentUser = getCurrentUser();
+
+        // Abwesenheit erstellen
+        Absence absence = new Absence();
+        absence.setUser(currentUser);
+        absence.setStartDate(request.getStartDate());
+        absence.setEndDate(request.getEndDate());
+        absence.setType(request.getType());
+
+        Absence createdAbsence = absenceService.createAbsence(absence);
+
+        return new ResponseEntity<>(
+                Map.of(
+                        "id", createdAbsence.getId(),
+                        "message", "Abwesenheit eingetragen"
+                ),
+                HttpStatus.CREATED
+        );
+    }
+
+    /**
+     * Abwesenheit aktualisieren
+     * PUT /api/absences/{id}
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @absenceController.isAbsenceOwner(#id)")
+    public ResponseEntity<Map<String, String>> updateAbsence(
+            @PathVariable Long id,
+            @Valid @RequestBody AbsenceRequest request) {
+
+        // Bestehende Abwesenheit finden
+        Absence existingAbsence = absenceService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Abwesenheit nicht gefunden mit ID: " + id));
+
+        // Nur nicht genehmigte Abwesenheiten können bearbeitet werden
+        if (existingAbsence.isApproved()) {
+            throw new IllegalArgumentException("Genehmigte Abwesenheiten können nicht bearbeitet werden");
+        }
+
+        // Aktualisierte Abwesenheit erstellen
+        Absence updatedAbsence = new Absence();
+        updatedAbsence.setUser(existingAbsence.getUser());
+        updatedAbsence.setStartDate(request.getStartDate());
+        updatedAbsence.setEndDate(request.getEndDate());
+        updatedAbsence.setType(request.getType());
+
+        absenceService.updateAbsence(id, updatedAbsence);
+
+        return ResponseEntity.ok(Map.of("message", "Abwesenheit aktualisiert"));
+    }
+
+    /**
+     * Abwesenheit löschen (nur Admin oder Besitzer)
+     * DELETE /api/absences/{id}
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @absenceController.isAbsenceOwner(#id)")
+    public ResponseEntity<Map<String, String>> deleteAbsence(@PathVariable Long id) {
+        absenceService.deleteAbsence(id);
+        return ResponseEntity.ok(Map.of("message", "Abwesenheit gelöscht"));
+    }
+
+    /**
+     * Eigene Abwesenheiten anzeigen
+     * GET /api/absences
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getCurrentUserAbsences() {
+        User currentUser = getCurrentUser();
+        List<Absence> absences = absenceService.findByUser(currentUser);
+
+        List<AbsenceResponse> responses = absences.stream()
+                .map(this::convertToAbsenceResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("absences", responses));
+    }
+
+    /**
+     * Abwesenheiten eines bestimmten Benutzers anzeigen (nur Admin)
+     * GET /api/users/{userId}/absences
+     */
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getUserAbsences(@PathVariable Long userId) {
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Benutzer nicht gefunden mit ID: " + userId));
+
+        List<Absence> absences = absenceService.findByUser(user);
+
+        List<AbsenceResponse> responses = absences.stream()
+                .map(this::convertToAbsenceResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("absences", responses));
+    }
+
+    /**
+     * Alle ausstehenden Abwesenheiten anzeigen (nur Admin/Manager)
+     * GET /api/absences/pending
+     */
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getPendingAbsences() {
+        List<Absence> pendingAbsences = absenceService.findPendingAbsences();
+
+        List<AbsenceResponse> responses = pendingAbsences.stream()
+                .map(this::convertToAbsenceResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("absences", responses));
+    }
+
+    /**
+     * Alle genehmigten Abwesenheiten anzeigen (nur Admin)
+     * GET /api/absences/approved
+     */
+    @GetMapping("/approved")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getApprovedAbsences() {
+        List<Absence> approvedAbsences = absenceService.findApprovedAbsences();
+
+        List<AbsenceResponse> responses = approvedAbsences.stream()
+                .map(this::convertToAbsenceResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("absences", responses));
+    }
+
+    /**
+     * Abwesenheit genehmigen (nur Admin/Manager)
+     * PATCH /api/absences/{id}/approve
+     */
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public ResponseEntity<Map<String, Object>> approveAbsence(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+
+        Absence approvedAbsence = absenceService.approveAbsence(id, currentUser.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "approved", true,
+                "message", "Absences approved"
+        ));
+    }
+
+    /**
+     * Abwesenheit ablehnen (nur Admin/Manager)
+     * PATCH /api/absences/{id}/reject
+     */
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public ResponseEntity<Map<String, String>> rejectAbsence(@PathVariable Long id) {
+        absenceService.rejectAbsence(id);
+
+        return ResponseEntity.ok(Map.of("message", "Abwesenheit abgelehnt"));
+    }
+
+    /**
+     * Aktuelle und zukünftige Abwesenheiten eines Benutzers
+     * GET /api/absences/user/{userId}/upcoming
+     */
+    @GetMapping("/user/{userId}/upcoming")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getUpcomingAbsences(@PathVariable Long userId) {
+        List<Absence> upcomingAbsences = absenceService.findCurrentAndFutureAbsencesByUserId(userId, LocalDate.now());
+
+        List<AbsenceResponse> responses = upcomingAbsences.stream()
+                .map(this::convertToAbsenceResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("absences", responses));
+    }
+
+    /**
+     * Abwesenheiten nach Typ filtern (nur Admin)
+     * GET /api/absences/type/{type}
+     */
+    @GetMapping("/type/{type}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getAbsencesByType(@PathVariable String type) {
+        try {
+            ch.fhnw.timerecordingbackend.model.enums.AbsenceType absenceType =
+                    ch.fhnw.timerecordingbackend.model.enums.AbsenceType.valueOf(type.toUpperCase());
+
+            List<Absence> absences = absenceService.findByType(absenceType);
+
+            List<AbsenceResponse> responses = absences.stream()
+                    .map(this::convertToAbsenceResponse)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(Map.of("absences", responses));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Ungültiger Abwesenheitstyp: " + type);
+        }
+    }
+
+    /**
+     * Prüft ob ein Benutzer an einem bestimmten Datum abwesend ist
+     * GET /api/absences/check?userId={userId}&date={date}
+     */
+    @GetMapping("/check")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> checkAbsenceOnDate(
+            @RequestParam Long userId,
+            @RequestParam String date) {
+
+        LocalDate checkDate = LocalDate.parse(date);
+        boolean hasAbsence = absenceService.hasApprovedAbsenceOnDate(userId, checkDate);
+
+        return ResponseEntity.ok(Map.of("hasAbsence", hasAbsence));
+    }
+
+    /**
+     * Hilfsmethode zur Überprüfung ob aktueller Benutzer Besitzer der Abwesenheit ist
+     * @param absenceId Abwesenheits-ID
+     * @return true wenn Benutzer Besitzer der Abwesenheit ist
+     */
+    public boolean isAbsenceOwner(Long absenceId) {
+        User currentUser = getCurrentUser();
+
+        return absenceService.findById(absenceId)
+                .map(absence -> absence.getUser().getId().equals(currentUser.getId()))
+                .orElse(false);
+    }
+
+    /**
+     * Hilfsmethode zum Ermitteln des aktuellen Benutzers
+     * @return Aktueller Benutzer
+     */
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
+        return userService.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Aktueller Benutzer nicht gefunden"));
+    }
+
+    /**
+     * Konvertiert ein Absence-Objekt zu einem AbsenceResponse-DTO
+     * @param absence Das zu konvertierende Absence-Objekt
+     * @return AbsenceResponse-DTO
+     */
+    private AbsenceResponse convertToAbsenceResponse(Absence absence) {
+        AbsenceResponse response = new AbsenceResponse();
+
+        // Basis-Informationen
+        response.setId(absence.getId());
+        response.setStartDate(absence.getStartDate());
+        response.setEndDate(absence.getEndDate());
+        response.setType(absence.getType());
+        response.setApproved(absence.isApproved());
+        response.setCreatedAt(absence.getCreatedAt());
+        response.setUpdatedAt(absence.getUpdatedAt());
+
+        // Benutzer-Informationen
+        if (absence.getUser() != null) {
+            response.setUserId(absence.getUser().getId());
+            response.setFirstName(absence.getUser().getFirstName());
+            response.setLastName(absence.getUser().getLastName());
+            response.setEmail(absence.getUser().getEmail());
+        }
+
+        // Genehmigungs-Zeitstempel falls vorhanden
+        if (absence.isApproved() && absence.getApprover() != null) {
+            response.setApprovedAt(absence.getUpdatedAt()); // Vereinfachung
+        }
+
+        return response;
+    }
+}

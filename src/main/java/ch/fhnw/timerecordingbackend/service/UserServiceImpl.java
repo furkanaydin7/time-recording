@@ -1,9 +1,19 @@
 package ch.fhnw.timerecordingbackend.service;
 
+import ch.fhnw.timerecordingbackend.model.Role;
+import ch.fhnw.timerecordingbackend.model.SystemLog;
+import ch.fhnw.timerecordingbackend.model.User;
+import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 import ch.fhnw.timerecordingbackend.repository.RoleRepository;
+import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.transaction.Transactional;
+import jakarta.validation.ValidationException;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Implementierung UserService Interface
@@ -16,14 +26,319 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final SystemLogRepository systemLogRepository;
 
-    public UserServiceImpl(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            RoleRepository roleRepository,
-            SystemLogRepository systemLogRepository
-    )
+    /**
+     * Konstruktor mit Dependency Injection
+     * @param userRepository
+     * @param roleRepository
+     * @param systemLogRepository
+     */
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, SystemLogRepository systemLogRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.systemLogRepository = systemLogRepository;
+    }
+
+    /**
+     * Suchmethoden
+     */
+    @Override
+    public List<User> findAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public List<User> findActiveUsers() {
+        return userRepository.findByActiveTrue();
+    }
+
+    @Override
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
+     * Neuen Benutzer erstellen
+     * @param user
+     * @param roleName
+     * @return
+     */
+    @Override
+    @Transactional
+    public User createUser(User user, String roleName) {
+        // Prüfen ob Email bereits existiert
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new ValidationException("Email existiert bereits");
+        }
+
+        //Zeitstempel
+        LocalDateTime now = LocalDateTime.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+
+        // Rolle zuweisen
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new ValidationException("Rolle nicht gefunden"));
+        user.addRole(role);
+
+        // Speichern
+        User savedUser = userRepository.save(user);
+
+        // System Log erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Benutzer erstellt" + user.getEmail());
+        log.setTimestamp(now);
+        log.setDetails("Benutzer ID: " + savedUser.getId() + ", Rolle: " + roleName);
+        systemLogRepository.save(log);
+
+        return savedUser;
+    }
+
+    /**
+     * Benurter aktualisieren
+     * @param id
+     * @param user neuer User mit allen Feldern
+     * @return
+     */
+    @Override
+    @Transactional
+    public User updateUser(Long id, User user) {
+        // Benutzer finden
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // Daten Aktualisieren
+        existingUser.setFirstName(user.getFirstName());
+        existingUser.setLastName(user.getLastName());
+        existingUser.setPlannedHoursPerDay(user.getPlannedHoursPerDay());
+        existingUser.setActive(user.isActive());
+
+        // Zeitstempel
+        LocalDateTime now = LocalDateTime.now();
+        existingUser.setUpdatedAt(now);
+
+        // System Log erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Benutzer aktualisiert" + user.getEmail());
+        log.setTimestamp(now);
+        log.setDetails("Benutzer ID: " + existingUser.getId());
+        systemLogRepository.save(log);
+
+        return userRepository.save(existingUser);
+    }
+
+    /**
+     * Passwort eines Benutzers ändern
+     * @param id
+     * @param oldPassword
+     * @param newPassword
+     * @return
+     */
+    @Override
+    @Transactional
+    public boolean updatePassword(Long id, String oldPassword, String newPassword) {
+        // Benutzer finden
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // altes Passwort überprüfen
+        if (!oldPassword.equals(user.getPassword())) {
+            return false;
+        }
+
+        // Neues Passwort erstellen
+        user.setPassword(newPassword);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Systemlog erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Passwort geändert: " + user.getEmail());
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+
+        return true;
+    }
+
+    /**
+     * Benutzer deaktivieren
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public User deactivateUser(Long id) {
+        // Benutzer finden
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // Benutzer deaktivieren
+        user.deactivate();
+        User deactivatedUser = userRepository.save(user);
+
+        // Systemlog erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Benutzer deaktiviert: " + user.getEmail());
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+
+        return deactivatedUser;
+    }
+
+    /**
+     * Benutzer aktivieren
+     * @param id
+     * @return
+     */
+    @Override
+    @Transactional
+    public User activateUser(Long id) {
+        // Benutzer finden
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // Benutzer aktivieren
+        user.activate();
+        User activatedUser = userRepository.save(user);
+
+        // Systemlog erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Benutzer aktiviert: " + user.getEmail());
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+
+        return activatedUser;
+    }
+
+    /**
+     * Benutzer Status ändern
+     * @param id
+     * @param status
+     * @return
+     */
+    @Override
+    @Transactional
+    public User updateUserStatus(Long id, UserStatus status) {
+        // Benutzer finden
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Benutzer nicht gefunden"));
+
+        // Status aktualisieren
+        user.setStatus(status);
+        user.setActive(status == UserStatus.ACTIVE);
+        user.setUpdatedAt(LocalDateTime.now());
+        User updatedUser = userRepository.save(user);
+
+        // Systemlog erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Benutzerstatus geändert: " + user.getEmail() + " " + status);
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+
+        return updatedUser;
+    }
+
+    /**
+     * Rolle zu Benutzer hinzufügen
+     * @param userId
+     * @param roleName
+     * @return
+     */
+    @Override
+    @Transactional
+    public User addRoleToUser(Long userId, String roleName) {
+        // Benutzer finden
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // Rolle finden
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new ValidationException("Rolle nicht gefunden"));
+
+        // Rolle hinzufügen, wenn der Benutzer sie noch nicht hat
+        if (user.getRoles().stream().noneMatch(r -> r.getName().equals(roleName))) {
+            user.addRole(role);
+            userRepository.save(user);
+
+            // Systemlog erstellen
+            SystemLog log = new SystemLog();
+            log.setAction("Rolle hinzugefügt: " + roleName + " zu " + user.getEmail());
+            log.setTimestamp(LocalDateTime.now());
+            log.setDetails("Benutzer ID: " + user.getId());
+            systemLogRepository.save(log);
+        }
+
+        return user;
+    }
+
+    /**
+     * Rolle von Benutzer entfernen
+     * @param userId
+     * @param roleName
+     * @return
+     */
+    @Override
+    @Transactional
+    public User removeRoleFromUser(Long userId, String roleName) {
+        // Benutzer finden
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Benutzer nicht gefunden"));
+
+        // Prüfen ob der Benutzer die Rolle hat
+        Role roleToRemove = null;
+        for (Role role : user.getRoles()) {
+            if (role.getName().equals(roleName)) {
+                roleToRemove = role;
+                break;
+            }
+        }
+
+        // Rolle entfernen
+        if (roleToRemove != null) {
+            user.getRoles().remove(roleToRemove);
+            userRepository.save(user);
+
+            // Systemlog erstellen
+            SystemLog log = new SystemLog();
+            log.setAction("Rolle entfernt: " + roleName + " von " + user.getEmail());
+            log.setTimestamp(LocalDateTime.now());
+            log.setDetails("Benutzer ID: " + user.getId());
+            systemLogRepository.save(log);
+        }
+
+        return user;
+    }
+
+    @Override
+    public List<User> searchUsers(String searchTerm) {
+        return userRepository.searchUsers(searchTerm);
+    }
+
+    @Override
+    public boolean isAdmin(Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        return userOptional.map(user -> user.hasRole("ADMIN")).orElse(false);
+    }
+
+    @Override
+    public boolean isProjectManager(Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        return userOptional.map(user -> user.hasRole("MANAGER")).orElse(false);
+    }
+
+    @Override
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
 }
