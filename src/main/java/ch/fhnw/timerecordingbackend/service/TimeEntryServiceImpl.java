@@ -8,7 +8,6 @@ import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.repository.ProjectRepository;
 import ch.fhnw.timerecordingbackend.repository.TimeEntryRepository;
 import ch.fhnw.timerecordingbackend.security.SecurityUtils;
-import ch.fhnw.timerecordingbackend.service.TimeEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
  * Stellt alle Funktionen für CRUD-Operationen und Start/Stopp-Tracking bereit
  * @author FA
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * Quelle: ChatGPT
  */
 @Service
 @Transactional
