@@ -1,0 +1,79 @@
+package ch.fhnw.timerecordingbackend.controller;
+
+
+import ch.fhnw.timerecordingbackend.dto.time.TimeEntryRequest;
+import ch.fhnw.timerecordingbackend.dto.time.TimeEntryResponse;
+import ch.fhnw.timerecordingbackend.service.TimeEntryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/time-entries")
+public class TimeEntryController {
+
+    @Autowired
+    private TimeEntryService timeEntryService;
+
+    @PostMapping
+    public ResponseEntity<TimeEntryResponse> createTimeEntry(@Valid @RequestBody TimeEntryRequest timeEntryRequest) {
+        return ResponseEntity.ok(timeEntryService.createTimeEntry(timeEntryRequest));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTimeEntry(
+            @PathVariable Long id,
+            @Valid @RequestBody TimeEntryRequest timeEntryRequest) {
+        timeEntryService.updateTimeEntry(id, timeEntryRequest);
+        return ResponseEntity.ok().body(Map.of("message", "Entry updated"));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteTimeEntry(@PathVariable Long id) {
+        timeEntryService.deleteTimeEntry(id);
+        return ResponseEntity.ok().body(Map.of("message", "Entry deleted"));
+    }
+
+    @GetMapping
+    public ResponseEntity<Map<String, List<TimeEntryResponse>>> getCurrentUserTimeEntries() {
+        List<TimeEntryResponse> entries = timeEntryService.getCurrentUserTimeEntries();
+        return ResponseEntity.ok(Map.of("entries", entries));
+    }
+
+    /**
+     * Zeiteinträge eines beliebigen Users abrufen (nur Admin).
+     */
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TimeEntryResponse>> getUserTimeEntries(@PathVariable Long userId) {
+        List<TimeEntryResponse> entries = timeEntryService.getUserTimeEntries(userId);
+        return ResponseEntity.ok(entries);
+    }
+
+    @PostMapping("/start")
+    public ResponseEntity<?> startTimeTracking(@RequestBody(required = false) Map<String, Long> body) {
+        Long projectId = body != null ? body.get("projectId") : null;
+        return ResponseEntity.ok(timeEntryService.startTimeTracking(projectId));
+    }
+
+    @PostMapping("/{entryId}/stop")
+    public ResponseEntity<?> stopTimeTracking(@PathVariable Long entryId) {
+        return ResponseEntity.ok(timeEntryService.stopTimeTracking(entryId));
+    }
+
+    @PostMapping("/{id}/assign-project")
+    public ResponseEntity<?> assignProject(
+            @PathVariable Long id,
+            @RequestBody Map<String, Long> requestBody) {
+        timeEntryService.assignProject(id, requestBody.get("projectId"));
+        return ResponseEntity.ok().body(Map.of(
+                "message", "Zeiteintrag zu Projekt erfolgreich zugewiesen"
+        ));
+    }
+}
