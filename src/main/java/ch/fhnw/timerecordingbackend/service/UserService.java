@@ -68,6 +68,18 @@ public interface UserService {
     boolean updatePassword (Long id, String oldPassword, String newPassword);
 
     /**
+     * Ändert das Passwort für den angemeldeten User.
+     * @param request enthält userId, altes und neues Passwort
+     */
+    void changePassword(ChangePasswordRequest request);
+
+    /**
+     * Schickt einen Reset-Link an die angegebene E-Mail.
+     * @param email Zieladresse
+     */
+    void sendPasswordResetLink(String email);
+
+    /**
      * User deaktivieren
      * @param id
      */

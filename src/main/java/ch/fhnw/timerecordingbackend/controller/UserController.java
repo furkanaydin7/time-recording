@@ -10,9 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST Controller für Benutzer
- * @author PD
+ * @author FA
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
  */
 @RestController
 @RequestMapping("/api/users")
