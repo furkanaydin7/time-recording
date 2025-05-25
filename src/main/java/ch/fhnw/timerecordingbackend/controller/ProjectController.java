@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
  * API Endpunkte für Vewaltung von Benutzern
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - API Pfad geändert
  */
 @RestController
-@RequestMapping("/api/project")
+@RequestMapping("/api/projects")
 public class ProjectController {
     private final ProjectService projectService;
     private final UserService userService;
