@@ -58,7 +58,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
      * @return Liste mit gefundenen Projekten
      * Quelle: ChatGPT.com
      */
-    @Query("SELECT p FROM Project p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', searchTerm, '%'))")
+    @Query("SELECT p FROM Project p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<Project> searchProjects(@Param("searchTerm") String searchTerm);
 
     /**

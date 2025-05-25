@@ -54,6 +54,8 @@ public class WebSecurityConfig {
                                 "/", "/index.html", "/css/**", "/js/**", "/images/**",
                                 "/api/auth/**", "/api/users/reset-password"
                         ).permitAll()
+                        // H2-Konsole erlauben
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/time-entries/**",

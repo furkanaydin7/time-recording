@@ -1,5 +1,6 @@
 package ch.fhnw.timerecordingbackend.service;
 
+import ch.fhnw.timerecordingbackend.dto.authentication.ChangePasswordRequest;
 import ch.fhnw.timerecordingbackend.model.Role;
 import ch.fhnw.timerecordingbackend.model.SystemLog;
 import ch.fhnw.timerecordingbackend.model.User;
@@ -9,6 +10,8 @@ import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -166,6 +169,83 @@ public class UserServiceImpl implements UserService {
         systemLogRepository.save(log);
 
         return true;
+    }
+
+    /**
+     * Ändert das Passwort für den angemeldeten User.
+     * @param request enthält userId, altes und neues Passwort
+     */
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        // Aktuelle Benutzer-ID aus Security Context holen
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ValidationException("Benutzer ist nicht authentifiziert");
+        }
+
+        String userEmail = auth.getName(); // E-Mail des eingeloggten Benutzers
+
+        // Benutzer finden
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
+
+        // altes Passwort überprüfen
+        if (!request.getOldPassword().equals(user.getPassword())) {
+            throw new ValidationException("Altes Passwort ist falsch");
+        }
+
+        // Neues Passwort setzen
+        user.setPassword(request.getNewPassword());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Systemlog erstellen
+        SystemLog log = new SystemLog();
+        log.setAction("Passwort geändert: " + user.getEmail());
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+    }
+
+
+    /**
+     * Schickt einen Reset-Link an die angegebene E-Mail.
+     * @param email Zieladresse
+     */
+    @Override
+    @Transactional
+    public void sendPasswordResetLink(String email) {
+        // Benutzer finden
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            // Aus Sicherheitsgründen keine Fehlermeldung ausgeben
+            // aber trotzdem loggen
+            SystemLog log = new SystemLog();
+            log.setAction("Password Reset für unbekannte E-Mail angefordert: " + email);
+            log.setTimestamp(LocalDateTime.now());
+            log.setDetails("E-Mail nicht gefunden");
+            systemLogRepository.save(log);
+            return;
+        }
+
+        User user = userOptional.get();
+
+        // TODO: Hier würden Sie normalerweise:
+        // 1. Ein Reset-Token generieren und in der DB speichern
+        // 2. Eine E-Mail mit dem Reset-Link senden
+        // 3. Das Token mit einem Ablaufdatum versehen
+
+        // Für jetzt nur ein Log-Eintrag
+        SystemLog log = new SystemLog();
+        log.setAction("Password Reset Link gesendet an: " + email);
+        log.setTimestamp(LocalDateTime.now());
+        log.setDetails("Benutzer ID: " + user.getId());
+        systemLogRepository.save(log);
+
+        // Hier würde der E-Mail-Versand implementiert werden
+        // emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
     }
 
     /**

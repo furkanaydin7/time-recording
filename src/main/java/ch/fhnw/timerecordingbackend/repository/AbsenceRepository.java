@@ -85,8 +85,21 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
      * @return Long mit der Summe der genehmigten Abwesenheiten eines Benutzers für einen bestimmten Zeitraum.
      * Quelle: ChatGPT.com
      */
-    @Query("SELECT SUM(FUNCTION('DATEDIFF', FUNCTION('GREATEST', a.endDate, :startDate), FUNCTION('LEAST', a.startDate, :endDate)) + 1) FROM Absence a WHERE a.user.id = :userId AND a.type = :type AND a.approved = true AND ((a.startDate BETWEEN :startDate AND :endDate) OR (a.endDate BETWEEN :startDate AND :endDate) OR (:startDate BETWEEN a.startDate AND a.endDate))")
-    Long sumAbsenceDaysByUserIdAndTypeAndDateRange(@Param("userId") Long userId, @Param("type") AbsenceType type, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    @Query(
+            value = "SELECT SUM(DATEDIFF('DAY', a.start_date, a.end_date)) " +
+                    "FROM absence a " +
+                    "WHERE a.user_id   = :userId " +
+                    "AND a.type      = :type " +
+                    "AND a.start_date >= :from " +
+                    "AND a.end_date   <= :to",
+            nativeQuery = true
+    )
+    Long sumAbsenceDaysByUserIdAndTypeAndDateRange(
+            @Param("userId") Long userId,
+            @Param("type")   AbsenceType type,
+            @Param("from")   LocalDate from,
+            @Param("to")     LocalDate to
+    );
 
     /**
      * Liefert alle aktuellen und zukünftigen Abwesenheiten eines Benutzers zurück.
