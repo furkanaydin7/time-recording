@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
             try {
-                const res = await api('/user/login', 'POST', { userName: username, password });
+                const res = await api('/auth/login', 'POST', { email: email, password: password });
                 localStorage.setItem('token', res.token);
+                localStorage.setItem('user', JSON.stringify(res.user));
+                localStorage.setItem('isAdmin', res.user.role === 'ADMIN');
                 window.location.href = 'dashboard.html';
             } catch (err) {
                 document.getElementById('error-msg').textContent = err.message;

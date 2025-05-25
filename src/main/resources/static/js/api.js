@@ -1,5 +1,5 @@
 //@author EK
-const API_BASE = 'http://localhost:8080/api/v1';
+const API_BASE = 'http://localhost:8080/api';
 
 async function api(path, method = 'GET', data = null) {
     const token = localStorage.getItem('token');
