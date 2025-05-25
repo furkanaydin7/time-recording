@@ -232,12 +232,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userOptional.get();
 
-        // TODO: Hier würden Sie normalerweise:
-        // 1. Ein Reset-Token generieren und in der DB speichern
-        // 2. Eine E-Mail mit dem Reset-Link senden
-        // 3. Das Token mit einem Ablaufdatum versehen
-
-        // Für jetzt nur ein Log-Eintrag
+        // Log-Eintrag
         SystemLog log = new SystemLog();
         log.setAction("Password Reset Link gesendet an: " + email);
         log.setTimestamp(LocalDateTime.now());
