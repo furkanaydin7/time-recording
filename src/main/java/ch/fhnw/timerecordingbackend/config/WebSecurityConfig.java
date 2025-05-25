@@ -65,6 +65,7 @@ public class WebSecurityConfig {
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
+                .headers(headers -> headers.frameOptions().disable()) // Für H2-Konsole
                 .addFilterBefore(
                         jwtAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class
