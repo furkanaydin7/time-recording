@@ -1,22 +1,328 @@
-<!--@author EK-->
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <title>Login – Time Recording</title>
-    <link rel="stylesheet" href="css/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Recording - Anmeldung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 0.75rem;
+            border: 1px solid #fcc;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 0.75rem;
+            border: 1px solid #cfc;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .demo-credentials {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+
+        .demo-credentials h3 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-credentials ul {
+            list-style: none;
+            color: #666;
+        }
+
+        .demo-credentials li {
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .demo-credentials li:hover {
+            background-color: #e9ecef;
+        }
+
+        .demo-credentials strong {
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
-<div class="container login-container">
-    <h1>Time Recording</h1>
-    <form id="login-form">
-        <input type="email" id="username" placeholder="Benutzername" required />
-        <input type="password" id="password" placeholder="Passwort" required />
-        <button type="submit">Login</button>
+<div class="login-container">
+    <div class="login-header">
+        <h1>🕐 Time Recording</h1>
+        <p>Melden Sie sich an, um fortzufahren</p>
+    </div>
+
+    <!-- Fehlermeldung anzeigen -->
+    <div id="error-message" class="error-message">
+        ❌ Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.
+    </div>
+
+    <!-- Erfolgsmeldung -->
+    <div id="success-message" class="success-message">
+        ✅ Anmeldung erfolgreich! Sie werden weitergeleitet...
+    </div>
+
+    <!-- Login-Formular -->
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="email">E-Mail-Adresse</label>
+            <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autocomplete="username"
+                    placeholder="admin@timerecording.ch"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="password">Passwort</label>
+            <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+            >
+        </div>
+
+        <button type="submit" class="login-btn" id="loginButton">
+            Anmelden
+        </button>
+
+        <div class="loading" id="loading">
+            <p>🔄 Anmeldung läuft...</p>
+        </div>
     </form>
-    <p id="error-msg" class="error hidden"></p>
+
+    <!-- Demo-Anmeldedaten -->
+    <div class="demo-credentials">
+        <h3>📋 Demo-Anmeldedaten:</h3>
+        <ul>
+            <li data-email="admin@timerecording.ch" data-password="admin123">
+                <strong>Admin:</strong> admin@timerecording.ch / admin123
+            </li>
+            <li data-email="manager@timerecording.ch" data-password="manager123">
+                <strong>Manager:</strong> manager@timerecording.ch / manager123
+            </li>
+            <li data-email="anna.schmidt@timerecording.ch" data-password="employee123">
+                <strong>Mitarbeiter:</strong> anna.schmidt@timerecording.ch / employee123
+            </li>
+        </ul>
+    </div>
 </div>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const loginButton = document.getElementById('loginButton');
+        const loading = document.getElementById('loading');
+
+        // Demo-Anmeldedaten per Klick einfügen
+        document.querySelectorAll('.demo-credentials li').forEach(li => {
+            li.addEventListener('click', function() {
+                const email = this.getAttribute('data-email');
+                const password = this.getAttribute('data-password');
+
+                if (email && password) {
+                    document.getElementById('email').value = email;
+                    document.getElementById('password').value = password;
+                }
+            });
+        });
+
+        // Login-Formular absenden
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // UI-Status ändern
+            loginButton.disabled = true;
+            loginButton.textContent = 'Anmelden...';
+            loading.style.display = 'block';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            try {
+                // API-Aufruf zum Login-Endpoint
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // JWT-Token im localStorage speichern
+                    const token = data.accessToken || data.token;
+                    if (token) {
+                        localStorage.setItem('jwtToken', token);
+                        localStorage.setItem('tokenType', data.tokenType || 'Bearer');
+                        localStorage.setItem('userEmail', data.email || email);
+                        localStorage.setItem('userId', data.userId);
+                        localStorage.setItem('userRoles', JSON.stringify(data.roles || []));
+                    }
+
+                    // Erfolgsmeldung anzeigen
+                    successMessage.style.display = 'block';
+
+                    // Nach erfolgreicher Anmeldung weiterleiten
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1500);
+
+                } else {
+                    // Fehlerbehandlung
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData.message || 'Ungültige Anmeldedaten';
+
+                    errorMessage.textContent = `❌ ${errorMsg}`;
+                    errorMessage.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = '❌ Verbindungsfehler. Bitte versuchen Sie es später erneut.';
+                errorMessage.style.display = 'block';
+            } finally {
+                // UI-Status zurücksetzen
+                loginButton.disabled = false;
+                loginButton.textContent = 'Anmelden';
+                loading.style.display = 'none';
+            }
+        });
+
+        // KEINE automatische Token-Prüfung mehr!
+        // Benutzer soll sich normal anmelden können
+    });
+</script>
 </body>
 </html>
+});

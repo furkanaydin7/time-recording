@@ -51,13 +51,18 @@ public class WebSecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/index.html", "/css/**", "/js/**", "/images/**",
-                                "/api/auth/**", "/api/users/reset-password",
-                                // Alle HTML-Seiten erlauben
-                                "/dashboard.html", "/admin.html", "/time-entry.html",
-                                "/user-management.html", "/projects.html", "/absences.html"
+                                "/",
+                                "/index.html",
+                                "/login.html",          // ← WICHTIG: Hinzufügen!
+                                "/dashboard.html",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/api/auth/**",
+                                "/favicon.ico",
+                                "/api/users/reset-password"
+
                         ).permitAll()
-                        // H2-Konsole erlauben
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(
@@ -65,10 +70,11 @@ public class WebSecurityConfig {
                                 "/api/projects/**",
                                 "/api/reports/**",
                                 "/api/absences/**"
-                        ).authenticated()
+                        ).authenticated()  // ← Nicht hasRole("ADMIN")!
                         .anyRequest().authenticated()
                 )
-                .headers(headers -> headers.frameOptions().disable()) // Für H2-Konsole
+                .formLogin(formLogin -> formLogin.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .addFilterBefore(
                         jwtAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class
