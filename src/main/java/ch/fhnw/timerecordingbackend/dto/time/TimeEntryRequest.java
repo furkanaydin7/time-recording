@@ -2,6 +2,7 @@ package ch.fhnw.timerecordingbackend.dto.time;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,13 +16,11 @@ public class TimeEntryRequest {
     @NotNull
     private LocalDate date;
 
-    @NotNull
-    private List<String> startTimes;
+    private List<String> startTimes = new ArrayList<>();
 
-    @NotNull
-    private List<String> endTimes;
+    private List<String> endTimes = new ArrayList<>();
 
-    private List<BreakTime> breaks;
+    private List<BreakTime> breaks = new ArrayList<>();
 
     private Long projectId;
 
@@ -39,7 +38,7 @@ public class TimeEntryRequest {
     }
 
     public void setStartTimes(List<String> startTimes) {
-        this.startTimes = startTimes;
+        this.startTimes = startTimes != null ? startTimes : new ArrayList<>();
     }
 
     public List<String> getEndTimes() {
@@ -47,7 +46,7 @@ public class TimeEntryRequest {
     }
 
     public void setEndTimes(List<String> endTimes) {
-        this.endTimes = endTimes;
+        this.endTimes = endTimes != null ? endTimes : new ArrayList<>();
     }
 
     public List<BreakTime> getBreaks() {
@@ -55,7 +54,7 @@ public class TimeEntryRequest {
     }
 
     public void setBreaks(List<BreakTime> breaks) {
-        this.breaks = breaks;
+        this.breaks = breaks != null ? breaks : new ArrayList<>();
     }
 
     public Long getProjectId() {
@@ -73,6 +72,14 @@ public class TimeEntryRequest {
     public static class BreakTime {
         private String start;
         private String end;
+
+        // Konstruktoren
+        public BreakTime() {}
+
+        public BreakTime(String start, String end) {
+            this.start = start;
+            this.end = end;
+        }
 
         // Getter und Setter
         public String getStart() {

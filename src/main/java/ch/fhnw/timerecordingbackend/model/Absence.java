@@ -7,12 +7,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-/**
- * Entität Klasse für Abwesenheiten
- * @author PD
- * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
- */
 @Entity
 @Table(name = "absences")
 public class Absence {
@@ -35,7 +29,7 @@ public class Absence {
     private AbsenceType type;
 
     @Column(nullable = false)
-    private boolean approved = false;
+    private boolean approved = false;  // ZURÜCK ZU BOOLEAN!
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approver_id")
@@ -47,9 +41,7 @@ public class Absence {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * Konstruktoren
-     */
+    // Konstruktoren
     public Absence() {}
 
     public Absence(User user, LocalDate startDate, LocalDate endDate, AbsenceType type) {
@@ -61,36 +53,23 @@ public class Absence {
         this.updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Abwesenheit genehmigen
-     * @param approver
-     */
+    // ALTE METHODEN
     public void approve(User approver) {
         this.approved = true;
         this.approver = approver;
         this.updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Abwesenheit ablehnen
-     */
     public void reject() {
         this.approved = false;
         this.approver = null;
     }
 
-    /**
-     * Zeitstempel aktualisieren
-     */
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Anzahl der Abwesenheitstage berechnen
-     * @return Anzahl der Tage
-     */
     public long getDurationInDays() {
         if (startDate == null || endDate == null) {
             return 0;
@@ -98,80 +77,33 @@ public class Absence {
         return ChronoUnit.DAYS.between(startDate, endDate) + 1;
     }
 
-    /**
-     * Getter und Setter
-     */
-    public Long getId() {
-        return id;
-    }
+    // Getter und Setter
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public User getUser() {
-        return user;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public LocalDate getStartDate() {
-        return startDate;
-    }
+    public AbsenceType getType() { return type; }
+    public void setType(AbsenceType type) { this.type = type; }
 
-    public void setStartDate(LocalDate date) {
-        this.startDate = date;
-    }
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
 
-    public LocalDate getEndDate() {
-        return endDate;
-    }
+    public User getApprover() { return approver; }
+    public void setApprover(User approver) { this.approver = approver; }
 
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public AbsenceType getType() {
-        return type;
-    }
-
-    public void setType(AbsenceType type) {
-        this.type = type;
-    }
-
-    public boolean isApproved() {
-        return approved;
-    }
-
-    public void setApproved(boolean approved) {
-        this.approved = approved;
-    }
-
-    public User getApprover() {
-        return approver;
-    }
-
-    public void setApprover(User approver) {
-        this.approver = approver;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     @Override
     public String toString() {

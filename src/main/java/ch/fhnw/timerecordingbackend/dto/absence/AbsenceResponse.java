@@ -1,3 +1,4 @@
+
 package ch.fhnw.timerecordingbackend.dto.absence;
 
 import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
@@ -6,164 +7,103 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * DTO Antwort für Abwesenheiten Anfragen
- * @author PD
- * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
- * Quelle: https://techkluster.com/2023/08/21/dto-for-a-java-spring-application/
+ * Response DTO für Abwesenheiten mit Status-Workflow
  */
 public class AbsenceResponse {
 
+    // Basis-Informationen
     private Long id;
     private LocalDate startDate;
     private LocalDate endDate;
     private AbsenceType type;
-    private boolean approved;
+    private String comment; // NEU!
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime approvedAt;
 
-    //User Informationen
+    // Benutzer-Informationen
     private Long userId;
     private String firstName;
     private String lastName;
     private String email;
 
-    /**
-     * Konstruktor
-     */
+    // Genehmiger-Informationen (NEU!)
+    private Long approverId;
+    private String approverName;
+    private LocalDateTime approvalDate;
+
+    // Ablehnungs-Informationen (NEU!)
+    private String rejectionReason;
+
+    // Status für UI (NEU!)
+    private boolean approved; // Für Backward Compatibility
+
     public AbsenceResponse() {}
 
-    public AbsenceResponse(Long id, LocalDate startDate, LocalDate endDate, AbsenceType type, boolean approved) {
-        this.id = id;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.type = type;
-        this.approved = approved;
-    }
+    // Getter und Setter
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    /**
-     * Vollständiger Namen des Users
-     * @return vollständiger Name
-     */
-    public String getUserFullName() {
-        return firstName + " " + lastName;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    /**
-     * Dauer der Abweseheit berechnen
-     */
-    public long getDurationInDays() {
-        if (startDate == null || endDate == null) {
-            return 0;
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public AbsenceType getType() { return type; }
+    public void setType(AbsenceType type) { this.type = type; }
+
+    public String getComment() { return comment; }
+    public void setComment(String comment) { this.comment = comment; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    // Benutzer-Informationen
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getFullName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
         }
-        return startDate.datesUntil(endDate.plusDays(1)).count();
-    }
-
-    /**
-     * Name des Abwesenheits Typ ausgeben
-     */
-    public String getTypeDisplayName() {
-        return type.getDisplayName();
-    }
-
-    /**
-     * Getter und Setter
-     */
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDate getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-
-    public AbsenceType getType() {
-        return type;
-    }
-
-    public void setType(AbsenceType type) {
-        this.type = type;
-    }
-
-    public boolean isApproved() {
-        return approved;
-    }
-
-    public void setApproved(boolean approved) {
-        this.approved = approved;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getApprovedAt() {
-        return approvedAt;
-    }
-
-    public void setApprovedAt(LocalDateTime approvedAt) {
-        this.approvedAt = approvedAt;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    // Genehmiger-Informationen
+    public Long getApproverId() { return approverId; }
+    public void setApproverId(Long approverId) { this.approverId = approverId; }
+
+    public String getApproverName() { return approverName; }
+    public void setApproverName(String approverName) { this.approverName = approverName; }
+
+    public LocalDateTime getApprovalDate() { return approvalDate; }
+    public void setApprovalDate(LocalDateTime approvalDate) { this.approvalDate = approvalDate; }
+
+    // Ablehnungs-Informationen
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    // Backward Compatibility
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
+
+    public long getDurationInDays() {
+        if (startDate != null && endDate != null) {
+            return java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        }
+        return 0;
     }
 
     @Override
@@ -173,10 +113,7 @@ public class AbsenceResponse {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", type=" + type +
-                ", approved=" + approved +
-                ", userFullName='" + getUserFullName() + '\'' +
-                ", durationInDays=" + getDurationInDays() +
+                ", email='" + email + '\'' +
                 '}';
     }
 }
-

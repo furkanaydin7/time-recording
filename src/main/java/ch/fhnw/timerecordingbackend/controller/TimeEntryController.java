@@ -1,6 +1,5 @@
 package ch.fhnw.timerecordingbackend.controller;
 
-
 import ch.fhnw.timerecordingbackend.dto.time.TimeEntryRequest;
 import ch.fhnw.timerecordingbackend.dto.time.TimeEntryResponse;
 import ch.fhnw.timerecordingbackend.service.TimeEntryService;
@@ -61,13 +60,12 @@ public class TimeEntryController {
         List<TimeEntryResponse> entries = timeEntryService.getUserTimeEntries(userId);
         return ResponseEntity.ok(entries);
     }
-
     @PostMapping("/start")
+
     public ResponseEntity<?> startTimeTracking(@RequestBody(required = false) Map<String, Long> body) {
         Long projectId = body != null ? body.get("projectId") : null;
         return ResponseEntity.ok(timeEntryService.startTimeTracking(projectId));
     }
-
     @PostMapping("/{entryId}/stop")
     public ResponseEntity<?> stopTimeTracking(@PathVariable Long entryId) {
         return ResponseEntity.ok(timeEntryService.stopTimeTracking(entryId));
@@ -81,4 +79,4 @@ public class TimeEntryController {
         return ResponseEntity.ok().body(Map.of(
                 "message", "Zeiteintrag zu Projekt zugewiesen"));
     }
-}
+} // ← WICHTIG: Diese schließende Klammer muss da sein!

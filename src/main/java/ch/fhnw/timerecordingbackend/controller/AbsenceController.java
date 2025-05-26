@@ -303,11 +303,6 @@ public class AbsenceController {
             response.setEmail(absence.getUser().getEmail());
         }
 
-        // Genehmigungs-Zeitstempel falls vorhanden
-        if (absence.isApproved() && absence.getApprover() != null) {
-            response.setApprovedAt(absence.getUpdatedAt()); // Vereinfachung
-        }
-
         return response;
     }
 }
