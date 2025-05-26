@@ -1,6 +1,7 @@
 package ch.fhnw.timerecordingbackend.util;
 
 import ch.fhnw.timerecordingbackend.model.*;
+import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 import ch.fhnw.timerecordingbackend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,13 +9,15 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
  * DataInitializer für Initialdaten beim Start der Anwendung
  * Erstellt Standard-Rollen, Admin-Benutzer und Beispieldaten
  * @author PD
- * @version 1.0
+ * @version 1.1
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -29,7 +32,10 @@ public class DataInitializer implements CommandLineRunner {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // WICHTIG: PasswordEncoder injizieren!
+    private AbsenceRepository absenceRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
@@ -39,10 +45,12 @@ public class DataInitializer implements CommandLineRunner {
             createRoles();
             createUsers();
             createProjects();
+            initializeExampleAbsences();
 
             System.out.println("✅ Initialdaten erfolgreich erstellt!");
         }
     }
+
     /**
      * Erstellt Standard-Rollen
      */
@@ -76,6 +84,7 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("  ✓ Rolle erstellt: EMPLOYEE");
         }
     }
+
     /**
      * Erstellt Standard-Benutzer
      */
@@ -144,6 +153,7 @@ public class DataInitializer implements CommandLineRunner {
         // Weitere Beispiel-Benutzer...
         createMoreUsers();
     }
+
     /**
      * Erstellt Beispiel-Mitarbeiter
      */
@@ -237,6 +247,82 @@ public class DataInitializer implements CommandLineRunner {
             project3.setManager(manager);
             projectRepository.save(project3);
             System.out.println("  ✓ Projekt erstellt: Database Migration");
+        }
+    }
+
+    /**
+     * Erstellt Beispiel-Abwesenheiten
+     */
+    private void initializeExampleAbsences() {
+        System.out.println("🏖️ Erstelle Beispiel-Abwesenheiten...");
+
+        User laura = userRepository.findByEmail("laura.weber@timerecording.ch").orElse(null);
+        User thomas = userRepository.findByEmail("thomas.fischer@timerecording.ch").orElse(null);
+        User admin = userRepository.findByEmail("admin@timerecording.ch").orElse(null);
+
+        if (laura != null) {
+            // Genehmigter Urlaub für Laura (nächste Woche)
+            Absence vacation = new Absence();
+            vacation.setUser(laura);
+            vacation.setStartDate(LocalDate.now().plusDays(7));
+            vacation.setEndDate(LocalDate.now().plusDays(11));
+            vacation.setType(AbsenceType.VACATION);
+            vacation.setApproved(true);
+            vacation.setApprover(admin);
+            vacation.setCreatedAt(LocalDateTime.now());
+            vacation.setUpdatedAt(LocalDateTime.now());
+
+            absenceRepository.save(vacation);
+            System.out.println("  ✓ Urlaub für Laura Weber erstellt (genehmigt)");
+        }
+
+        if (thomas != null) {
+            // Ausstehende Fortbildung für Thomas
+            Absence training = new Absence();
+            training.setUser(thomas);
+            training.setStartDate(LocalDate.now().plusDays(14));
+            training.setEndDate(LocalDate.now().plusDays(16));
+            training.setType(AbsenceType.TRAINING);
+            training.setApproved(false);
+            training.setCreatedAt(LocalDateTime.now());
+            training.setUpdatedAt(LocalDateTime.now());
+
+            absenceRepository.save(training);
+            System.out.println("  ✓ Fortbildung für Thomas Fischer erstellt (ausstehend)");
+        }
+
+        // Zusätzliche Beispiel-Abwesenheiten für mehr Testdaten
+        User anna = userRepository.findByEmail("anna.schmidt@timerecording.ch").orElse(null);
+        if (anna != null) {
+            // Home Office für Anna (diese Woche)
+            Absence homeOffice = new Absence();
+            homeOffice.setUser(anna);
+            homeOffice.setStartDate(LocalDate.now().plusDays(2));
+            homeOffice.setEndDate(LocalDate.now().plusDays(4));
+            homeOffice.setType(AbsenceType.HOME_OFFICE);
+            homeOffice.setApproved(true);
+            homeOffice.setApprover(admin);
+            homeOffice.setCreatedAt(LocalDateTime.now());
+            homeOffice.setUpdatedAt(LocalDateTime.now());
+
+            absenceRepository.save(homeOffice);
+            System.out.println("  ✓ Home Office für Anna Schmidt erstellt (genehmigt)");
+        }
+
+        User peter = userRepository.findByEmail("peter.mueller@timerecording.ch").orElse(null);
+        if (peter != null) {
+            // Ausstehender Sonderurlaub für Peter
+            Absence specialLeave = new Absence();
+            specialLeave.setUser(peter);
+            specialLeave.setStartDate(LocalDate.now().plusDays(21));
+            specialLeave.setEndDate(LocalDate.now().plusDays(21)); // Nur ein Tag
+            specialLeave.setType(AbsenceType.SPECIAL_LEAVE);
+            specialLeave.setApproved(false);
+            specialLeave.setCreatedAt(LocalDateTime.now());
+            specialLeave.setUpdatedAt(LocalDateTime.now());
+
+            absenceRepository.save(specialLeave);
+            System.out.println("  ✓ Sonderurlaub für Peter Müller erstellt (ausstehend)");
         }
     }
 }
