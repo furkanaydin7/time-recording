@@ -52,7 +52,10 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/index.html", "/css/**", "/js/**", "/images/**",
-                                "/api/auth/**", "/api/users/reset-password"
+                                "/api/auth/**", "/api/users/reset-password",
+                                // Alle HTML-Seiten erlauben
+                                "/dashboard.html", "/admin.html", "/time-entry.html",
+                                "/user-management.html", "/projects.html", "/absences.html"
                         ).permitAll()
                         // H2-Konsole erlauben
                         .requestMatchers("/h2-console/**").permitAll()
@@ -65,6 +68,7 @@ public class WebSecurityConfig {
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
+                .headers(headers -> headers.frameOptions().disable()) // Für H2-Konsole
                 .addFilterBefore(
                         jwtAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class

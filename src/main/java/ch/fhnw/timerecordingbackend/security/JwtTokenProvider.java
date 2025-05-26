@@ -1,6 +1,7 @@
 package ch.fhnw.timerecordingbackend.security;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys; // Diese Zeile hinzufügen
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -9,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey; // Diese Zeile hinzufügen
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,6 +36,19 @@ public class JwtTokenProvider {
     // Set zur Speicherung von invalidierten (z. B. ausgeloggten) Tokens
     private Set<String> blacklistedTokens = new HashSet<>();
 
+    // Methode zur Generierung eines sicheren Schlüssels für HS512
+    private SecretKey getSigningKey() {
+        // Wenn jwtSecret leer ist, erstellen wir einen zufälligen Schlüssel
+        if (jwtSecret == null || jwtSecret.isEmpty()) {
+            return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        }
+
+        // Ansonsten verwenden wir den konfigurierten Schlüssel, stellen aber sicher,
+        // dass er lang genug ist
+        byte[] keyBytes = jwtSecret.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
     /**
      * Erstellt ein JWT-Token auf Basis der übergebenen Authentifizierungsdaten.
      * Das Token enthält Username, Rollen und Ablaufzeit.
@@ -49,13 +64,13 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority) // z. B. "ROLE_USER", "ROLE_ADMIN"
                 .collect(Collectors.toList());
 
-        // Erstellt und signiert das JWT Token
+        // Erstellt und signiert das JWT Token mit einem sicheren Schlüssel
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername()) // Benutzername als Subject
                 .claim("roles", roles) // Rollen als Claim hinzufügen
                 .setIssuedAt(new Date()) // Zeitpunkt der Ausstellung
                 .setExpiration(expiryDate) // Ablaufdatum
-                .signWith(SignatureAlgorithm.HS512, jwtSecret) // Signatur mit HMAC-SHA512
+                .signWith(getSigningKey()) // Verwenden Sie die neue Methode für den Schlüssel
                 .compact(); // Finales Token-String erstellen
     }
 
@@ -63,8 +78,9 @@ public class JwtTokenProvider {
      * Extrahiert den Benutzernamen (Subject) aus einem gültigen JWT
      */
     public String getUsernameFromJwt(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(jwtSecret)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -75,8 +91,9 @@ public class JwtTokenProvider {
      * Extrahiert die Rollen aus dem Token und wandelt sie in Spring Security Authorities um
      */
     public List<GrantedAuthority> getAuthoritiesFromJwt(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(jwtSecret)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -98,7 +115,10 @@ public class JwtTokenProvider {
 
         try {
             // Versucht das Token zu parsen und zu verifizieren
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(authToken);
             return true; // Token gültig
         } catch (SecurityException e) {
             // JWT Signatur ist ungültig
