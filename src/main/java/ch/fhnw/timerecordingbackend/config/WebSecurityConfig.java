@@ -73,6 +73,7 @@ public class WebSecurityConfig {
                         ).authenticated()  // ← Nicht hasRole("ADMIN")!
                         .anyRequest().authenticated()
                 )
+                .headers(headers -> headers.frameOptions().disable()) // Für H2-Konsole
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .addFilterBefore(
