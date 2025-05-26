@@ -7,6 +7,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Entität Klasse für Abwesenheiten
+ * @author PD
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.0
+ */
 @Entity
 @Table(name = "absences")
 public class Absence {
@@ -53,23 +59,36 @@ public class Absence {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ALTE METHODEN
+    /**
+     * Abwesenheit genehmigen
+     * @param approver
+     */
     public void approve(User approver) {
         this.approved = true;
         this.approver = approver;
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Abwesenheit ablehnen
+     */
     public void reject() {
         this.approved = false;
         this.approver = null;
     }
 
+    /**
+     * Zeitstempel aktualisieren
+     */
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Anzahl der Abwesenheitstage berechnen
+     * @return Anzahl der Tage
+     */
     public long getDurationInDays() {
         if (startDate == null || endDate == null) {
             return 0;

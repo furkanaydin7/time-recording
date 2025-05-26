@@ -1,4 +1,4 @@
-package ch.fhnw.timerecordingbackend.config;
+package ch.fhnw.timerecordingbackend.util;
 
 import ch.fhnw.timerecordingbackend.model.*;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
@@ -10,6 +10,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
+/**
+ * DataInitializer für Initialdaten beim Start der Anwendung
+ * Erstellt Standard-Rollen, Admin-Benutzer und Beispieldaten
+ * @author PD
+ * @version 1.0
+ */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
@@ -37,7 +43,9 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("✅ Initialdaten erfolgreich erstellt!");
         }
     }
-
+    /**
+     * Erstellt Standard-Rollen
+     */
     private void createRoles() {
         System.out.println("📋 Erstelle Standard-Rollen...");
 
@@ -68,7 +76,9 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("  ✓ Rolle erstellt: EMPLOYEE");
         }
     }
-
+    /**
+     * Erstellt Standard-Benutzer
+     */
     private void createUsers() {
         System.out.println("👤 Erstelle Admin-Benutzer...");
 
@@ -134,7 +144,9 @@ public class DataInitializer implements CommandLineRunner {
         // Weitere Beispiel-Benutzer...
         createMoreUsers();
     }
-
+    /**
+     * Erstellt Beispiel-Mitarbeiter
+     */
     private void createMoreUsers() {
         Role employeeRole = roleRepository.findByName("EMPLOYEE")
                 .orElseThrow(() -> new RuntimeException("Employee role not found"));
@@ -185,6 +197,9 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    /**
+     * Erstellt Beispiel-Projekte
+     */
     private void createProjects() {
         System.out.println("📁 Erstelle Beispiel-Projekte...");
 
