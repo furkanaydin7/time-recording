@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * REST Controller für Administratoren
@@ -38,6 +39,9 @@ public class AdminController {
     public AdminController(UserService userService) {
         this.userService = userService;
     }
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Gibt eine Liste aller UserResponse-DTOs zurück
@@ -78,7 +82,9 @@ public class AdminController {
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail());
         user.setPlannedHoursPerDay(request.getPlannedHoursPerDay());
-        user.setPassword(request.getPassword());
+
+        // Hier das Passwort verschlüsseln
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User createdUser = userService.createUser(user, request.getRole());
 

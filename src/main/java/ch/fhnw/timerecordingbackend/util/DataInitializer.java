@@ -33,38 +33,15 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // NUR beim ersten Start ausführen (wenn keine User da sind)
         if (userRepository.count() == 0) {
             System.out.println("🚀 DataInitializer gestartet - Erstelle Initialdaten...");
+
             createRoles();
             createUsers();
             createProjects();
+
             System.out.println("✅ Initialdaten erfolgreich erstellt!");
-        } else {
-            System.out.println("📊 Datenbank enthält bereits " + userRepository.count() + " Benutzer - überspringe Initialisierung");
         }
-    }
-
-    // Erweitere createMoreUsers() für Test-User:
-    private void createMoreUsers() {
-        Role employeeRole = roleRepository.findByName("EMPLOYEE")
-                .orElseThrow(() -> new RuntimeException("Employee role not found"));
-
-        // Test User für Datenbank-Tests
-        if (!userRepository.existsByEmail("max.database@timerecording.ch")) {
-            User maxDb = new User();
-            maxDb.setFirstName("Max");
-            maxDb.setLastName("Database");
-            maxDb.setEmail("max.database@timerecording.ch");
-            maxDb.setPassword(passwordEncoder.encode("password123"));
-            maxDb.setActive(true);
-            maxDb.setStatus(UserStatus.ACTIVE);
-            maxDb.setPlannedHoursPerDay(8.0);
-            maxDb.setRoles(Set.of(employeeRole));
-            userRepository.save(maxDb);
-            System.out.println("  ✓ Test-User erstellt: max.database@timerecording.ch");
-        }
-
     }
     /**
      * Erstellt Standard-Rollen
@@ -170,6 +147,55 @@ public class DataInitializer implements CommandLineRunner {
     /**
      * Erstellt Beispiel-Mitarbeiter
      */
+    private void createMoreUsers() {
+        Role employeeRole = roleRepository.findByName("EMPLOYEE")
+                .orElseThrow(() -> new RuntimeException("Employee role not found"));
+
+        // Peter Müller
+        if (!userRepository.existsByEmail("peter.mueller@timerecording.ch")) {
+            User peter = new User();
+            peter.setFirstName("Peter");
+            peter.setLastName("Müller");
+            peter.setEmail("peter.mueller@timerecording.ch");
+            peter.setPassword(passwordEncoder.encode("employee123"));
+            peter.setActive(true);
+            peter.setStatus(UserStatus.ACTIVE);
+            peter.setPlannedHoursPerDay(8.0);
+            peter.setRoles(Set.of(employeeRole));
+            userRepository.save(peter);
+            System.out.println("  ✓ Mitarbeiter erstellt: peter.mueller@timerecording.ch (Passwort: employee123)");
+        }
+
+        // Laura Weber
+        if (!userRepository.existsByEmail("laura.weber@timerecording.ch")) {
+            User laura = new User();
+            laura.setFirstName("Laura");
+            laura.setLastName("Weber");
+            laura.setEmail("laura.weber@timerecording.ch");
+            laura.setPassword(passwordEncoder.encode("employee123"));
+            laura.setActive(true);
+            laura.setStatus(UserStatus.ACTIVE);
+            laura.setPlannedHoursPerDay(8.0);
+            laura.setRoles(Set.of(employeeRole));
+            userRepository.save(laura);
+            System.out.println("  ✓ Mitarbeiter erstellt: laura.weber@timerecording.ch (Passwort: employee123)");
+        }
+
+        // Thomas Fischer
+        if (!userRepository.existsByEmail("thomas.fischer@timerecording.ch")) {
+            User thomas = new User();
+            thomas.setFirstName("Thomas");
+            thomas.setLastName("Fischer");
+            thomas.setEmail("thomas.fischer@timerecording.ch");
+            thomas.setPassword(passwordEncoder.encode("employee123"));
+            thomas.setActive(true);
+            thomas.setStatus(UserStatus.ACTIVE);
+            thomas.setPlannedHoursPerDay(8.0);
+            thomas.setRoles(Set.of(employeeRole));
+            userRepository.save(thomas);
+            System.out.println("  ✓ Mitarbeiter erstellt: thomas.fischer@timerecording.ch (Passwort: employee123)");
+        }
+    }
 
     /**
      * Erstellt Beispiel-Projekte
