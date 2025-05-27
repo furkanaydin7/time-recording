@@ -541,9 +541,16 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="manualBreakMinutes">Pause (Minuten):</label>
-        <input type="number" id="manualBreakMinutes" min="0" max="480" value="0" placeholder="0">
+      <-- PD Pausen start und Endzeit!-->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="manualBreakStartTime">Pause Startzeit (optional):</label>
+          <input type="time" id="manualBreakStartTime">
+        </div>
+        <div class="form-group">
+          <label for="manualBreakEndTime">Pause Endzeit (optional):</label>
+          <input type="time" id="manualBreakEndTime">
+        </div>
       </div>
 
       <div class="form-group">
@@ -1062,24 +1069,38 @@
     }
   }
 
+  // Pausen Start und Endzeit angepasst - PD
+  // Quelle: ChatGPT.com
   function calculateWorkTime() {
-    const startTime = document.getElementById('manualStartTime').value;
-    const endTime = document.getElementById('manualEndTime').value;
-    const breakMinutes = parseInt(document.getElementById('manualBreakMinutes').value) || 0;
+    const startTimeStr = document.getElementById('manualStartTime').value;
+    const endTimeStr = document.getElementById('manualEndTime').value;
+    const breakStartTimeStr = document.getElementById('manualBreakStartTime').value;
+    const breakEndTimeStr = document.getElementById('manualBreakEndTime').value;
 
-    if (startTime && endTime) {
-      const start = new Date(`2000-01-01T${startTime}`);
-      const end = new Date(`2000-01-01T${endTime}`);
+    if (startTimeStr && endTimeStr) {
+      const startDate = new Date(`2000-01-01T${startTimeStr}`);
+      const endDate = new Date(`2000-01-01T${endTimeStr}`);
+      let workDurationMs = endDate - startDate;
 
-      let totalMinutes = (end - start) / (1000 * 60) - breakMinutes;
+      if (breakStartTimeStr && breakEndTimeStr) {
+        const breakStartDate = new Date(`2000-01-01T${breakStartTimeStr}`);
+        const breakEndDate = new Date(`2000-01-01T${breakEndTimeStr}`);
+        if (breakEndDate > breakStartDate) {
+          const breakDurationMs = breakEndDate - breakStartDate;
+          workDurationMs -= breakDurationMs;
+        }
+      }
 
-      if (totalMinutes < 0) totalMinutes = 0;
+      if (workDurationMs < 0) workDurationMs = 0;
 
+      const totalMinutes = Math.round(workDurationMs / (1000 * 60));
       const hours = Math.floor(totalMinutes / 60);
-      const minutes = Math.round(totalMinutes % 60);
+      const minutes = totalMinutes % 60;
 
       document.getElementById('calculatedHours').textContent =
               `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    } else {
+      document.getElementById('calculatedHours').textContent = '00:00';
     }
   }
 
@@ -1303,7 +1324,8 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
     // Manueller Zeiteintrag - Event Listeners
     document.getElementById('manualStartTime').addEventListener('change', calculateWorkTime);
     document.getElementById('manualEndTime').addEventListener('change', calculateWorkTime);
-    document.getElementById('manualBreakMinutes').addEventListener('input', calculateWorkTime);
+    document.getElementById('manualBreakStartTime').addEventListener('change', calculateWorkTime);
+    document.getElementById('manualBreakEndTime').addEventListener('change', calculateWorkTime);
 
     // Manueller Zeiteintrag - Form Submit
     document.getElementById('manualEntryForm').addEventListener('submit', async function(e) {
@@ -1312,7 +1334,8 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
       const date = document.getElementById('manualDate').value;
       const startTime = document.getElementById('manualStartTime').value;
       const endTime = document.getElementById('manualEndTime').value;
-      const breakMinutes = parseInt(document.getElementById('manualBreakMinutes').value) || 0;
+      const breakStartTime = document.getElementById('manualBreakStartTime').value; // NEU
+      const breakEndTime = document.getElementById('manualBreakEndTime').value;
       const projectId = document.getElementById('manualProject').value || null;
 
       if (new Date(`2000-01-01T${endTime}`) <= new Date(`2000-01-01T${startTime}`)) {
@@ -1320,14 +1343,32 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
         return;
       }
 
+      // Validierung für Pausenzeiten PD
+      if ((breakStartTime && !breakEndTime) || (!breakStartTime && breakEndTime)) {
+        showError('⚠️ Bitte geben Sie sowohl Start- als auch Endzeit für die Pause an oder lassen Sie beide Felder leer.');
+        return;
+      }
+      if (breakStartTime && breakEndTime && new Date(`2000-01-01T${breakEndTime}`) <= new Date(`2000-01-01T${breakStartTime}`)) {
+        showError('⚠️ Pausen-Endzeit muss nach der Pausen-Startzeit liegen.');
+        return;
+      }
+
       try {
         const calculatedTime = document.getElementById('calculatedHours').textContent;
+        const breaksArray = [];
+
+        if (breakStartTime && breakEndTime) {
+          breaksArray.push({
+            start: breakStartTime,
+            end: breakEndTime
+          });
+        }
 
         const timeEntryData = {
           date: date,
           startTimes: [startTime],
           endTimes: [endTime],
-          breaks: [],
+          breaks: breaksArray, // Korrekt befülltes Pausen-Array PD
           projectId: projectId
         };
 
@@ -1342,6 +1383,9 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
           showSuccess(`✅ Zeiteintrag erfolgreich erstellt! Arbeitszeit: ${calculatedTime}`);
           closeModal('manualEntryModal');
           document.getElementById('manualEntryForm').reset();
+          document.getElementById('manualBreakStartTime').value = '';
+          document.getElementById('manualBreakEndTime').value = '';
+          calculateWorkTime(); // Berechnete Zeit auf 00:00 zurücksetzen
 
           await loadDashboardData(true);
           console.log('✅ Manueller Zeiteintrag erfolgreich erstellt');
