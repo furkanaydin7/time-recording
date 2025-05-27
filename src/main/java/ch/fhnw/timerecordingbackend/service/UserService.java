@@ -74,10 +74,11 @@ public interface UserService {
     void changePassword(ChangePasswordRequest request);
 
     /**
-     * Schickt einen Reset-Link an die angegebene E-Mail.
-     * @param email Zieladresse
+     * Passwort zurücksetzen
+     * @param userId
+     * @return neues Passwort
      */
-    void sendPasswordResetLink(String email);
+    String resetPasswordToTemporary(Long userId);
 
     /**
      * User deaktivieren

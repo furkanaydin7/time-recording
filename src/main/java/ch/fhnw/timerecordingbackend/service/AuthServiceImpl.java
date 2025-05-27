@@ -8,6 +8,8 @@ import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
 import ch.fhnw.timerecordingbackend.security.JwtTokenProvider;
 import ch.fhnw.timerecordingbackend.security.SecurityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service-Implementierung für Authentifizierung
@@ -30,6 +34,8 @@ import java.time.LocalDateTime;
  */
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -51,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * Authentifiziert einen Benutzer und gibt Token mit Benutzerinformationen zurück
-     *
+     * PD - Rollenerkennung geändert
      * @param loginRequest Enthält E-Mail und Passwort
      * @return LoginResponse mit JWT-Token und Benutzerinformationen
      * @throws BadCredentialsException wenn Login-Daten ungültig sind
@@ -60,12 +66,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
         try {
+            logger.info("Login-Versuch für: {}", loginRequest.getEmail());
+
             // Benutzer vor Authentifizierung laden für Aktivitätsprüfung
             User user = userRepository.findByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("Ungültige Login-Daten"));
 
+            logger.info("🔍 Benutzer gefunden: {} mit {} Rollen", user.getEmail(), user.getRoles().size());
+
             // Prüfen ob Benutzer aktiv ist
             if (!user.isActive()) {
+                logger.warn("Benutzer {} ist deaktiviert", user.getEmail());
                 logAuthActivity(user, "Login failed", "Account disabled");
                 throw new DisabledException("Benutzerkonto ist deaktiviert");
             }
@@ -84,17 +95,26 @@ public class AuthServiceImpl implements AuthService {
             // JWT-Token generieren
             String jwt = tokenProvider.generateToken(authentication);
 
+            // Rollen extrahieren und in Response schreiben
+            List<String> allRoles = user.getRoles().stream()
+                    .map(role -> role.getName()) // Rolle-Namen extrahieren
+                    .collect(Collectors.toList());
+
+            // Rollen in Response schreiben
+            logger.info("🔍 Alle Rollen für {}: {}", user.getEmail(), allRoles);
+
             // Primäre Rolle bestimmen (erste Rolle falls mehrere vorhanden)
-            String primaryRole = user.getRoles().isEmpty() ?
-                    "EMPLOYEE" :
-                    user.getRoles().iterator().next().getName();
+            String primaryRole = allRoles.isEmpty() ? "EMPLOYEE" : allRoles.get(0);
 
             // UserDto für Response erstellen
             LoginResponse.UserDto userDto = new LoginResponse.UserDto(
                     user.getId(),
                     user.getFullName(),
-                    primaryRole
+                    primaryRole,
+                    allRoles
             );
+
+            logger.info("✅ Login erfolgreich für: {} mit Rollen: {}", loginRequest.getEmail(), allRoles);
 
             // Erfolgreichen Login protokollieren
             logAuthActivity(user, "User logged in", "Login successful");

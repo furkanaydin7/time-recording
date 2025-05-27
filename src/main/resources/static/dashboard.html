@@ -1718,6 +1718,188 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
   console.log('⌨️ Shortcuts: Strg+Enter = Zeit starten/stoppen, ESC = Modals schließen');
   console.log('🔧 Debug: debugToken(), checkSystemStatus(), testDuplicateHandling()');
   console.log('📋 Ein Zeiteintrag pro Tag - Duplikat-Schutz aktiv');
+
+  // ========================================
+  // DASHBOARD ADMIN-FIX - In Ihre dashboard.html einfügen
+  // ========================================
+
+  // Verbesserte loadUserInfo-Funktion
+  async function loadUserInfo() {
+    console.log('🔍 ===== ADMIN DEBUG START =====');
+
+    const userEmail = localStorage.getItem('userEmail');
+    const userRolesString = localStorage.getItem('userRoles');
+
+    console.log('🔍 User Email:', userEmail);
+    console.log('🔍 User Roles (raw):', userRolesString);
+
+    if (userEmail) {
+      document.getElementById('userEmail').textContent = userEmail;
+    }
+
+    // Rollen parsen
+    let userRoles = [];
+    try {
+      if (userRolesString) {
+        userRoles = JSON.parse(userRolesString);
+      }
+    } catch (e) {
+      console.error('❌ Fehler beim Parsen der Rollen:', e);
+      userRoles = [];
+    }
+
+    console.log('🔍 User Roles (parsed):', userRoles);
+    console.log('🔍 User Roles Typ:', typeof userRoles, 'isArray:', Array.isArray(userRoles));
+
+    // ⭐ KRITISCHE Admin-Erkennung
+    let isAdmin = false;
+
+    if (Array.isArray(userRoles)) {
+      userRoles.forEach((role, index) => {
+        console.log(`🔍 Rolle ${index}: "${role}" (${typeof role})`);
+
+        const roleStr = role.toString().toUpperCase();
+        const isAdminRole = roleStr === 'ADMIN' ||
+                roleStr === 'ROLE_ADMIN' ||
+                roleStr.includes('ADMIN');
+
+        console.log(`🔍 Rolle "${role}" → Admin-Check: ${isAdminRole}`);
+
+        if (isAdminRole) {
+          isAdmin = true;
+        }
+      });
+    } else {
+      console.log('⚠️ userRoles ist kein Array!');
+    }
+
+    console.log('🔍 Final isAdmin Ergebnis:', isAdmin);
+
+    // UI entsprechend anpassen
+    const adminCard = document.getElementById('adminCard');
+    const createProjectBtn = document.getElementById('createProjectBtn');
+
+    if (isAdmin) {
+      console.log('✅ Admin erkannt - UI wird aktiviert');
+      if (adminCard) {
+        adminCard.style.display = 'block';
+        console.log('✅ Admin Card angezeigt');
+      }
+      if (createProjectBtn) {
+        createProjectBtn.style.display = 'inline-block';
+        console.log('✅ Create Project Button angezeigt');
+      }
+    } else {
+      console.log('❌ Kein Admin erkannt - UI bleibt verborgen');
+      if (adminCard) {
+        adminCard.style.display = 'none';
+      }
+      if (createProjectBtn) {
+        createProjectBtn.style.display = 'none';
+      }
+    }
+
+    console.log('🔍 ===== ADMIN DEBUG END =====');
+
+    if (DEBUG_MODE) {
+      console.log('👤 User Info:', {
+        email: userEmail,
+        roles: userRoles,
+        isAdmin: isAdmin
+      });
+    }
+  }
+
+  // ========================================
+  // SOFORT-TEST FUNKTION
+  // ========================================
+  function debugAdminStatus() {
+    console.log('🔧 === ADMIN STATUS DEBUG ===');
+
+    // LocalStorage prüfen
+    console.log('📱 LocalStorage Daten:');
+    console.log('  - jwtToken:', localStorage.getItem('jwtToken') ? 'VORHANDEN' : 'FEHLT');
+    console.log('  - userEmail:', localStorage.getItem('userEmail'));
+    console.log('  - userRoles:', localStorage.getItem('userRoles'));
+
+    // Admin Card Status prüfen
+    const adminCard = document.getElementById('adminCard');
+    console.log('🎯 Admin Card Status:');
+    console.log('  - Element gefunden:', !!adminCard);
+    console.log('  - Display Style:', adminCard ? adminCard.style.display : 'NICHT GEFUNDEN');
+    console.log('  - Computed Style:', adminCard ? window.getComputedStyle(adminCard).display : 'NICHT GEFUNDEN');
+
+    // Rollen-Analyse
+    try {
+      const roles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+      console.log('🔍 Rollen-Analyse:');
+      if (Array.isArray(roles)) {
+        roles.forEach((role, i) => {
+          const isAdmin = role.toString().toUpperCase().includes('ADMIN');
+          console.log(`  - Rolle ${i}: "${role}" → Admin: ${isAdmin}`);
+        });
+      }
+    } catch (e) {
+      console.error('❌ Fehler bei Rollen-Analyse:', e);
+    }
+
+    console.log('🔧 === DEBUG END ===');
+  }
+
+  // Funktion für manuellen Admin-Panel Test
+  function forceShowAdminPanel() {
+    console.log('🔧 FORCE: Admin-Panel wird erzwungen...');
+
+    // Admin-Panel anzeigen
+    const adminCard = document.getElementById('adminCard');
+    if (adminCard) {
+      adminCard.style.display = 'block';
+      console.log('✅ Admin Card erzwungen angezeigt');
+    }
+
+    // Create Project Button anzeigen
+    const createProjectBtn = document.getElementById('createProjectBtn');
+    if (createProjectBtn) {
+      createProjectBtn.style.display = 'inline-block';
+      console.log('✅ Create Project Button erzwungen angezeigt');
+    }
+
+    // LocalStorage temporär anpassen
+    localStorage.setItem('userRoles', JSON.stringify(['ROLE_ADMIN']));
+    console.log('✅ userRoles temporär auf ROLE_ADMIN gesetzt');
+
+    console.log('🔧 Admin-Panel wurde erzwungen angezeigt!');
+  }
+
+  // ========================================
+  // INITIALISIERUNG - Am Ende der Datei einfügen
+  // ========================================
+
+  // Diese Zeilen in Ihre bestehende DOMContentLoaded Funktion einfügen:
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dashboard wird initialisiert...');
+
+    if (!jwtToken) {
+      console.log('❌ Kein JWT Token gefunden');
+      window.location.href = '/';
+      return;
+    }
+
+    // ⭐ WICHTIG: loadUserInfo mit Debug aufrufen
+    loadUserInfo();
+
+    // Debug-Funktionen im Browser-Console verfügbar machen
+    window.debugAdminStatus = debugAdminStatus;
+    window.forceShowAdminPanel = forceShowAdminPanel;
+
+    // Andere Initialisierungen...
+    loadDashboardData();
+    checkActiveTimer();
+    initializeEventListeners();
+
+    console.log('🎉 Dashboard initialisiert!');
+    console.log('🔧 Debug-Funktionen verfügbar: debugAdminStatus(), forceShowAdminPanel()');
+  });
 </script>
 </body>
 </html>

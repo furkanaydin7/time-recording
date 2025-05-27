@@ -61,15 +61,16 @@ public class WebSecurityConfig {
                                 "/api/auth/**",
                                 "/favicon.ico",
                                 "/api/users/reset-password"
-
                         ).permitAll()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/users/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/projects/manage/**").hasAnyAuthority("ADMIN", "MANAGER")
                         .requestMatchers(
                                 "/api/time-entries/**",
                                 "/api/projects/**",
                                 "/api/reports/**",
                                 "/api/absences/**"
-                        ).authenticated()
+                        ).hasAnyAuthority("ADMIN", "MANAGER", "EMPLOYEE")
                         .anyRequest().authenticated()
                 )
                 .formLogin(formLogin -> formLogin.disable())
