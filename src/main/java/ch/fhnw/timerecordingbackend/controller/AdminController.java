@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,27 +22,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * API Endpunkte für Vewaltung von Benutzern
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.2 - ADMIN Authority bearbeitet
  */
 @RestController
 @RequestMapping("/api/admin")
 // Quelle: https://docs-spring-io.translate.goog/spring-security/reference/servlet/authorization/method-security.html?_x_tr_sl=en&_x_tr_tl=de&_x_tr_hl=de&_x_tr_pto=sge#use-preauthorize
-@PreAuthorize("hasRole('ROLE_ADMIN')")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class AdminController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Konstruktor für AdminController
      * @param userService
      */
     @Autowired
-    public AdminController(UserService userService) {
+    public AdminController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     /**
      * Gibt eine Liste aller UserResponse-DTOs zurück
@@ -49,6 +49,7 @@ public class AdminController {
      */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
+
         List<User> users = userService.findAllUsers();
         List<UserResponse> responses = users.stream()
                 .map(this::convertToUserResponse)
@@ -181,6 +182,21 @@ public class AdminController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Setzt das Passwort eines bestehenden Users zurück
+     * @param id
+     * @return ResponseEntity mit Meldung und temporären Passwort
+     */
+    @PostMapping("/users/{id}/reset-password")
+    public ResponseEntity<?> resetUserPassword(@PathVariable Long id) {
+        String tempPassword = userService.resetPasswordToTemporary(id);
+        return ResponseEntity.ok(Map.of(
+                "message", "Passwort zurückgesetzt",
+                "temporaryPassword", tempPassword,
+                "userId", id
+        ));
     }
 
     /**

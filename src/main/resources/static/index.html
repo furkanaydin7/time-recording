@@ -287,7 +287,7 @@
                         localStorage.setItem('tokenType', data.tokenType || 'Bearer');
                         localStorage.setItem('userEmail', data.email || email);
                         localStorage.setItem('userId', data.userId);
-                        localStorage.setItem('userRoles', JSON.stringify(data.roles || []));
+                        localStorage.setItem('userRoles', JSON.stringify(data.user.roles || []));
                     }
 
                     // Erfolgsmeldung anzeigen

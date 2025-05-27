@@ -1,5 +1,6 @@
 package ch.fhnw.timerecordingbackend.dto.admin;
 
+import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 
 import java.time.LocalDateTime;
@@ -10,7 +11,7 @@ import java.util.Set;
  * Benutzerinformationen an Client senden
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - Passwort reset und temporäre Passwort hinzugefügt
  * Quelle: https://techkluster.com/2023/08/21/dto-for-a-java-spring-application/
  */
 public class UserResponse {
@@ -25,11 +26,29 @@ public class UserResponse {
     private Set<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String temporaryPassword;
+    private String message;
+
+    /**
+     * Passwort zurücksetzen
+     * @param user
+     * @param tempPassword
+     * @return UserResponse mit temporärem Passwort und Meldung
+     */
+    public static UserResponse forPasswordReset(User user, String tempPassword) {
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setTemporaryPassword(tempPassword);
+        response.setMessage("Passwort erfolgreich zurückgesetzt");
+        return response;
+    }
 
     /**
      * Getter und Setter
      */
-
     public Long getId() {
         return id;
     }
@@ -112,6 +131,22 @@ public class UserResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTemporaryPassword() {
+        return temporaryPassword;
+    }
+
+    public void setTemporaryPassword(String temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     @Override

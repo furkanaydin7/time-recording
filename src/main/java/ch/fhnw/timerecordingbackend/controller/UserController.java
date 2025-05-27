@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * REST Controller für Benutzer
  * @author FA
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.1 - sendpasswortresetlink entfernt - PD
  */
 @RestController
 @RequestMapping("/api/users")
@@ -28,12 +29,4 @@ public class UserController {
         );
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        String email = request.getEmail();
-        userService.sendPasswordResetLink(email);
-        return ResponseEntity.ok().body(
-                java.util.Map.of(
-                        "message", "Reset-Link gesendet"));
-    }
 }

@@ -12,18 +12,20 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * Implementierung UserService Interface
  * Geschöftslogik Benutzerverwaltung
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
+ * @version 1.1 - Passwort zurücksetzten, zufälliges Passwort generieren und PasswordEncoder hinzugefügt
  */
 @Service
 public class UserServiceImpl implements UserService {
@@ -31,6 +33,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final SystemLogRepository systemLogRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Konstruktor mit Dependency Injection
@@ -38,10 +41,11 @@ public class UserServiceImpl implements UserService {
      * @param roleRepository
      * @param systemLogRepository
      */
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, SystemLogRepository systemLogRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, SystemLogRepository systemLogRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.systemLogRepository = systemLogRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -208,39 +212,47 @@ public class UserServiceImpl implements UserService {
         systemLogRepository.save(log);
     }
 
-
     /**
-     * Schickt einen Reset-Link an die angegebene E-Mail.
-     * @param email Zieladresse
+     * Passwort zurücksetzen
+     * @param userId
+     * @return neues Passwort
      */
     @Override
     @Transactional
-    public void sendPasswordResetLink(String email) {
-        // Benutzer finden
-        Optional<User> userOptional = userRepository.findByEmail(email);
+    public String resetPasswordToTemporary(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ValidationException("Benutzer nicht vorhanden"));
 
-        if (userOptional.isEmpty()) {
-            // Aus Sicherheitsgründen keine Fehlermeldung ausgeben
-            // aber trotzdem loggen
-            SystemLog log = new SystemLog();
-            log.setAction("Password Reset für unbekannte E-Mail angefordert: " + email);
-            log.setTimestamp(LocalDateTime.now());
-            log.setDetails("E-Mail nicht gefunden");
-            systemLogRepository.save(log);
-            return;
-        }
+        String tempPassword = generateRandomPassword();
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
 
-        User user = userOptional.get();
-
-        // Log-Eintrag
+        // Log erstellen
         SystemLog log = new SystemLog();
-        log.setAction("Password Reset Link gesendet an: " + email);
+        log.setUserId(user.getId());
+        log.setUserEmail(user.getEmail());
+        log.setAction("Admin hat Passwort zurückgesetzt");
+        log.setDetails("Temporäres Passwort generiert für User ID: " + userId);
         log.setTimestamp(LocalDateTime.now());
-        log.setDetails("Benutzer ID: " + user.getId());
         systemLogRepository.save(log);
 
-        // Hier würde der E-Mail-Versand implementiert werden
-        // emailService.sendPasswordResetEmail(user.getEmail(), resetToken);
+        return tempPassword;
+    }
+
+    /**
+     * Generiert ein zufälliges Passwort.
+     * @return zufälliges Passwort
+     */
+    private String generateRandomPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder password = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 8; i++) {
+            password.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return password.toString();
     }
 
     /**

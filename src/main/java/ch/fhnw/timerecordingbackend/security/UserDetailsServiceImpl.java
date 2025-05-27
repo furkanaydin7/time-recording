@@ -39,7 +39,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         // Wandelt Benutzerrollen in Spring Security Authorities um (z. B. "ROLE_ADMIN")
         List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
         // Erstellt ein UserDetails-Objekt mit E-Mail, Passwort und Rollen
