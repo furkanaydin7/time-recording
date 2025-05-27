@@ -53,7 +53,7 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/index.html",
-                                "/login.html",          // ← WICHTIG: Hinzufügen!
+                                "/login.html",
                                 "/dashboard.html",
                                 "/css/**",
                                 "/js/**",
@@ -63,17 +63,15 @@ public class WebSecurityConfig {
                                 "/api/users/reset-password"
 
                         ).permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/time-entries/**",
                                 "/api/projects/**",
                                 "/api/reports/**",
                                 "/api/absences/**"
-                        ).authenticated()  // ← Nicht hasRole("ADMIN")!
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
-                .headers(headers -> headers.frameOptions().disable()) // Für H2-Konsole
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .addFilterBefore(
