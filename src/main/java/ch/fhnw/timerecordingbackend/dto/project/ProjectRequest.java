@@ -2,6 +2,7 @@ package ch.fhnw.timerecordingbackend.dto.project;
 
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -19,7 +20,7 @@ public class ProjectRequest {
     @Size(min = 2, max = 255, message = "Projektbeschreibung muss zwischen 2 und 255 Zeichen lang sein")
     private String description;
 
-    @NotBlank(message = "Projektmanager ID darf nicht leer sein")
+    @NotNull(message = "Projektmanager ID darf nicht leer sein")
     private Long managerId;
 
     /**
