@@ -113,4 +113,21 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, Long> {
     @Query("SELECT COUNT(DISTINCT t.date) FROM TimeEntry t WHERE t.user.id = :userId AND t.date BETWEEN :startDate AND :endDate")
     long countWorkdaysByUserIdAndDateBetween(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
+    /**
+     * Summe aller tatsächlichen Stunden für ein Projekt berechnen
+     * @param projectId
+     * @return
+     * Quelle: ChatGPT.com
+     */
+    @Query(value = "SELECT COALESCE(SUM(EXTRACT(HOUR FROM TO_TIMESTAMP(t.actual_hours, 'HH24:MI')) * 60 + EXTRACT(MINUTE FROM TO_TIMESTAMP(t.actual_hours, 'HH24:MI'))), 0) FROM time_entries t WHERE t.project_id = :projectId", nativeQuery = true)
+    List<Object[]> sumActualHoursByProjectId(@Param("projectId") Long projectId);
+
+    /**
+     * Benutzer anhand Zeiteinträge für ein Projekt finden
+     * @param projectId
+     * @return
+     */
+    @Query("SELECT DISTINCT t.user FROM TimeEntry t WHERE t.project.id = :projectId")
+    List<User> findDistinctUsersByProjectId(@Param("projectId") Long projectId);
+
 }

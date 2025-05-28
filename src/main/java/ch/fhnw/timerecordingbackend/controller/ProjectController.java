@@ -1,5 +1,6 @@
 package ch.fhnw.timerecordingbackend.controller;
 
+import ch.fhnw.timerecordingbackend.dto.admin.UserResponse;
 import ch.fhnw.timerecordingbackend.dto.project.ProjectRequest;
 import ch.fhnw.timerecordingbackend.dto.project.ProjectResponse;
 import ch.fhnw.timerecordingbackend.model.Project;
@@ -41,7 +42,7 @@ public class ProjectController {
      * GET /api/projects
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getAllProjects() {
         List<Project> projects = projectService.findAllProjects();
         List<ProjectResponse> responses = projects.stream()
@@ -82,7 +83,7 @@ public class ProjectController {
      * POST /api/projects
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, Object>> createProject(@Valid @RequestBody ProjectRequest request) {
         // Projekt erstellen
         Project project = new Project();
@@ -112,7 +113,7 @@ public class ProjectController {
      * PUT /api/projects/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN') or @projectController.isProjectManager(#id)")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER') or @projectController.isProjectManager(#id)")
     public ResponseEntity<Map<String, String>> updateProject(
             @PathVariable Long id,
             @Valid @RequestBody ProjectRequest request) {
@@ -138,7 +139,7 @@ public class ProjectController {
      * PATCH /api/projects/{id}/deactivate
      */
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, String>> deactivateProject(@PathVariable Long id) {
         projectService.deactivateProject(id);
         return ResponseEntity.ok(Map.of("message", "Projekt deaktiviert"));
@@ -149,7 +150,7 @@ public class ProjectController {
      * PATCH /api/projects/{id}/activate
      */
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, String>> activateProject(@PathVariable Long id) {
         projectService.activateProject(id);
         return ResponseEntity.ok(Map.of("message", "Projekt aktiviert"));
@@ -160,7 +161,7 @@ public class ProjectController {
      * POST /api/projects/{id}/manager
      */
     @PostMapping("/{id}/manager")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, String>> assignManager(
             @PathVariable Long id,
             @RequestBody Map<String, Long> requestBody) {
@@ -179,7 +180,7 @@ public class ProjectController {
      * DELETE /api/projects/{id}/manager
      */
     @DeleteMapping("/{id}/manager")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<Map<String, String>> removeManager(@PathVariable Long id) {
         projectService.removeManager(id);
         return ResponseEntity.ok(Map.of("message", "Manager erfolgreich entfernt"));
@@ -206,7 +207,7 @@ public class ProjectController {
      * GET /api/projects/user/{userId}
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER') or #userId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getProjectsByUserId(@PathVariable Long userId) {
         List<Project> projects = projectService.findProjectsByUserId(userId);
         List<ProjectResponse> responses = projects.stream()
@@ -221,7 +222,7 @@ public class ProjectController {
      * GET /api/projects/user/{userId}/active
      */
     @GetMapping("/user/{userId}/active")
-    @PreAuthorize("hasAuthority('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER') or #userId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getActiveProjectsByUserId(@PathVariable Long userId) {
         List<Project> projects = projectService.findActiveProjectsByUserId(userId);
         List<ProjectResponse> responses = projects.stream()
@@ -236,7 +237,7 @@ public class ProjectController {
      * GET /api/projects/manager/{managerId}
      */
     @GetMapping("/manager/{managerId}")
-    @PreAuthorize("hasAuthority('ADMIN') or #managerId == authentication.principal.id")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER') or #managerId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getProjectsByManagerId(@PathVariable Long managerId) {
         List<Project> projects = projectService.findProjectsByManagerId(managerId);
         List<ProjectResponse> responses = projects.stream()
@@ -251,7 +252,7 @@ public class ProjectController {
      * GET /api/projects/manager/{managerId}/active
      */
     @GetMapping("/manager/{managerId}/active")
-    @PreAuthorize("hasAuthority('ADMIN') or #managerId == authentication.principal.id")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER') or #managerId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getActiveProjectsByManagerId(@PathVariable Long managerId) {
         List<Project> projects = projectService.findActiveProjectsByManagerId(managerId);
         List<ProjectResponse> responses = projects.stream()
@@ -287,25 +288,40 @@ public class ProjectController {
         response.setCreatedAt(project.getCreatedAt());
         response.setUpdatedAt(project.getUpdatedAt());
 
+        // Manager hinzufügen
+        if (project.getManager() != null) {
+            response.setManagerId(project.getManager().getId());
+            response.setManagerName(project.getManager().getFullName());
+        } else {
+            response.setManagerId(null);
+            response.setManagerName(null);
+        }
+
         // Statistiken hinzufügen
         ProjectResponse.ProjectStatistics statistics = new ProjectResponse.ProjectStatistics();
-        statistics.setActiveEmployees(projectService.countUsersByProjectId(project.getId()));
-        statistics.setTotalTimeEntries(project.getTimeEntries().size());
 
-        // Gesamtstunden berechnen (vereinfacht)
-        String totalHours = project.getTimeEntries().stream()
-                .mapToDouble(entry -> parseHoursFromString(entry.getActualHours()))
-                .mapToInt(hours -> (int) Math.round(hours * 60))
-                .mapToObj(minutes -> String.format("%02d:%02d", minutes / 60, minutes % 60))
-                .reduce("00:00", (a, b) -> {
-                    String[] aParts = a.split(":");
-                    String[] bParts = b.split(":");
-                    int totalMinutes = Integer.parseInt(aParts[0]) * 60 + Integer.parseInt(aParts[1]) +
-                            Integer.parseInt(bParts[0]) * 60 + Integer.parseInt(bParts[1]);
-                    return String.format("%02d:%02d", totalMinutes / 60, totalMinutes % 60);
-                });
+        // Gesamtstunden buchen
+        String totalHoursWorked = projectService.calculateTotalActualHoursForProject(project.getId());
+        statistics.setTotalHoursWorked(totalHoursWorked);
 
-        statistics.setTotalHoursWorked(totalHours);
+        // Mitarbeiter, die an dem Projekt gearbeitet haben
+        List<User> projectUsers = projectService.findUsersByProjectId(project.getId());
+        statistics.setActiveEmployees(projectUsers.size());
+
+        // Konvertieren der Benutzer in eine Liste von UserResponse-DTOs
+        List<UserResponse> involvedUsers = projectUsers.stream()
+                .map(user -> {
+                    UserResponse userRes = new UserResponse();
+                    userRes.setId(user.getId());
+                    userRes.setFirstName(user.getFirstName());
+                    userRes.setLastName(user.getLastName());
+                    userRes.setEmail(user.getEmail());
+                    return userRes;
+                })
+                .collect(Collectors.toList());
+
+        // An response übergeben
+        response.setInvolvedUsers(involvedUsers);
         response.setStatistics(statistics);
 
         return response;
