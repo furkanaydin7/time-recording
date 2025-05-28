@@ -85,7 +85,7 @@ public interface AbsenceService {
      * @param id
      * @return Die abgelehnte Abwesenheit
      */
-    Absence rejectAbsence(Long id);
+    Absence rejectAbsence(Long id, Long rejecterId);
 
     /**
      * Findet alle genehmigten Abwesenheiten

@@ -90,78 +90,79 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void createUsers() {
         System.out.println("👤 Erstelle Admin-Benutzer...");
+        Role adminRole = roleRepository.findByName("ADMIN")
+                .orElseThrow(() -> new RuntimeException("Admin role not found"));
+        Role managerRole = roleRepository.findByName("MANAGER")
+                .orElseThrow(() -> new RuntimeException("Manager role not found"));
+        Role employeeRole = roleRepository.findByName("EMPLOYEE")
+                .orElseThrow(() -> new RuntimeException("Employee role not found"));
 
-        // Admin-Benutzer
+        User adminUser = null;
         if (!userRepository.existsByEmail("admin@timerecording.ch")) {
-            Role adminRole = roleRepository.findByName("ADMIN")
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-
-            User admin = new User();
-            admin.setFirstName("System");
-            admin.setLastName("Administrator");
-            admin.setEmail("admin@timerecording.ch");
-            admin.setPassword(passwordEncoder.encode("admin123")); // ← WICHTIG: encode() verwenden!
-            admin.setActive(true);
-            admin.setStatus(UserStatus.ACTIVE);
-            admin.setPlannedHoursPerDay(8.0);
-            admin.setRoles(Set.of(adminRole));
-
-            userRepository.save(admin);
+            adminUser = new User();
+            adminUser.setFirstName("System");
+            adminUser.setLastName("Administrator");
+            adminUser.setEmail("admin@timerecording.ch");
+            adminUser.setPassword(passwordEncoder.encode("admin123"));
+            adminUser.setActive(true);
+            adminUser.setStatus(UserStatus.ACTIVE);
+            adminUser.setPlannedHoursPerDay(8.0);
+            adminUser.setRoles(Set.of(adminRole));
+            // Admin hat keinen direkten Manager (manager Feld bleibt null)
+            userRepository.save(adminUser);
             System.out.println("  ✓ Admin-Benutzer erstellt: admin@timerecording.ch (Passwort: admin123)");
+        } else {
+            adminUser = userRepository.findByEmail("admin@timerecording.ch").orElse(null);
         }
+
 
         System.out.println("👥 Erstelle Beispiel-Benutzer...");
-
-        // Manager-Benutzer
+        User managerMax = null;
         if (!userRepository.existsByEmail("manager@timerecording.ch")) {
-            Role managerRole = roleRepository.findByName("MANAGER")
-                    .orElseThrow(() -> new RuntimeException("Manager role not found"));
-
-            User manager = new User();
-            manager.setFirstName("Max");
-            manager.setLastName("Manager");
-            manager.setEmail("manager@timerecording.ch");
-            manager.setPassword(passwordEncoder.encode("manager123")); // ← WICHTIG!
-            manager.setActive(true);
-            manager.setStatus(UserStatus.ACTIVE);
-            manager.setPlannedHoursPerDay(8.0);
-            manager.setRoles(Set.of(managerRole));
-
-            userRepository.save(manager);
+            managerMax = new User();
+            managerMax.setFirstName("Max");
+            managerMax.setLastName("Manager");
+            managerMax.setEmail("manager@timerecording.ch");
+            managerMax.setPassword(passwordEncoder.encode("manager123"));
+            managerMax.setActive(true);
+            managerMax.setStatus(UserStatus.ACTIVE);
+            managerMax.setPlannedHoursPerDay(8.0);
+            managerMax.setRoles(Set.of(managerRole));
+            if (adminUser != null) { // Annahme: Admin ist der Manager von Max Manager
+                managerMax.setManager(adminUser);
+            }
+            userRepository.save(managerMax);
             System.out.println("  ✓ Manager erstellt: manager@timerecording.ch (Passwort: manager123)");
+        } else {
+            managerMax = userRepository.findByEmail("manager@timerecording.ch").orElse(null);
         }
 
-        // Employee-Benutzer
         if (!userRepository.existsByEmail("anna.schmidt@timerecording.ch")) {
-            Role employeeRole = roleRepository.findByName("EMPLOYEE")
-                    .orElseThrow(() -> new RuntimeException("Employee role not found"));
-
-            User employee = new User();
-            employee.setFirstName("Anna");
-            employee.setLastName("Schmidt");
-            employee.setEmail("anna.schmidt@timerecording.ch");
-            employee.setPassword(passwordEncoder.encode("employee123")); // ← WICHTIG!
-            employee.setActive(true);
-            employee.setStatus(UserStatus.ACTIVE);
-            employee.setPlannedHoursPerDay(8.0);
-            employee.setRoles(Set.of(employeeRole));
-
-            userRepository.save(employee);
-            System.out.println("  ✓ Mitarbeiter erstellt: anna.schmidt@timerecording.ch (Passwort: employee123)");
+            User employeeAnna = new User();
+            employeeAnna.setFirstName("Anna");
+            employeeAnna.setLastName("Schmidt");
+            employeeAnna.setEmail("anna.schmidt@timerecording.ch");
+            employeeAnna.setPassword(passwordEncoder.encode("employee123"));
+            employeeAnna.setActive(true);
+            employeeAnna.setStatus(UserStatus.ACTIVE);
+            employeeAnna.setPlannedHoursPerDay(8.0);
+            employeeAnna.setRoles(Set.of(employeeRole));
+            if (managerMax != null) { // Anna Schmidt berichtet an Max Manager
+                employeeAnna.setManager(managerMax);
+            }
+            userRepository.save(employeeAnna);
+            System.out.println("  ✓ Mitarbeiter erstellt: anna.schmidt@timerecording.ch (Passwort: employee123, Manager: Max Manager)");
         }
-
-        // Weitere Beispiel-Benutzer...
-        createMoreUsers();
+        createMoreUsers(managerMax); // managerMax an createMoreUsers übergeben
     }
 
     /**
      * Erstellt Beispiel-Mitarbeiter
      */
-    private void createMoreUsers() {
+    private void createMoreUsers(User directManager) { // Parameter für direkten Manager
         Role employeeRole = roleRepository.findByName("EMPLOYEE")
                 .orElseThrow(() -> new RuntimeException("Employee role not found"));
 
-        // Peter Müller
         if (!userRepository.existsByEmail("peter.mueller@timerecording.ch")) {
             User peter = new User();
             peter.setFirstName("Peter");
@@ -172,8 +173,9 @@ public class DataInitializer implements CommandLineRunner {
             peter.setStatus(UserStatus.ACTIVE);
             peter.setPlannedHoursPerDay(8.0);
             peter.setRoles(Set.of(employeeRole));
+            if (directManager != null) { peter.setManager(directManager); }
             userRepository.save(peter);
-            System.out.println("  ✓ Mitarbeiter erstellt: peter.mueller@timerecording.ch (Passwort: employee123)");
+            System.out.println("  ✓ Mitarbeiter erstellt: peter.mueller@timerecording.ch (Manager: " + (directManager != null ? directManager.getFullName() : "N/A") + ")");
         }
 
         // Laura Weber
@@ -187,6 +189,7 @@ public class DataInitializer implements CommandLineRunner {
             laura.setStatus(UserStatus.ACTIVE);
             laura.setPlannedHoursPerDay(8.0);
             laura.setRoles(Set.of(employeeRole));
+            if (directManager != null) { laura.setManager(directManager); }
             userRepository.save(laura);
             System.out.println("  ✓ Mitarbeiter erstellt: laura.weber@timerecording.ch (Passwort: employee123)");
         }
@@ -202,6 +205,7 @@ public class DataInitializer implements CommandLineRunner {
             thomas.setStatus(UserStatus.ACTIVE);
             thomas.setPlannedHoursPerDay(8.0);
             thomas.setRoles(Set.of(employeeRole));
+            if (directManager != null) { thomas.setManager(directManager); }
             userRepository.save(thomas);
             System.out.println("  ✓ Mitarbeiter erstellt: thomas.fischer@timerecording.ch (Passwort: employee123)");
         }

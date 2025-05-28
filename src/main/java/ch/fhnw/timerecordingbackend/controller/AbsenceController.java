@@ -142,7 +142,7 @@ public class AbsenceController {
      * GET /api/absences/pending
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MANAGER')")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getPendingAbsences() {
         List<Absence> pendingAbsences = absenceService.findPendingAbsences();
 
@@ -174,7 +174,7 @@ public class AbsenceController {
      * PATCH /api/absences/{id}/approve
      */
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAnyAuthority('MANAGER')")
     public ResponseEntity<Map<String, Object>> approveAbsence(@PathVariable Long id) {
         User currentUser = getCurrentUser();
 
@@ -182,7 +182,7 @@ public class AbsenceController {
 
         return ResponseEntity.ok(Map.of(
                 "approved", true,
-                "message", "Absences approved"
+                "message", "Abwesenheit genehmigt"
         ));
     }
 
@@ -191,9 +191,10 @@ public class AbsenceController {
      * PATCH /api/absences/{id}/reject
      */
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('MANAGER')")
     public ResponseEntity<Map<String, String>> rejectAbsence(@PathVariable Long id) {
-        absenceService.rejectAbsence(id);
+        User currentUser = getCurrentUser();
+        absenceService.rejectAbsence(id, currentUser.getId());
 
         return ResponseEntity.ok(Map.of("message", "Abwesenheit abgelehnt"));
     }

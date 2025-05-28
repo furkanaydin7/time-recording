@@ -73,6 +73,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Absence> absences = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id") // Name der Fremdschlüsselspalte in der DB
+    private User manager;
+
     /**
      * Konstruktoren
      */
@@ -242,6 +246,14 @@ public class User {
         this.absences = absences;
     }
 
+    public User getManager() {
+        return manager;
+    }
+
+    public void setManager(User manager) {
+        this.manager = manager;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -251,6 +263,7 @@ public class User {
                 ", email='" + email + '\'' +
                 ", active=" + active +
                 ", status=" + status +
+                (manager != null ? ", managerId=" + manager.getId() : ", managerId=null") +
                 '}';
     }
 }

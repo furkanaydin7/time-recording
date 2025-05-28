@@ -9,6 +9,7 @@ import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -179,29 +180,47 @@ public class AbsenceServiceImpl implements AbsenceService{
         User approver = userRepository.findById(approverId)
                 .orElseThrow(() -> new IllegalArgumentException("Genehmiger nicht vorhanden"));
 
-        // Prüfen, ob der Genehmiger berechtigt ist
-        if (!approver.hasRole("ADMIN") && !approver.hasRole("MANAGER")) {
-            throw new IllegalArgumentException("Benutzer hat keine Berechtigung zur Genehmigung von Abwesenheiten");
+        User applicant = absence.getUser();
+
+        boolean isAdmin = approver.getRoles().stream().anyMatch(role -> role.getName().equals("ADMIN"));
+        // Prüft, ob der Antragsteller einen Manager hat UND ob dieser Manager der aktuelle Genehmiger ist.
+        boolean isDirectManager = applicant.getManager() != null && applicant.getManager().getId().equals(approverId);
+
+        // Nur Admins oder der direkte Vorgesetzte (der auch die Rolle MANAGER haben sollte) dürfen genehmigen.
+        if (!isAdmin && !isDirectManager) {
+            throw new AccessDeniedException("Nur der direkte Vorgesetzte oder ein Administrator darf diese Abwesenheit genehmigen.");
         }
 
         // Abwesenheit genehmigen
         absence.approve(approver);
+        absence.setUpdatedAt(LocalDateTime.now()); // Sicherstellen, dass das Update-Datum gesetzt wird
         Absence approvedAbsence = absenceRepository.save(absence);
 
         // Log erstellen
-        createSystemLog("Abwesenheit genehmigt für " + absence.getUser().getFullName() +
+        createSystemLog("Abwesenheit genehmigt für " + applicant.getFullName() +
                         " von " + approver.getFullName(),
-                "Abwesenheit ID: " + absence.getId());
+                "Abwesenheit ID: " + approvedAbsence.getId() + ", Status: Genehmigt");
 
         return approvedAbsence;
     }
 
     @Override
     @Transactional
-    public Absence rejectAbsence(Long id) {
+    public Absence rejectAbsence(Long id, Long rejecterId) {
         // Abwesenheit finden
         Absence absence = absenceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Abwesenheit nicht vorhanden"));
+        User rejecter = userRepository.findById(rejecterId)
+                .orElseThrow(() -> new IllegalArgumentException("Ablehnender nicht vorhanden"));
+
+        User applicant = absence.getUser();
+
+        boolean isAdmin = rejecter.getRoles().stream().anyMatch(role -> role.getName().equals("ADMIN"));
+        boolean isDirectManager = applicant.getManager() != null && applicant.getManager().getId().equals(rejecterId);
+
+        if (!isAdmin && !isDirectManager) {
+            throw new AccessDeniedException("Nur der direkte Vorgesetzte oder ein Administrator darf diese Abwesenheit ablehnen.");
+        }
 
         // Abwesenheit ablehnen
         absence.reject();
@@ -209,8 +228,9 @@ public class AbsenceServiceImpl implements AbsenceService{
         Absence rejectedAbsence = absenceRepository.save(absence);
 
         // Log erstellen
-        createSystemLog("Abwesenheit abgelehnt für " + absence.getUser().getFullName(),
-                "Abwesenheit ID: " + absence.getId());
+        createSystemLog("Abwesenheit abgelehnt für " + applicant.getFullName() +
+                        " von " + rejecter.getFullName(),
+                "Abwesenheit ID: " + rejectedAbsence.getId() + ", Status: Abgelehnt");
 
         return rejectedAbsence;
     }
