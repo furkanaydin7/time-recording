@@ -672,29 +672,6 @@
   let DEBUG_MODE = true; // Für Entwicklung
 
   // ========================================
-  // INITIALISIERUNG
-  // ========================================
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dashboard wird initialisiert...');
-
-    if (!jwtToken) {
-      console.log('❌ Kein JWT Token gefunden');
-      window.location.href = '/';
-      return;
-    }
-
-    if (DEBUG_MODE) {
-      document.getElementById('debugInfo').style.display = 'block';
-      console.log('🔧 Debug-Modus aktiviert');
-    }
-
-    loadUserInfo();
-    loadDashboardData();
-    checkActiveTimer();
-    initializeEventListeners();
-  });
-
-  // ========================================
   // VERBESSERTE API-FUNKTIONEN
   // ========================================
   async function apiCall(url, options = {}) {
@@ -1990,7 +1967,7 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
   }
 
   // ========================================
-  // INITIALISIERUNG - Am Ende der Datei einfügen
+  // INITIALISIERUNG
   // ========================================
 
   // Diese Zeilen in Ihre bestehende DOMContentLoaded Funktion einfügen:
