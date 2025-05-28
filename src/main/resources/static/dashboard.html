@@ -1109,11 +1109,12 @@
       const endDate = new Date(`2000-01-01T${endTimeStr}`);
       let workDurationMs = endDate - startDate;
 
+      let breakDurationMs = 0;
       if (breakStartTimeStr && breakEndTimeStr) {
         const breakStartDate = new Date(`2000-01-01T${breakStartTimeStr}`);
         const breakEndDate = new Date(`2000-01-01T${breakEndTimeStr}`);
         if (breakEndDate > breakStartDate) {
-          const breakDurationMs = breakEndDate - breakStartDate;
+          breakDurationMs = breakEndDate - breakStartDate;
           workDurationMs -= breakDurationMs;
         }
       }
@@ -1126,10 +1127,37 @@
 
       document.getElementById('calculatedHours').textContent =
               `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+      // Rückgabe der reinen Arbeitszeit und Pausenzeit in Minuten für die Validierung
+      return {
+        workTimeInMinutes: totalMinutes,
+        breakTimeInMinutes: Math.round(breakDurationMs / (1000 * 60))
+      };
     } else {
       document.getElementById('calculatedHours').textContent = '00:00';
+      return { workTimeInMinutes: 0, breakTimeInMinutes: 0 };
     }
   }
+
+  function validateBreakTime(workTimeInMinutes, breakTimeInMinutes) {
+    const workTimeHours = workTimeInMinutes / 60;
+
+    if (workTimeHours > 9) {
+      if (breakTimeInMinutes < 60) {
+        return "Bei einer Arbeitszeit von mehr als 9 Stunden ist mindestens 1 Stunde Pause erforderlich.";
+      }
+    } else if (workTimeHours > 7) {
+      if (breakTimeInMinutes < 30) {
+        return "Bei einer Arbeitszeit von mehr als 7 Stunden sind mindestens 30 Minuten Pause erforderlich.";
+      }
+    } else if (workTimeHours > 5.5) {
+      if (breakTimeInMinutes < 15) {
+        return "Bei einer Arbeitszeit von mehr als 5,5 Stunden sind mindestens 15 Minuten Pause erforderlich.";
+      }
+    }
+    return null; // Kein Fehler
+  }
+
 
   // ========================================
   // DUPLIKAT-BEHANDLUNG
@@ -1355,14 +1383,13 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
     document.getElementById('manualBreakStartTime').addEventListener('change', calculateWorkTime);
     document.getElementById('manualBreakEndTime').addEventListener('change', calculateWorkTime);
 
-    // Manueller Zeiteintrag - Form Submit
     document.getElementById('manualEntryForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const date = document.getElementById('manualDate').value;
       const startTime = document.getElementById('manualStartTime').value;
       const endTime = document.getElementById('manualEndTime').value;
-      const breakStartTime = document.getElementById('manualBreakStartTime').value; // NEU
+      const breakStartTime = document.getElementById('manualBreakStartTime').value;
       const breakEndTime = document.getElementById('manualBreakEndTime').value;
       const projectId = document.getElementById('manualProject').value || null;
 
@@ -1371,7 +1398,6 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
         return;
       }
 
-      // Validierung für Pausenzeiten PD
       if ((breakStartTime && !breakEndTime) || (!breakStartTime && breakEndTime)) {
         showError('⚠️ Bitte geben Sie sowohl Start- als auch Endzeit für die Pause an oder lassen Sie beide Felder leer.');
         return;
@@ -1381,8 +1407,19 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
         return;
       }
 
+      // Arbeitszeit und Pausenzeit berechnen
+      const { workTimeInMinutes, breakTimeInMinutes } = calculateWorkTime(); // calculateWorkTime gibt jetzt ein Objekt zurück
+
+      // Pausenregelung validieren
+      const breakValidationError = validateBreakTime(workTimeInMinutes, breakTimeInMinutes);
+      if (breakValidationError) {
+        showError(`⚠️ Gesetzliche Pausenregelung nicht eingehalten: ${breakValidationError}`);
+        return;
+      }
+
       try {
-        const calculatedTime = document.getElementById('calculatedHours').textContent;
+        // ... (restlicher Code für den API-Aufruf) ...
+        const calculatedTime = document.getElementById('calculatedHours').textContent; // Beachten Sie, dass dies die Arbeitszeit *inklusive* Pause ist, wenn die Pausenfelder leer sind. Die reine Arbeitszeit ist `workTimeInMinutes`.
         const breaksArray = [];
 
         if (breakStartTime && breakEndTime) {
@@ -1396,7 +1433,7 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
           date: date,
           startTimes: [startTime],
           endTimes: [endTime],
-          breaks: breaksArray, // Korrekt befülltes Pausen-Array PD
+          breaks: breaksArray,
           projectId: projectId
         };
 
@@ -1408,12 +1445,13 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
         });
 
         if (response) {
-          showSuccess(`✅ Zeiteintrag erfolgreich erstellt! Arbeitszeit: ${calculatedTime}`);
+          showSuccess(`✅ Zeiteintrag erfolgreich erstellt! Arbeitszeit: ${formatMinutesToHours(workTimeInMinutes)}`); // Angepasste Erfolgsmeldung
           closeModal('manualEntryModal');
           document.getElementById('manualEntryForm').reset();
+          // Felder für Pausenzeiten explizit zurücksetzen, falls sie nicht Teil des Standard-Formular-Resets sind
           document.getElementById('manualBreakStartTime').value = '';
           document.getElementById('manualBreakEndTime').value = '';
-          calculateWorkTime(); // Berechnete Zeit auf 00:00 zurücksetzen
+          calculateWorkTime();
 
           await loadDashboardData(true);
           console.log('✅ Manueller Zeiteintrag erfolgreich erstellt');
