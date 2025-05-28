@@ -579,7 +579,54 @@
     </form>
   </div>
 </div>
+<div id="editTimeEntryModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('editTimeEntryModal')">&times;</span>
+    <h2>📝 Zeiteintrag bearbeiten</h2>
+    <form id="editTimeEntryForm">
+      <input type="hidden" id="editTimeEntryId"> {/* Zum Speichern der ID des Eintrags */}
 
+      <div class="form-group">
+        <label for="editDate">Datum:</label>
+        <input type="date" id="editDate" class="form-input" required>
+      </div>
+
+      <hr style="margin: 1rem 0;">
+      <h4>Arbeitszeiten</h4>
+      <div id="editTimeSlotsContainer">
+        {/* Dynamische Zeit-Slots (Start/Ende) werden hier per JavaScript eingefügt */}
+      </div>
+      <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditTimeSlot()">+ Arbeitszeit-Slot hinzufügen</button>
+
+      <hr style="margin: 1rem 0;">
+      <h4>Pausen</h4>
+      <div id="editBreakSlotsContainer">
+        {/* Dynamische Pausen-Slots werden hier per JavaScript eingefügt */}
+      </div>
+      <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditBreakSlot()">+ Pause hinzufügen</button>
+
+      <hr style="margin: 1rem 0;">
+
+      <div class="form-group">
+        <label for="editProject">Projekt:</label>
+        <select id="editProject" class="form-input">
+          <option value="">Kein Projekt</option>
+          {/* Projekte werden hier dynamisch durch JavaScript geladen */}
+        </select>
+      </div>
+
+      <div class="calculated-time" style="margin-top: 1rem;">
+        <div>Berechnete Arbeitszeit (wird nach Speichern serverseitig aktualisiert):</div>
+        <div class="calculated-hours" id="editCalculatedHours">--:--</div>
+      </div>
+
+      <div class="action-buttons" style="margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editTimeEntryModal')">Abbrechen</button>
+      </div>
+    </form>
+  </div>
+</div>
 <!-- Modal für Projekt erstellen -->
 <div id="createProjectModal" class="modal">
   <div class="modal-content">
@@ -851,10 +898,9 @@
   async function loadDashboardData(forceRefresh = false) {
     try {
       console.log('📊 Lade Dashboard-Daten...', forceRefresh ? '(Force Refresh)' : '');
-
       const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
 
-      // Zeiteinträge laden
+      // Zeiteinträge laden (Ihre bestehende Logik)
       const timeEntriesResponse = await apiCall(`/api/time-entries${cacheBuster}`);
       if (timeEntriesResponse && timeEntriesResponse.entries) {
         const todayEntries = timeEntriesResponse.entries.filter(entry => {
@@ -863,21 +909,22 @@
           return entryDate.toDateString() === today.toDateString();
         });
         document.getElementById('entryCount').textContent = todayEntries.length;
-
-        const weekHours = calculateWeekHours(timeEntriesResponse.entries);
-        document.getElementById('totalHours').textContent = weekHours;
-
-        console.log(`✅ Gefunden: ${todayEntries.length} Einträge heute, ${timeEntriesResponse.entries.length} gesamt`);
+        document.getElementById('totalHours').textContent = calculateWeekHours(timeEntriesResponse.entries);
       }
 
-      // Projekte laden
+      // Projekte laden und Dropdowns füllen
       const projectsResponse = await apiCall(`/api/projects/active${cacheBuster}`);
       if (projectsResponse && projectsResponse.projects) {
-        projects = projectsResponse.projects;
+        projects = projectsResponse.projects; // Projekte global speichern für spätere Verwendung
         document.getElementById('projectCount').textContent = projects.length;
+
+        // Dropdown für manuellen Eintrag füllen
+        populateProjectDropdown(document.getElementById('manualProject'), projects);
+        // Dropdown für Bearbeitungs-Modal füllen (wird später beim Öffnen des Modals spezifisch gesetzt)
+        populateProjectDropdown(document.getElementById('editProject'), projects);
       }
 
-      // Abwesenheiten laden
+      // Abwesenheiten laden (Ihre bestehende Logik)
       const absencesResponse = await apiCall(`/api/absences${cacheBuster}`);
       if (absencesResponse && absencesResponse.absences) {
         const pending = absencesResponse.absences.filter(absence => !absence.approved);
@@ -885,13 +932,30 @@
       }
 
       document.getElementById('loading').style.display = 'none';
-      console.log('✅ Dashboard-Daten erfolgreich geladen');
+      console.log('✅ Dashboard-Daten erfolgreich geladen, inkl. Projekte für Dropdowns');
 
     } catch (error) {
       console.error('❌ Fehler beim Laden der Dashboard-Daten:', error);
       showError('Fehler beim Laden der Dashboard-Daten: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
       document.getElementById('loading').style.display = 'none';
     }
+  }
+
+  // Hilfsfunktion zum Befüllen von Projekt-Dropdowns
+  function populateProjectDropdown(selectElement, projectList, selectedProjectId = null) {
+    if (!selectElement) return;
+    selectElement.innerHTML = '<option value="">Kein Projekt</option>'; // Standardoption
+    projectList.forEach(project => {
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name;
+      // Wenn eine selectedProjectId übergeben wird und sie mit der aktuellen Projekt-ID übereinstimmt,
+      // wird diese Option vorausgewählt.
+      if (selectedProjectId && project.id.toString() === selectedProjectId.toString()) {
+        option.selected = true;
+      }
+      selectElement.appendChild(option);
+    });
   }
 
   // ========================================
@@ -1313,26 +1377,285 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
       return '<p>Keine Zeiteinträge gefunden.</p>';
     }
 
-    let html = '<table class="data-table"><thead><tr><th>Datum</th><th>Projekt</th><th>Startzeit</th><th>Endzeit</th><th>Geplant</th><th>Tatsächlich</th><th>Differenz</th></tr></thead><tbody>';
+    // Einträge nach Datum sortieren (neueste zuerst)
+    // Stellen Sie sicher, dass entry.date ein gültiges Datumsformat für new Date() ist
+    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+
+    let tableHtml = `<table class="data-table">
+                       <thead>
+                         <tr>
+                           <th>Datum</th>
+                           <th>Projekt</th>
+                           <th>Start</th>
+                           <th>Ende</th>
+                           <th>Pause(n)</th>
+                           <th>Effektiv</th>
+                           <th>Geplant</th>
+                           <th>Differenz</th>
+                           <th>Aktionen</th>
+                         </tr>
+                       </thead>
+                       <tbody>`;
     entries.forEach(entry => {
-      const startTimes = entry.startTimes && entry.startTimes.length > 0 ? entry.startTimes.join(', ') : '-';
-      const endTimes = entry.endTimes && entry.endTimes.length > 0 ? entry.endTimes.join(', ') : '-';
+      const startTimesDisplay = entry.startTimes && entry.startTimes.length > 0
+              ? entry.startTimes.map(t => t ? t.substring(0,5) : '-').join(', ')
+              : '-';
+      const endTimesDisplay = entry.endTimes && entry.endTimes.length > 0
+              ? entry.endTimes.map(t => t ? t.substring(0,5) : '(läuft)').join(', ')
+              : (entry.startTimes && entry.startTimes.length > 0 ? '(läuft)' : '-');
+      const breaksFormatted = entry.breaks && entry.breaks.length > 0
+              ? entry.breaks.map(b => `${b.start ? b.start.substring(0,5) : '??'}-${b.end ? b.end.substring(0,5) : '??'}`).join('<br>')
+              : '-';
 
-      html += `<tr>
-                    <td>${formatDate(entry.date)}</td>
-                    <td>${entry.project?.name || 'Kein Projekt'}</td>
-                    <td>${startTimes}</td>
-                    <td>${endTimes}</td>
-                    <td>${entry.plannedHours || '00:00'}</td>
-                    <td>${entry.actualHours || '00:00'}</td>
-                    <td>${entry.difference || '00:00'}</td>
-                </tr>`;
+      // Das entry-Objekt muss als String übergeben und im onclick geparst werden,
+      // um Probleme mit speziellen Zeichen im HTML-Attribut zu vermeiden.
+      const entryJsonString = JSON.stringify(entry).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+      tableHtml += `<tr>
+                        <td>${formatDate(entry.date)}</td>
+                        <td>${entry.project ? entry.project.name : 'Kein Projekt'}</td>
+                        <td>${startTimesDisplay}</td>
+                        <td>${endTimesDisplay}</td>
+                        <td>${breaksFormatted}</td>
+                        <td>${entry.actualHours || '-'}</td>
+                        <td>${entry.plannedHours || '-'}</td>
+                        <td>${entry.difference || '-'}</td>
+                        <td class="actions-cell">
+
+                            <button class="btn btn-secondary btn-small" onclick='openEditTimeEntryModal(${entryJsonString})'>Bearbeiten</button>
+
+                            <button class="btn btn-danger btn-small" onclick='deleteTimeEntryHandler(${entry.id})' style="margin-left:5px;">Löschen</button>
+                        </td>
+                      </tr>`;
+    });
+    tableHtml += '</tbody></table>';
+    return tableHtml;
+  }
+
+  // Handler für den Löschen-Button (optional, falls Sie ihn möchten)
+  async function deleteTimeEntryHandler(entryId) {
+    if (confirm('Sind Sie sicher, dass Sie diesen Zeiteintrag löschen möchten?')) {
+      try {
+        await apiCall(`/api/time-entries/${entryId}`, { method: 'DELETE' });
+        showSuccess('Zeiteintrag erfolgreich gelöscht.');
+        viewTimeEntries(); // Liste neu laden, um den gelöschten Eintrag zu entfernen
+        loadDashboardData(true); // Dashboard Statistiken aktualisieren
+      } catch (error) {
+        showError('Fehler beim Löschen des Zeiteintrags: ' + error.message);
+      }
+    }
+  }
+  let currentEditingTimeEntry = null;
+  let editTimeSlotIdCounter = 0; // Zähler für eindeutige IDs der Zeit-Slots im Edit-Modal
+  let editBreakSlotIdCounter = 0; // Zähler für eindeutige IDs der Pausen-Slots im Edit-Modal
+
+
+  // Funktion zum Öffnen und Befüllen des Bearbeitungsmodals
+  async function openEditTimeEntryModal(entry) {
+    console.log("Öffne Bearbeitungsmodal für Eintrag:", entry);
+    if (!entry || typeof entry !== 'object') {
+      showError("Ungültige Eintragsdaten für die Bearbeitung.");
+      return;
+    }
+    currentEditingTimeEntry = entry; // Den aktuellen Eintrag speichern
+
+    document.getElementById('editTimeEntryId').value = entry.id;
+    document.getElementById('editDate').value = entry.date; // Format YYYY-MM-DD wird vom Input-Typ "date" erwartet
+
+    // Container für Zeit- und Pausen-Slots leeren und neu befüllen
+    const timeSlotsContainer = document.getElementById('editTimeSlotsContainer');
+    timeSlotsContainer.innerHTML = '';
+    editTimeSlotIdCounter = 0; // Zähler zurücksetzen
+    if (entry.startTimes && entry.startTimes.length > 0) {
+      entry.startTimes.forEach((startTime, index) => {
+        const endTime = (entry.endTimes && entry.endTimes[index]) ? entry.endTimes[index] : '';
+        addEditTimeSlot(startTime, endTime);
+      });
+    } else {
+      addEditTimeSlot(); // Mindestens ein leerer Slot, falls keine Zeiten vorhanden sind
+    }
+
+    const breakSlotsContainer = document.getElementById('editBreakSlotsContainer');
+    breakSlotsContainer.innerHTML = '';
+    editBreakSlotIdCounter = 0; // Zähler zurücksetzen
+    if (entry.breaks && entry.breaks.length > 0) {
+      entry.breaks.forEach(breakItem => {
+        addEditBreakSlot(breakItem.start, breakItem.end);
+      });
+    }
+    // Kein default leerer Pausen-Slot, Pausen sind optional
+
+    // Projekte laden und das aktuell ausgewählte Projekt setzen
+    // Die globale 'projects'-Variable sollte bereits durch loadDashboardData() gefüllt sein.
+    if (projects && projects.length > 0) {
+      populateProjectDropdown(document.getElementById('editProject'), projects, entry.project ? entry.project.id : null);
+    } else {
+      // Fallback, falls Projekte noch nicht geladen wurden (sollte nicht passieren, wenn loadDashboardData vorher läuft)
+      try {
+        const projectsResponse = await apiCall('/api/projects/active');
+        if (projectsResponse && projectsResponse.projects) {
+          projects = projectsResponse.projects;
+          populateProjectDropdown(document.getElementById('editProject'), projects, entry.project ? entry.project.id : null);
+        }
+      } catch(err) {
+        showError("Projekte konnten nicht für das Bearbeitungsformular geladen werden.");
+      }
+    }
+
+    // Berechnete Stunden anzeigen (aus dem Eintrag, wird nicht live im Formular neu berechnet)
+    document.getElementById('editCalculatedHours').textContent = entry.actualHours || '--:--';
+
+    document.getElementById('editTimeEntryModal').style.display = 'block';
+  }
+
+  // Funktion zum Hinzufügen eines Arbeitszeit-Slots im Edit-Modal
+  function addEditTimeSlot(startTime = '', endTime = '') {
+    editTimeSlotIdCounter++;
+    const container = document.getElementById('editTimeSlotsContainer');
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'time-slot-container'; // Klasse für Styling
+    slotDiv.id = `edit-time-slot-${editTimeSlotIdCounter}`;
+    slotDiv.innerHTML = `
+        <div class="form-group time-slot-inputs">
+            <div>
+                <label for="editStartTime-${editTimeSlotIdCounter}">Start ${editTimeSlotIdCounter}:</label>
+                <input type="time" id="editStartTime-${editTimeSlotIdCounter}" name="editStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}" required>
+            </div>
+            <div>
+                <label for="editEndTime-${editTimeSlotIdCounter}">Ende ${editTimeSlotIdCounter}:</label>
+                <input type="time" id="editEndTime-${editTimeSlotIdCounter}" name="editEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
+            </div>
+        </div>
+        ${editTimeSlotIdCounter > 1 || (container.children.length > 0) ? // Nur wenn nicht der erste Slot ist ODER schon Slots da sind
+            `<div class="remove-slot-btn-container"><button type="button" class="btn btn-danger btn-small" onclick="removeEditTimeSlot('edit-time-slot-${editTimeSlotIdCounter}')">Slot ${editTimeSlotIdCounter} entfernen</button></div>` : ''}
+    `;
+    container.appendChild(slotDiv);
+  }
+
+  // Funktion zum Entfernen eines Arbeitszeit-Slots im Edit-Modal
+  function removeEditTimeSlot(slotId) {
+    const slotToRemove = document.getElementById(slotId);
+    if (slotToRemove) {
+      slotToRemove.remove();
+    }
+    // Optional: Labels neu nummerieren, wenn ein Slot entfernt wird (für bessere UX)
+    // Hier nicht implementiert, um es einfacher zu halten.
+  }
+
+  // Funktion zum Hinzufügen eines Pausen-Slots im Edit-Modal
+  function addEditBreakSlot(startTime = '', endTime = '') {
+    editBreakSlotIdCounter++;
+    const container = document.getElementById('editBreakSlotsContainer');
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'break-slot-container'; // Klasse für Styling
+    slotDiv.id = `edit-break-slot-${editBreakSlotIdCounter}`;
+    slotDiv.innerHTML = `
+        <div class="form-group break-slot-inputs">
+            <div>
+                <label for="editBreakStartTime-${editBreakSlotIdCounter}">Pause Start ${editBreakSlotIdCounter}:</label>
+                <input type="time" id="editBreakStartTime-${editBreakSlotIdCounter}" name="editBreakStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}">
+            </div>
+            <div>
+                <label for="editBreakEndTime-${editBreakSlotIdCounter}">Pause Ende ${editBreakSlotIdCounter}:</label>
+                <input type="time" id="editBreakEndTime-${editBreakSlotIdCounter}" name="editBreakEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
+            </div>
+        </div>
+        <div class="remove-slot-btn-container"><button type="button" class="btn btn-danger btn-small" onclick="removeEditBreakSlot('edit-break-slot-${editBreakSlotIdCounter}')">Pause ${editBreakSlotIdCounter} entfernen</button></div>
+    `;
+    container.appendChild(slotDiv);
+  }
+
+  // Funktion zum Entfernen eines Pausen-Slots im Edit-Modal
+  function removeEditBreakSlot(slotId) {
+    const slotToRemove = document.getElementById(slotId);
+    if (slotToRemove) {
+      slotToRemove.remove();
+    }
+  }
+
+  // Event Listener für das Absenden des Bearbeitungsformulars
+  document.getElementById('editTimeEntryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const entryId = document.getElementById('editTimeEntryId').value;
+    const date = document.getElementById('editDate').value;
+    const projectId = document.getElementById('editProject').value || null; // Kann leer sein
+
+    const startTimes = [];
+    document.querySelectorAll('#editTimeSlotsContainer input[name="editStartTimes"]').forEach(input => {
+      if (input.value) startTimes.push(input.value);
     });
 
-    html += '</tbody></table>';
-    return html;
-  }
+    const endTimes = [];
+    document.querySelectorAll('#editTimeSlotsContainer input[name="editEndTimes"]').forEach(input => {
+      // Erlaube leere Endzeiten, falls der Timer noch läuft (Backend muss das ggf. validieren)
+      endTimes.push(input.value || ''); // Sende leeren String statt null/undefined für optionale Endzeiten
+    });
+
+    const breaks = [];
+    document.querySelectorAll('#editBreakSlotsContainer .break-slot-container').forEach(slotContainer => {
+      const startInput = slotContainer.querySelector('input[name="editBreakStartTimes"]');
+      const endInput = slotContainer.querySelector('input[name="editBreakEndTimes"]');
+      if (startInput && startInput.value && endInput && endInput.value) {
+        breaks.push({ start: startInput.value, end: endInput.value });
+      } else if (startInput && startInput.value && (!endInput || !endInput.value)) {
+        // Optional: Fehlermeldung wenn nur eine Pausenzeit angegeben ist
+        showError("Für Pause " + (breaks.length + 1) + " fehlt die Endzeit.");
+        // Hier könnten Sie `return;` verwenden, um die Submittierung abzubrechen.
+      } else if ((!startInput || !startInput.value) && endInput && endInput.value) {
+        showError("Für Pause " + (breaks.length + 1) + " fehlt die Startzeit.");
+      }
+    });
+
+    // Validierung: Jeder Startzeit muss eine Endzeit zugeordnet sein, außer die Endzeit ist leer (läuft noch)
+    const finalEndTimes = [];
+    let validTimes = true;
+    if (startTimes.length > 0) {
+      for (let i = 0; i < startTimes.length; i++) {
+        const st = startTimes[i];
+        const et = endTimes[i] || ''; // Default zu leerem String, falls nicht vorhanden
+
+        if (et && st >= et) {
+          showError(`Die Endzeit für Arbeitszeit-Slot ${i + 1} muss nach der Startzeit liegen.`);
+          validTimes = false;
+          break;
+        }
+        finalEndTimes.push(et); // Füge die (ggf. leere) Endzeit hinzu
+      }
+    }
+    if (!validTimes) return;
+
+    for(const p of breaks) {
+      if (p.start >= p.end) {
+        showError(`Die Pausenendzeit muss nach der Pausenstartzeit liegen.`);
+        return;
+      }
+    }
+
+
+    const payload = {
+      date: date,
+      startTimes: startTimes,
+      endTimes: finalEndTimes, // Verwende die finalEndTimes
+      breaks: breaks,
+      projectId: projectId ? parseInt(projectId) : null // Stelle sicher, dass es eine Zahl oder null ist
+    };
+
+    console.log("Sende Update für Zeiteintrag:", entryId, "Payload:", payload);
+
+    try {
+      await apiCall(`/api/time-entries/${entryId}`, { method: 'PUT', body: payload });
+      showSuccess('Zeiteintrag erfolgreich aktualisiert!');
+      closeModal('editTimeEntryModal');
+      viewTimeEntries(); // Tabelle neu laden, um Änderungen anzuzeigen
+      loadDashboardData(true); // Dashboard Statistiken aktualisieren
+    } catch (error) {
+      showError('Fehler beim Aktualisieren des Zeiteintrags: ' + error.message);
+      console.error("Update Fehler Details:", error);
+    }
+  });
+
+
 
   function formatProjectsTable(projects) {
     if (!projects || projects.length === 0) {
