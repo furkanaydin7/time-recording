@@ -611,7 +611,7 @@
     <span class="close" onclick="closeModal('editTimeEntryModal')">&times;</span>
     <h2>📝 Zeiteintrag bearbeiten</h2>
     <form id="editTimeEntryForm">
-      <input type="hidden" id="editTimeEntryId"> {/* Zum Speichern der ID des Eintrags */}
+      <input type="hidden" id="editTimeEntryId">
 
       <div class="form-group">
         <label for="editDate">Datum:</label>
@@ -621,14 +621,13 @@
       <hr style="margin: 1rem 0;">
       <h4>Arbeitszeiten</h4>
       <div id="editTimeSlotsContainer">
-        {/* Dynamische Zeit-Slots (Start/Ende) werden hier per JavaScript eingefügt */}
+
       </div>
       <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditTimeSlot()">+ Arbeitszeit-Slot hinzufügen</button>
 
       <hr style="margin: 1rem 0;">
       <h4>Pausen</h4>
       <div id="editBreakSlotsContainer">
-        {/* Dynamische Pausen-Slots werden hier per JavaScript eingefügt */}
       </div>
       <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditBreakSlot()">+ Pause hinzufügen</button>
 
@@ -638,7 +637,7 @@
         <label for="editProject">Projekt:</label>
         <select id="editProject" class="form-input">
           <option value="">Kein Projekt</option>
-          {/* Projekte werden hier dynamisch durch JavaScript geladen */}
+
         </select>
       </div>
 
@@ -646,7 +645,6 @@
         <div>Berechnete Arbeitszeit (wird nach Speichern serverseitig aktualisiert):</div>
         <div class="calculated-hours" id="editCalculatedHours">--:--</div>
       </div>
-
       <div class="action-buttons" style="margin-top: 1.5rem;">
         <button type="submit" class="btn btn-primary">Änderungen speichern</button>
         <button type="button" class="btn btn-secondary" onclick="closeModal('editTimeEntryModal')">Abbrechen</button>
