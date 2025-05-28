@@ -392,6 +392,14 @@
       .form-row {
         grid-template-columns: 1fr;
       }
+
+      .data-table tbody tr {
+        cursor: pointer;
+      }
+
+      .data-table tbody tr:hover {
+        background-color: #e9ecef; /* Ein leichter Hover-Effekt */
+      }
     }
   </style>
 </head>
@@ -655,6 +663,54 @@
       <button class="btn btn-primary" onclick="viewTimeEntries(); closeModal('duplicateInfoModal');">Einträge anzeigen</button>
       <button class="btn btn-info" onclick="openManualEntryModal(); closeModal('duplicateInfoModal');">Anderes Datum wählen</button>
       <button class="btn btn-secondary" onclick="closeModal('duplicateInfoModal')">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div id="projectDetailModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('projectDetailModal')">&times;</span>
+    <h2>Projekt Details: <span id="detailProjectName"></span></h2>
+    <div id="projectDetailContent">
+      <p><strong>Beschreibung:</strong> <span id="detailProjectDescription"></span></p>
+      <p><strong>Manager:</strong> <span id="detailProjectManager"></span></p>
+      <p><strong>Status:</strong> <span id="detailProjectStatus"></span></p>
+      <p><strong>Erstellt am:</strong> <span id="detailProjectCreatedAt"></span></p>
+      <p><strong>Zuletzt aktualisiert:</strong> <span id="detailProjectUpdatedAt"></span></p>
+      <hr>
+      <h3>Projekt-Statistiken</h3>
+      <p><strong>Gesamt gebuchte Stunden:</strong> <span id="detailProjectTotalHours"></span></p>
+      <p><strong>Anzahl beteiligter Mitarbeiter:</strong> <span id="detailProjectInvolvedEmployees"></span></p>
+      <h4 style="margin-top: 1rem;">Beteiligte Mitarbeiter:</h4>
+      <ul id="detailProjectUsersList">
+      </ul>
+
+      <div id="projectEditSection" style="display: none; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <h3>Projekt bearbeiten</h3>
+        <form id="editProjectForm">
+          <input type="hidden" id="editProjectId">
+
+          <div class="form-group">
+            <label for="editProjectStatus">Status:</label>
+            <select id="editProjectStatus" class="form-input">
+              <option value="true">Aktiv</option>
+              <option value="false">Inaktiv</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editProjectManager">Projektmanager:</label>
+            <select id="editProjectManager" class="form-input">
+              <option value="">Nicht zugewiesen</option>
+            </select>
+          </div>
+
+          <div class="action-buttons">
+            <button type="submit" class="btn btn-primary" id="saveProjectChangesBtn">Änderungen speichern</button>
+            <button type="button" class="btn btn-danger" id="deleteProjectBtn" style="display:none;">Projekt löschen (Admin)</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
@@ -1275,20 +1331,202 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
       return '<p>Keine aktiven Projekte gefunden.</p>';
     }
 
-    let html = '<table class="data-table"><thead><tr><th>Name</th><th>Beschreibung</th><th>Manager</th><th>Status</th><th>Mitarbeiter</th></tr></thead><tbody>';
+    let html = '<table class="data-table"><thead><tr><th>Name</th><th>Beschreibung</th><th>Manager</th><th>Status</th></tr></thead><tbody>';
 
     projects.forEach(project => {
-      html += `<tr>
+      html += `<tr onclick="showProjectDetails(${project.id})">
                     <td><strong>${project.name}</strong></td>
                     <td>${project.description || '-'}</td>
                     <td>${project.managerName || '-'}</td>
                     <td><span style="color: ${project.active ? '#28a745' : '#dc3545'}">${project.active ? 'Aktiv' : 'Inaktiv'}</span></td>
-                    <td>${project.memberCount || 0}</td>
                 </tr>`;
     });
 
     html += '</tbody></table>';
     return html;
+  }
+
+  // Variable zum Speichern des aktuell angezeigten Projekts
+  let currentProjectForEditing = null;
+  let availableManagers = []; // Zum Speichern der Manager-Liste
+
+  // Funktion zum Laden der Manager für Bearbeitungs-Dropdown
+  async function loadManagersForEditDropdown() {
+    try {
+      const response = await apiCall('/api/admin/users');
+      availableManagers = []; // Liste zurücksetzen
+
+      if (response && Array.isArray(response)) {
+        response.forEach(user => {
+          const userRoles = user.roles || [];
+          const isManagerOrAdmin = userRoles.some(role =>
+                  role === 'ADMIN' || role === 'ROLE_ADMIN' || role === 'MANAGER' || role === 'ROLE_MANAGER'
+          );
+          if (isManagerOrAdmin) {
+            availableManagers.push(user);
+          }
+        });
+      }
+
+      const managerSelect = document.getElementById('editProjectManager');
+      managerSelect.innerHTML = '<option value="">Nicht zugewiesen</option>';
+      availableManagers.forEach(manager => {
+        const option = document.createElement('option');
+        option.value = manager.id;
+        option.textContent = `${manager.firstName} ${manager.lastName} (${manager.email})`;
+        managerSelect.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error('Fehler beim Laden der Manager für das Bearbeitungs-Dropdown:', error);
+      showError('Fehler beim Laden der Manager-Liste für Bearbeitung.');
+    }
+  }
+
+  // Funktion zum Anzeigen der Projektdetails
+  async function showProjectDetails(projectId) {
+    try {
+      // Benutzerinformationen laden, um Rollen zu prüfen
+      const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
+      const isAdmin = userRoles.includes('ADMIN') || userRoles.includes('ROLE_ADMIN');
+      const isManager = userRoles.includes('MANAGER') || userRoles.includes('ROLE_MANAGER');
+      const canEdit = isAdmin || isManager; // Nur Admins und Manager können bearbeiten
+
+      const project = await apiCall(`/api/projects/${projectId}`);
+      if (project) {
+        currentProjectForEditing = project; // Projekt für Bearbeitung speichern
+
+        document.getElementById('detailProjectName').textContent = project.name;
+        document.getElementById('detailProjectDescription').textContent = project.description || 'N/A';
+        document.getElementById('detailProjectManager').textContent = project.managerName || 'Nicht zugewiesen';
+        document.getElementById('detailProjectStatus').textContent = project.active ? 'Aktiv' : 'Inaktiv';
+        document.getElementById('detailProjectStatus').style.color = project.active ? '#28a745' : '#dc3545';
+        document.getElementById('detailProjectCreatedAt').textContent = formatDateTimeDisplay(project.createdAt);
+        document.getElementById('detailProjectUpdatedAt').textContent = formatDateTimeDisplay(project.updatedAt);
+
+        document.getElementById('detailProjectTotalHours').textContent = project.statistics?.totalHoursWorked || '00:00';
+        document.getElementById('detailProjectInvolvedEmployees').textContent = project.statistics?.activeEmployees || 0;
+
+        const usersList = document.getElementById('detailProjectUsersList');
+        usersList.innerHTML = '';
+        if (project.involvedUsers && project.involvedUsers.length > 0) {
+          project.involvedUsers.forEach(user => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
+            usersList.appendChild(listItem);
+          });
+        } else {
+          const listItem = document.createElement('li');
+          listItem.textContent = 'Keine Mitarbeiter haben Stunden auf dieses Projekt gebucht.';
+          usersList.appendChild(listItem);
+        }
+
+        //Bearbeitungsbereich anzeigen, wenn berechtigt
+        const projectEditSection = document.getElementById('projectEditSection');
+        if (canEdit) {
+          projectEditSection.style.display = 'block';
+          document.getElementById('editProjectId').value = project.id;
+          document.getElementById('editProjectStatus').value = project.active ? 'true' : 'false';
+
+          // Manager-Dropdown füllen und aktuellen Manager auswählen
+          await loadManagersForEditDropdown(); // Manager-Liste laden
+          const editProjectManagerSelect = document.getElementById('editProjectManager');
+          if (project.managerId) { // Angenommen, project.managerId ist die ID des Managers
+            editProjectManagerSelect.value = project.managerId;
+          } else {
+            editProjectManagerSelect.value = ''; // Kein Manager zugewiesen
+          }
+
+          // Löschen-Button nur für Admins anzeigen
+          document.getElementById('deleteProjectBtn').style.display = isAdmin ? 'inline-block' : 'none';
+
+        } else {
+          projectEditSection.style.display = 'none';
+        }
+
+        document.getElementById('projectDetailModal').style.display = 'block';
+      } else {
+        showError('Projekt Details nicht gefunden.');
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Projektdetails:', error);
+      showError('Fehler beim Laden der Projektdetails: ' + error.message);
+    }
+  }
+
+  // Event Listener für Projektänderungen
+  document.getElementById('editProjectForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const projectId = document.getElementById('editProjectId').value;
+    const newStatus = document.getElementById('editProjectStatus').value === 'true';
+    const newManagerId = document.getElementById('editProjectManager').value;
+
+    try {
+      if (currentProjectForEditing.active !== newStatus) {
+        if (newStatus) {
+          await apiCall(`/api/projects/${projectId}/activate`, { method: 'PATCH' });
+          showSuccess('Projekt erfolgreich aktiviert!');
+        } else {
+          await apiCall(`/api/projects/${projectId}/deactivate`, { method: 'PATCH' });
+          showSuccess('Projekt erfolgreich deaktiviert!');
+        }
+      }
+
+      // Manager-Änderung nur senden, wenn ein Manager ausgewählt wurde
+      if (newManagerId !== (currentProjectForEditing.managerId || '')) {
+        if (newManagerId === '') {
+          // Manager entfernen
+          await apiCall(`/api/projects/${projectId}/manager`, { method: 'DELETE' });
+          showSuccess('Manager erfolgreich entfernt!');
+        } else {
+          // Manager zuweisen
+          await apiCall(`/api/projects/${projectId}/manager`, {
+            method: 'POST',
+            body: { managerId: parseInt(newManagerId) }
+          });
+          showSuccess('Manager erfolgreich zugewiesen!');
+        }
+      }
+
+      closeModal('projectDetailModal');
+      await loadDashboardData(true); // Dashboard-Daten neu laden
+    } catch (error) {
+      console.error('Fehler beim Speichern der Projektänderungen:', error);
+      showError('Fehler beim Speichern der Projektänderungen: ' + error.message);
+    }
+  });
+
+  // Event Listener für das Löschen eines Projekts
+  document.getElementById('deleteProjectBtn').addEventListener('click', async function() {
+    const projectId = document.getElementById('editProjectId').value;
+    if (confirm('Sind Sie sicher, dass Sie dieses Projekt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      try {
+        // Annahme: Es gibt einen DELETE /api/projects/{id} Endpunkt
+        // Derzeit existiert im Controller nur DELETE /api/time-entries/{id} und kein direkter DELETE für Projekte.
+        // Falls benötigt, muss dieser Endpunkt im ProjectController implementiert werden, z.B.:
+        // @DeleteMapping("/{id}") @PreAuthorize("hasAuthority('ADMIN')") public ResponseEntity<?> deleteProject(@PathVariable Long id) { projectService.deleteProject(id); return ResponseEntity.ok().build(); }
+        // Da dieser Endpunkt im bereitgestellten Code nicht existiert, wird dieser Teil nur als Beispiel gezeigt.
+        // Stattdessen können wir die existierende Deaktivierungsfunktion nutzen, wenn ein echtes Löschen nicht erwünscht ist.
+        // Für den Zweck des "Löschens" nutzen wir vorerst die Deaktivierung:
+        // Quelle ChatGPT.com
+        await apiCall(`/api/projects/${projectId}/deactivate`, { method: 'PATCH' });
+        showSuccess('Projekt erfolgreich deaktiviert (Löschen nicht direkt implementiert)!');
+
+        closeModal('projectDetailModal');
+        await loadDashboardData(true);
+      } catch (error) {
+        console.error('Fehler beim Löschen des Projekts:', error);
+        showError('Fehler beim Löschen des Projekts: ' + error.message);
+      }
+    }
+  });
+
+  // Hilfsfunktion zur Formatierung von Datum und Uhrzeit für die Anzeige
+  function formatDateTimeDisplay(dateTimeString) {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleDateString('de-DE', options);
   }
 
   function formatAbsencesTable(absences) {

@@ -1,6 +1,9 @@
 package ch.fhnw.timerecordingbackend.dto.project;
 
+import ch.fhnw.timerecordingbackend.dto.admin.UserResponse;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * DTO Antwort für Projekte Anfragen
@@ -19,6 +22,9 @@ public class ProjectResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private ProjectStatistics statistics;
+    private List<UserResponse> involvedUsers;
+    private Long managerId;
+    private String managerName;
 
     /**
      * Konstruktor
@@ -93,6 +99,30 @@ public class ProjectResponse {
         this.statistics = statistics;
     }
 
+    public List<UserResponse> getInvolvedUsers() {
+        return involvedUsers;
+    }
+
+    public void setInvolvedUsers(List<UserResponse> involvedUsers) {
+        this.involvedUsers = involvedUsers;
+    }
+
+    public Long getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
+
+    public String getManagerName() {
+        return managerName;
+    }
+
+    public void setManagerName(String managerName) {
+        this.managerName = managerName;
+    }
+
     @Override
     public String toString() {
         return "ProjectResponse{" +
@@ -106,7 +136,7 @@ public class ProjectResponse {
     }
 
     /**
-     * Embedded-Klasse für Projektezeiten
+     * Embedded-Klasse für Projektstatistiken
      */
     public static class ProjectStatistics {
         private long totalTimeEntries;

@@ -1,6 +1,7 @@
 package ch.fhnw.timerecordingbackend.service;
 
 import ch.fhnw.timerecordingbackend.model.Project;
+import ch.fhnw.timerecordingbackend.model.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -155,5 +156,19 @@ public interface ProjectService {
      */
     @Query("SELECT COUNT(DISTINCT t.user.id) FROM TimeEntry t WHERE t.project.id = :projectId")
     long countUsersByProjectId(@Param("projectId") Long projectId);
+
+    /**
+     * ActualHours für Projekt berechnen
+     * @param projectId
+     * @return
+     */
+    String calculateTotalActualHoursForProject(Long projectId);
+
+    /**
+     * Mitarbeiter für Projekt finden
+     * @param projectId
+     * @return
+     */
+    List<User> findUsersByProjectId(Long projectId);
 
 }

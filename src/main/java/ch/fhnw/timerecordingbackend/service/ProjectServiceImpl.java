@@ -5,6 +5,7 @@ import ch.fhnw.timerecordingbackend.model.SystemLog;
 import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.repository.ProjectRepository;
 import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
+import ch.fhnw.timerecordingbackend.repository.TimeEntryRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +27,14 @@ public class ProjectServiceImpl implements ProjectService{
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final SystemLogRepository systemLogRepository;
+    private final TimeEntryRepository timeEntryRepository;
 
     @Autowired
-    public ProjectServiceImpl(ProjectRepository projectRepository, UserRepository userRepository, SystemLogRepository systemLogRepository) {
+    public ProjectServiceImpl(ProjectRepository projectRepository, UserRepository userRepository, SystemLogRepository systemLogRepository, TimeEntryRepository timeEntryRepository) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.systemLogRepository = systemLogRepository;
+        this.timeEntryRepository = timeEntryRepository;
     }
 
     @Override
@@ -225,6 +228,51 @@ public class ProjectServiceImpl implements ProjectService{
                 "Projekt ID: " + project.getId());
 
         return updatedProject;
+    }
+
+    /**
+     * ActualHourse für Projekte berechnen
+     * @param projectId
+     * @return
+     */
+    @Override
+    public String calculateTotalActualHoursForProject(Long projectId) {
+        List<Object[]> results = timeEntryRepository.sumActualHoursByProjectId(projectId);
+
+        if (results != null && !results.isEmpty()) {
+            Object resultValue = results.get(0)[0];
+            if (resultValue instanceof Number) { // Sicherstellen, dass es sich um eine Zahl handelt
+                Double totalMinutes = ((Number) resultValue).doubleValue();
+                long hours = (long) (totalMinutes / 60);
+                long minutes = (long) (totalMinutes % 60);
+                return String.format("%02d:%02d", hours, minutes);
+            }
+        }
+        return "00:00";
+    }
+
+    // Hilfsmethode, um HH:mm String in Minuten zu parsen
+    private double parseHoursToMinutes(String timeString) {
+        if (timeString == null || timeString.trim().isEmpty()) {
+            return 0.0;
+        }
+        try {
+            String[] parts = timeString.split(":");
+            return Double.parseDouble(parts[0]) * 60 + Double.parseDouble(parts[1]);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    /**
+     * Mitarbeiter für Projekt finden
+     * @param projectId
+     * @return
+     */
+    @Override
+    public List<User> findUsersByProjectId(Long projectId) {
+        // Dies wird alle Benutzer zurückgeben, die jemals Stunden auf dieses Projekt gebucht haben
+        return timeEntryRepository.findDistinctUsersByProjectId(projectId);
     }
 
     @Override
