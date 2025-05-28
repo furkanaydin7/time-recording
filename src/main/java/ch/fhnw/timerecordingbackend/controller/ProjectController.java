@@ -82,7 +82,7 @@ public class ProjectController {
      * POST /api/projects
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Object>> createProject(@Valid @RequestBody ProjectRequest request) {
         // Projekt erstellen
         Project project = new Project();
@@ -112,7 +112,7 @@ public class ProjectController {
      * PUT /api/projects/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @projectController.isProjectManager(#id)")
+    @PreAuthorize("hasAuthority('ADMIN') or @projectController.isProjectManager(#id)")
     public ResponseEntity<Map<String, String>> updateProject(
             @PathVariable Long id,
             @Valid @RequestBody ProjectRequest request) {
@@ -138,7 +138,7 @@ public class ProjectController {
      * PATCH /api/projects/{id}/deactivate
      */
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> deactivateProject(@PathVariable Long id) {
         projectService.deactivateProject(id);
         return ResponseEntity.ok(Map.of("message", "Projekt deaktiviert"));
@@ -149,7 +149,7 @@ public class ProjectController {
      * PATCH /api/projects/{id}/activate
      */
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> activateProject(@PathVariable Long id) {
         projectService.activateProject(id);
         return ResponseEntity.ok(Map.of("message", "Projekt aktiviert"));
@@ -160,7 +160,7 @@ public class ProjectController {
      * POST /api/projects/{id}/manager
      */
     @PostMapping("/{id}/manager")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> assignManager(
             @PathVariable Long id,
             @RequestBody Map<String, Long> requestBody) {
@@ -179,7 +179,7 @@ public class ProjectController {
      * DELETE /api/projects/{id}/manager
      */
     @DeleteMapping("/{id}/manager")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, String>> removeManager(@PathVariable Long id) {
         projectService.removeManager(id);
         return ResponseEntity.ok(Map.of("message", "Manager erfolgreich entfernt"));
@@ -206,7 +206,7 @@ public class ProjectController {
      * GET /api/projects/user/{userId}
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAuthority('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getProjectsByUserId(@PathVariable Long userId) {
         List<Project> projects = projectService.findProjectsByUserId(userId);
         List<ProjectResponse> responses = projects.stream()
@@ -221,7 +221,7 @@ public class ProjectController {
      * GET /api/projects/user/{userId}/active
      */
     @GetMapping("/user/{userId}/active")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAuthority('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getActiveProjectsByUserId(@PathVariable Long userId) {
         List<Project> projects = projectService.findActiveProjectsByUserId(userId);
         List<ProjectResponse> responses = projects.stream()
@@ -236,7 +236,7 @@ public class ProjectController {
      * GET /api/projects/manager/{managerId}
      */
     @GetMapping("/manager/{managerId}")
-    @PreAuthorize("hasRole('ADMIN') or #managerId == authentication.principal.id")
+    @PreAuthorize("hasAuthority('ADMIN') or #managerId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getProjectsByManagerId(@PathVariable Long managerId) {
         List<Project> projects = projectService.findProjectsByManagerId(managerId);
         List<ProjectResponse> responses = projects.stream()
@@ -251,7 +251,7 @@ public class ProjectController {
      * GET /api/projects/manager/{managerId}/active
      */
     @GetMapping("/manager/{managerId}/active")
-    @PreAuthorize("hasRole('ADMIN') or #managerId == authentication.principal.id")
+    @PreAuthorize("hasAuthority('ADMIN') or #managerId == authentication.principal.id")
     public ResponseEntity<Map<String, List<ProjectResponse>>> getActiveProjectsByManagerId(@PathVariable Long managerId) {
         List<Project> projects = projectService.findActiveProjectsByManagerId(managerId);
         List<ProjectResponse> responses = projects.stream()

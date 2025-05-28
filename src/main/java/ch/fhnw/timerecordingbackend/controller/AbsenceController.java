@@ -65,7 +65,7 @@ public class AbsenceController {
      * PUT /api/absences/{id}
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @absenceController.isAbsenceOwner(#id)")
+    @PreAuthorize("hasAuthority('ADMIN') or @absenceController.isAbsenceOwner(#id)")
     public ResponseEntity<Map<String, String>> updateAbsence(
             @PathVariable Long id,
             @Valid @RequestBody AbsenceRequest request) {
@@ -96,7 +96,7 @@ public class AbsenceController {
      * DELETE /api/absences/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or @absenceController.isAbsenceOwner(#id)")
+    @PreAuthorize("hasAuthority('ADMIN') or @absenceController.isAbsenceOwner(#id)")
     public ResponseEntity<Map<String, String>> deleteAbsence(@PathVariable Long id) {
         absenceService.deleteAbsence(id);
         return ResponseEntity.ok(Map.of("message", "Abwesenheit gelöscht"));
@@ -123,7 +123,7 @@ public class AbsenceController {
      * GET /api/users/{userId}/absences
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getUserAbsences(@PathVariable Long userId) {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Benutzer nicht gefunden mit ID: " + userId));
@@ -142,7 +142,7 @@ public class AbsenceController {
      * GET /api/absences/pending
      */
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getPendingAbsences() {
         List<Absence> pendingAbsences = absenceService.findPendingAbsences();
 
@@ -158,7 +158,7 @@ public class AbsenceController {
      * GET /api/absences/approved
      */
     @GetMapping("/approved")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getApprovedAbsences() {
         List<Absence> approvedAbsences = absenceService.findApprovedAbsences();
 
@@ -174,7 +174,7 @@ public class AbsenceController {
      * PATCH /api/absences/{id}/approve
      */
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<Map<String, Object>> approveAbsence(@PathVariable Long id) {
         User currentUser = getCurrentUser();
 
@@ -191,7 +191,7 @@ public class AbsenceController {
      * PATCH /api/absences/{id}/reject
      */
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<Map<String, String>> rejectAbsence(@PathVariable Long id) {
         absenceService.rejectAbsence(id);
 
@@ -203,7 +203,7 @@ public class AbsenceController {
      * GET /api/absences/user/{userId}/upcoming
      */
     @GetMapping("/user/{userId}/upcoming")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasAuthority('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getUpcomingAbsences(@PathVariable Long userId) {
         List<Absence> upcomingAbsences = absenceService.findCurrentAndFutureAbsencesByUserId(userId, LocalDate.now());
 
@@ -219,7 +219,7 @@ public class AbsenceController {
      * GET /api/absences/type/{type}
      */
     @GetMapping("/type/{type}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, List<AbsenceResponse>>> getAbsencesByType(@PathVariable String type) {
         try {
             ch.fhnw.timerecordingbackend.model.enums.AbsenceType absenceType =
@@ -242,7 +242,7 @@ public class AbsenceController {
      * GET /api/absences/check?userId={userId}&date={date}
      */
     @GetMapping("/check")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Map<String, Boolean>> checkAbsenceOnDate(
             @RequestParam Long userId,
             @RequestParam String date) {

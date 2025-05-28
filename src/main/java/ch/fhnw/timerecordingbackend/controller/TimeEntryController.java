@@ -39,7 +39,7 @@ public class TimeEntryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> deleteTimeEntry(@PathVariable Long id) {
         timeEntryService.deleteTimeEntry(id);
         return ResponseEntity.ok().body(Map.of("message", "Eintrag gelöscht"));
@@ -55,7 +55,7 @@ public class TimeEntryController {
      * Zeiteinträge eines beliebigen Users abrufen
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<TimeEntryResponse>> getUserTimeEntries(@PathVariable Long userId) {
         List<TimeEntryResponse> entries = timeEntryService.getUserTimeEntries(userId);
         return ResponseEntity.ok(entries);

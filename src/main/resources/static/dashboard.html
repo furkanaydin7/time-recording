@@ -587,6 +587,12 @@
         <label for="projectDescription">Beschreibung:</label>
         <textarea id="projectDescription" rows="3"></textarea>
       </div>
+      <div class="form-group">
+        <label for="projectManager">Projektmanager:</label>
+        <select id="projectManager" required>
+          <option value="">Wählen Sie einen Manager</option>
+        </select>
+      </div>
       <div class="action-buttons">
         <button type="submit" class="btn btn-primary">Erstellen</button>
         <button type="button" class="btn btn-secondary" onclick="closeModal('createProjectModal')">Abbrechen</button>
@@ -1049,6 +1055,73 @@
     calculateWorkTime();
   }
 
+  // Manager laden für Projekterstellung PD
+  // Quelle: ChatGPT.com
+  async function loadManagersForProjectCreation() {
+    try {
+      // Alle Benutzer vom Admin-Endpunkt abrufen
+      const response = await apiCall('/api/admin/users');
+      const managerSelect = document.getElementById('projectManager');
+      managerSelect.innerHTML = '<option value="">Wählen Sie einen Manager</option>'; // Optionen zurücksetzen
+
+      if (response && Array.isArray(response)) {
+        response.forEach(user => {
+          // Prüfen, ob der Benutzer die Rolle "ADMIN" oder "MANAGER" hat
+          const userRoles = user.roles || [];
+          const isManagerOrAdmin = userRoles.some(role =>
+                  role === 'ADMIN' || role === 'ROLE_ADMIN' || role === 'MANAGER' || role === 'ROLE_MANAGER'
+          );
+
+          if (isManagerOrAdmin) {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
+            managerSelect.appendChild(option);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Manager:', error);
+      showError('Fehler beim Laden der Manager-Liste: ' + error.message);
+    }
+  }
+
+  // Passen Sie den createProjectForm Event Listener an
+  document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const projectName = document.getElementById('projectName').value;
+    const projectDescription = document.getElementById('projectDescription').value;
+    const projectManagerId = document.getElementById('projectManager').value; // Ausgewählte Manager-ID abrufen
+
+    if (!projectManagerId) { // Überprüfen, ob ein Manager ausgewählt wurde
+      showError('Bitte wählen Sie einen Projektmanager aus.');
+      return;
+    }
+
+    const projectData = {
+      name: projectName,
+      description: projectDescription,
+      managerId: parseInt(projectManagerId) // Sicherstellen, dass es eine Ganzzahl ist
+    };
+
+    try {
+      const response = await apiCall('/api/projects', {
+        method: 'POST',
+        body: JSON.stringify(projectData)
+      });
+
+      if (response) {
+        showSuccess('✅ Projekt erfolgreich erstellt!');
+        closeModal('createProjectModal');
+        document.getElementById('createProjectForm').reset();
+        await loadDashboardData(true);
+      }
+    } catch (error) {
+      showError('❌ Fehler beim Erstellen des Projekts: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
+    }
+  });
+
   async function loadProjectsForManualEntry() {
     try {
       const response = await apiCall('/api/projects/active');
@@ -1302,7 +1375,8 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
   // ========================================
   // MODAL-FUNKTIONEN
   // ========================================
-  function openCreateProjectModal() {
+  async function openCreateProjectModal() {
+    await loadManagersForProjectCreation(); // Manager beim Öffnen des Modals laden
     document.getElementById('createProjectModal').style.display = 'block';
   }
 
