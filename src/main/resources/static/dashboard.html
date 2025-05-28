@@ -1265,7 +1265,7 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
 
       html += `<tr>
                     <td>${formatDate(entry.date)}</td>
-                    <td>${entry.projectName || 'Kein Projekt'}</td>
+                    <td>${entry.project?.name || 'Kein Projekt'}</td>
                     <td>${startTimes}</td>
                     <td>${endTimes}</td>
                     <td>${entry.plannedHours || '00:00'}</td>
