@@ -790,29 +790,6 @@
   }
 
   // ========================================
-  // BENUTZER-FUNKTIONEN
-  // ========================================
-  async function loadUserInfo() {
-    const userEmail = localStorage.getItem('userEmail');
-    if (userEmail) {
-      document.getElementById('userEmail').textContent = userEmail;
-    }
-
-    const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
-    if (userRoles.includes('ROLE_ADMIN')) {
-      document.getElementById('adminCard').style.display = 'block';
-      document.getElementById('createProjectBtn').style.display = 'inline-block';
-    }
-
-    if (DEBUG_MODE) {
-      console.log('👤 User Info:', {
-        email: userEmail,
-        roles: userRoles
-      });
-    }
-  }
-
-  // ========================================
   // DASHBOARD-DATEN
   // ========================================
   async function loadDashboardData(forceRefresh = false) {
@@ -1969,8 +1946,6 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
   // ========================================
   // INITIALISIERUNG
   // ========================================
-
-  // Diese Zeilen in Ihre bestehende DOMContentLoaded Funktion einfügen:
   document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Dashboard wird initialisiert...');
 
