@@ -1015,6 +1015,7 @@
     const today = new Date().toISOString().split('T')[0];
 
     // Standard auf gestern setzen, da heute möglicherweise bereits belegt
+    // Für heute ist gedacht, dass man den "Zeit starten"-Button nutzt
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
