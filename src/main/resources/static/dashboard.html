@@ -1,2928 +1,324 @@
+<!--@author EK-->
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Time Recording - Dashboard</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f5f5;
-      min-height: 100vh;
-    }
-
-    header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    .header-left h1 {
-      font-size: 1.5rem;
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .logout-btn {
-      background: rgba(255,255,255,0.2);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .logout-btn:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 2rem;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 2rem;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-    }
-
-    .card h2 {
-      color: #333;
-      margin-bottom: 1rem;
-      font-size: 1.25rem;
-    }
-
-    .card p {
-      color: #666;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .stat-number {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-top: 1rem;
-    }
-
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-block;
-      transition: transform 0.2s ease;
-      font-size: 0.9rem;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-    }
-
-    .btn-success {
-      background: #28a745;
-      color: white;
-    }
-
-    .btn-danger {
-      background: #dc3545;
-      color: white;
-    }
-
-    .btn-info {
-      background: #17a2b8;
-      color: white;
-    }
-
-    .btn-warning {
-      background: #ffc107;
-      color: #212529;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background-color: white;
-      margin: 5% auto;
-      padding: 2rem;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .close:hover {
-      color: black;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .calculated-time {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 5px;
-      margin: 1rem 0;
-      text-align: center;
-    }
-
-    .calculated-hours {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #667eea;
-      margin-top: 0.5rem;
-    }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-
-    .data-table th,
-    .data-table td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
-
-    .data-table th {
-      background-color: #f8f9fa;
-      font-weight: 600;
-    }
-
-    .data-table tr:hover {
-      background-color: #f8f9fa;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 2rem;
-      color: #666;
-    }
-
-    .error {
-      background: #fee;
-      color: #c33;
-      padding: 1rem;
-      border-radius: 5px;
-      margin-bottom: 1rem;
-      text-align: left;
-      border-left: 4px solid #dc3545;
-    }
-
-    .success {
-      background: #efe;
-      color: #363;
-      padding: 1rem;
-      border-radius: 5px;
-      margin-bottom: 1rem;
-      text-align: center;
-      border-left: 4px solid #28a745;
-    }
-
-    .warning {
-      background: #fff3cd;
-      color: #856404;
-      padding: 1rem;
-      border-radius: 5px;
-      margin-bottom: 1rem;
-      text-align: left;
-      border-left: 4px solid #ffc107;
-    }
-
-    .timer-display {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #28a745;
-      text-align: center;
-      margin: 1rem 0;
-    }
-
-    .timer-running {
-      color: #dc3545;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
-    }
-
-    .debug-info {
-      background: #333;
-      color: #0f0;
-      padding: 0.5rem;
-      border-radius: 5px;
-      font-family: monospace;
-      font-size: 0.8rem;
-      margin: 1rem 0;
-      display: none;
-    }
-
-    .duplicate-info {
-      background: #e7f3ff;
-      border: 1px solid #b6d7ff;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-
-    .duplicate-info h4 {
-      color: #004085;
-      margin-bottom: 0.5rem;
-    }
-
-    .duplicate-info ul {
-      margin: 0.5rem 0;
-      padding-left: 1.5rem;
-    }
-
-    .duplicate-info li {
-      margin-bottom: 0.25rem;
-      color: #004085;
-    }
-
-    .system-info {
-      background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-radius: 5px;
-      padding: 0.75rem;
-      margin: 1rem 0;
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-      }
-
-      .container {
-        padding: 0 1rem;
-      }
-
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .action-buttons {
-        flex-direction: column;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .data-table tbody tr {
-        cursor: pointer;
-      }
-
-      .data-table tbody tr:hover {
-        background-color: #e9ecef; /* Ein leichter Hover-Effekt */
-      }
-
-      /* styles for user roles */
-      .user-role-tag {
-        display: inline-flex;
-        align-items: center;
-        background-color: #e0e7ff; /* light blue */
-        color: #3f51b5; /* dark blue */
-        padding: 0.3em 0.6em;
-        border-radius: 12px;
-        font-size: 0.75em;
-        margin-right: 5px;
-        margin-bottom: 5px;
-        white-space: nowrap;
-      }
-      .user-role-tag .btn-danger.btn-small {
-        margin-left: 5px;
-        padding: 0.1em 0.4em;
-        line-height: 1;
-        font-size: 0.8em;
-        border-radius: 50%;
-        background-color: #ef5350; /* red */
-        color: white;
-      }
-      .user-role-tag .btn-danger.btn-small:hover {
-        background-color: #d32f2f; /* darker red */
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
 <header>
-  <div class="header-left">
-    <h1>Time Recording Dashboard</h1>
-  </div>
+  <div class="header-left"><h1>Time Recording Dashboard</h1></div>
   <div class="header-right">
-    <div class="user-info">
-      <span>👤</span>
-      <span id="userEmail">Lädt...</span>
-    </div>
-    <button class="logout-btn" onclick="logout()">Abmelden</button>
+    <div class="user-info"><span>👤</span><span id="userEmail">Lädt...</span><span id="changePasswordIcon" title="Passwort ändern" style="cursor: pointer; margin-left: 10px;">🔑</span></div>
+    <button id="logoutButton" class="logout-btn">Abmelden</button>
   </div>
 </header>
 
 <div class="container">
-  <div id="errorMessage" class="error" style="display: none;">
-    ❌ Fehler beim Laden der Daten
-  </div>
-
-  <div id="successMessage" class="success" style="display: none;">
-    ✅ Erfolgreich!
-  </div>
-
-  <div id="warningMessage" class="warning" style="display: none;">
-    ⚠️ Warnung
-  </div>
-
-  <!-- Debug Info (für Entwicklung) -->
-  <div id="debugInfo" class="debug-info">
-    <div>Debug aktiviert - F12 für Details</div>
-  </div>
-
-  <!-- System Info -->
-  <div class="system-info">
-    <strong>ℹ️ System-Info:</strong> Pro Tag ist nur ein Zeiteintrag möglich. Für Änderungen bearbeiten Sie den vorhandenen Eintrag.
-  </div>
+  <div id="errorMessage" class="error" style="display: none;"></div>
+  <div id="successMessage" class="success" style="display: none;"></div>
+  <div id="warningMessage" class="warning" style="display: none;"></div>
+  <div class="system-info"><strong>ℹ️ System-Info:</strong> Pro Tag nur ein Zeiteintrag. Änderungen über Bearbeiten.</div>
 
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-number" id="totalHours">--</div>
-      <div class="stat-label">Stunden diese Woche</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="projectCount">--</div>
-      <div class="stat-label">Aktive Projekte</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="entryCount">--</div>
-      <div class="stat-label">Einträge heute</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number" id="pendingAbsences">--</div>
-      <div class="stat-label">Offene Abwesenheiten</div>
-    </div>
+    <div class="stat-card"><div class="stat-number" id="totalHours">--</div><div class="stat-label">Std. diese Woche</div></div>
+    <div class="stat-card"><div class="stat-number" id="projectCount">--</div><div class="stat-label">Aktive Projekte</div></div>
+    <div class="stat-card"><div class="stat-number" id="entryCount">--</div><div class="stat-label">Einträge heute</div></div>
+    <div class="stat-card"><div class="stat-number" id="pendingAbsences">--</div><div class="stat-label">Offene Abwesenheiten</div></div>
   </div>
 
   <div class="dashboard-grid">
-    <!-- Zeiterfassung Karte -->
     <div class="card">
       <h2>⏰ Zeiterfassung</h2>
       <div class="timer-display" id="timerDisplay">00:00:00</div>
       <p id="currentProject">Kein Projekt ausgewählt</p>
       <div class="action-buttons">
-        <button class="btn btn-success" id="startTimer" onclick="startTimeTracking()">Zeit starten</button>
-        <button class="btn btn-danger" id="stopTimer" onclick="stopTimeTracking()" style="display: none;">Zeit stoppen</button>
-        <button class="btn btn-info" onclick="openManualEntryModal()">Manueller Eintrag</button>
-        <button class="btn btn-secondary" onclick="viewTimeEntries()">Einträge anzeigen</button>
+        <button class="btn btn-success" id="startTimer">Zeit starten</button>
+        <button class="btn btn-danger" id="stopTimer" style="display: none;">Zeit stoppen</button>
+        <button class="btn btn-info" id="openManualEntryModalBtn">Manueller Eintrag</button>
+        <button class="btn btn-secondary" id="viewTimeEntriesBtn">Einträge anzeigen</button>
       </div>
     </div>
-
-    <!-- Projekte Karte -->
     <div class="card">
-      <h2>📁 Projekte</h2>
-      <p>Verwalten Sie Ihre Projekte und weisen Sie Zeiteinträge zu.</p>
-      <div class="action-buttons">
-        <button class="btn btn-primary" onclick="viewProjects()">Projekte anzeigen</button>
-        <button class="btn btn-secondary" onclick="openCreateProjectModal()" id="createProjectBtn" style="display: none;">Neues Projekt</button>
-      </div>
+      <h2>📁 Projekte</h2><p>Projekte verwalten und Zeiteinträge zuweisen.</p>
+      <div class="action-buttons"><button class="btn btn-primary" id="viewProjectsBtn">Projekte anzeigen</button><button class="btn btn-secondary" id="createProjectBtn" style="display: none;">Neues Projekt</button></div>
     </div>
-
-    <!-- Abwesenheiten Karte -->
     <div class="card">
-      <h2>🏖️ Abwesenheiten</h2>
-      <p>Verwalten Sie Ihre Urlaubsanträge und Abwesenheiten.</p>
-      <div class="action-buttons">
-        <button class="btn btn-primary" onclick="viewAbsences()">Abwesenheiten anzeigen</button>
-        <button class="btn btn-secondary" onclick="openCreateAbsenceModal()">Abwesenheit beantragen</button>
-      </div>
+      <h2>🏖️ Abwesenheiten</h2><p>Urlaubsanträge und Abwesenheiten verwalten.</p>
+      <div class="action-buttons"><button class="btn btn-primary" id="viewAbsencesBtn">Abwesenheiten anzeigen</button><button class="btn btn-secondary" id="openCreateAbsenceModalBtn">Abwesenheit beantragen</button></div>
     </div>
-
-    <!-- Admin Panel (nur für Admins) -->
     <div class="card" id="adminCard" style="display: none;">
-      <h2>⚙️ Administration</h2>
-      <p>Verwalten Sie Benutzer, Projekte und Systemeinstellungen.</p>
+      <h2>⚙️ Administration</h2><p>Benutzer, Projekte und Systemeinstellungen verwalten.</p>
       <div class="action-buttons">
-        <button class="btn btn-success" onclick="viewUsers()">Benutzer verwalten</button>
-        <button class="btn btn-primary" onclick="openCreateUserModal()">Neuen Benutzer anlegen</button>
-        <button class="btn btn-secondary" onclick="viewSystemLogs()">System-Logs</button>
-        <button class="btn btn-warning" onclick="debugToken()">Debug Token</button>
-        <button class="btn btn-info" onclick="checkSystemStatus()">System Check</button>
+        <button class="btn btn-success" id="viewUsersBtn">Benutzer verwalten</button><button class="btn btn-primary" id="openCreateUserModalBtn">Neuen Benutzer anlegen</button>
+        <button class="btn btn-secondary" id="viewSystemLogsBtn">System-Logs</button><button class="btn btn-warning" id="debugTokenBtn">Debug Token</button>
+        <button class="btn btn-info" id="checkSystemStatusBtn">System Check</button>
       </div>
     </div>
   </div>
 
-  <!-- Daten-Anzeige Bereich -->
   <div class="card" id="dataDisplay" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h2 id="dataTitle">Daten</h2>
-      <button class="btn btn-secondary" onclick="hideDataDisplay()">Schließen</button>
+      <h2 id="dataTitle">Daten</h2><button id="hideDataDisplayBtn" class="btn btn-secondary">Schließen</button>
     </div>
-    <div id="dataContent">
-      <div class="loading">🔄 Lade Daten...</div>
-    </div>
+    <div id="dataContent"><div class="loading">🔄 Lade Daten...</div></div>
   </div>
-
-  <div class="loading" id="loading">
-    🔄 Lade Dashboard-Daten...
-  </div>
+  <div class="loading" id="loading" style="display: none;">🔄 Lade Dashboard-Daten...</div>
 </div>
 
-<!-- Modal für manuellen Zeiteintrag -->
+<!-- Modal: Manueller Zeiteintrag -->
 <div id="manualEntryModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('manualEntryModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>📝 Manueller Zeiteintrag</h2>
-
-    <div class="system-info">
-      <strong>ℹ️ Hinweis:</strong> Pro Tag ist nur ein Zeiteintrag möglich. Wählen Sie ein Datum ohne vorhandenen Eintrag.
-    </div>
-
     <form id="manualEntryForm">
-      <div class="form-group">
-        <label for="manualDate">Datum:</label>
-        <input type="date" id="manualDate" required>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="manualStartTime">Startzeit:</label>
-          <input type="time" id="manualStartTime" required>
-        </div>
-        <div class="form-group">
-          <label for="manualEndTime">Endzeit:</label>
-          <input type="time" id="manualEndTime" required>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="manualBreakStartTime">Pause Startzeit:</label>
-          <input type="time" id="manualBreakStartTime">
-        </div>
-        <div class="form-group">
-          <label for="manualBreakEndTime">Pause Endzeit:</label>
-          <input type="time" id="manualBreakEndTime">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="manualProject">Projekt (optional):</label>
-        <select id="manualProject">
-          <option value="">Kein Projekt</option>
-        </select>
-      </div>
-
-      <div class="calculated-time">
-        <div>Berechnete Arbeitszeit:</div>
-        <div class="calculated-hours" id="calculatedHours">00:00</div>
-      </div>
-
-      <div class="action-buttons">
-        <button type="submit" class="btn btn-primary">Eintrag erstellen</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('manualEntryModal')">Abbrechen</button>
-      </div>
+      <div class="form-group"><label for="manualDate">Datum:</label><input type="date" id="manualDate" required></div>
+      <div class="form-row"><div class="form-group"><label for="manualStartTime">Startzeit:</label><input type="time" id="manualStartTime" required></div><div class="form-group"><label for="manualEndTime">Endzeit:</label><input type="time" id="manualEndTime" required></div></div>
+      <div class="form-row"><div class="form-group"><label for="manualBreakStartTime">Pause Start:</label><input type="time" id="manualBreakStartTime"></div><div class="form-group"><label for="manualBreakEndTime">Pause Ende:</label><input type="time" id="manualBreakEndTime"></div></div>
+      <div class="form-group"><label for="manualProject">Projekt:</label><select id="manualProject"><option value="">Kein Projekt</option></select></div>
+      <div class="calculated-time"><div>Berechnete Arbeitszeit:</div><div class="calculated-hours" id="calculatedHours">00:00</div></div>
+      <div class="action-buttons"><button type="submit" class="btn btn-primary">Eintrag erstellen</button><button type="button" id="cancelManualEntryBtn" class="btn btn-secondary">Abbrechen</button></div>
     </form>
   </div>
 </div>
+
+<!-- Modal: Zeiteintrag bearbeiten -->
 <div id="editTimeEntryModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('editTimeEntryModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>📝 Zeiteintrag bearbeiten</h2>
     <form id="editTimeEntryForm">
       <input type="hidden" id="editTimeEntryId">
-
-      <div class="form-group">
-        <label for="editDate">Datum:</label>
-        <input type="date" id="editDate" class="form-input" required>
-      </div>
-
-      <hr style="margin: 1rem 0;">
-      <h4>Arbeitszeiten</h4>
-      <div id="editTimeSlotsContainer">
-
-      </div>
-      <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditTimeSlot()">+ Arbeitszeit-Slot hinzufügen</button>
-
-      <hr style="margin: 1rem 0;">
-      <h4>Pausen</h4>
-      <div id="editBreakSlotsContainer">
-      </div>
-      <button type="button" class="btn btn-secondary btn-small" style="margin-top: 0.5rem; margin-bottom: 1rem;" onclick="addEditBreakSlot()">+ Pause hinzufügen</button>
-
-      <hr style="margin: 1rem 0;">
-
-      <div class="form-group">
-        <label for="editProject">Projekt:</label>
-        <select id="editProject" class="form-input">
-          <option value="">Kein Projekt</option>
-
-        </select>
-      </div>
-
-      <div class="calculated-time" style="margin-top: 1rem;">
-        <div>Berechnete Arbeitszeit (wird nach Speichern serverseitig aktualisiert):</div>
-        <div class="calculated-hours" id="editCalculatedHours">--:--</div>
-      </div>
-      <div class="action-buttons" style="margin-top: 1.5rem;">
-        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('editTimeEntryModal')">Abbrechen</button>
-      </div>
+      <div class="form-group"><label for="editDate">Datum:</label><input type="date" id="editDate" class="form-input" required></div>
+      <hr><h4 id="editTimeSlotsTitle">Arbeitszeiten</h4><div id="editTimeSlotsContainer"></div>
+      <button type="button" id="addEditTimeSlotBtn" class="btn btn-secondary btn-small" style="margin:0.5rem 0 1rem;">+ Arbeitszeit-Slot</button>
+      <hr><h4 id="editBreakSlotsTitle">Pausen</h4><div id="editBreakSlotsContainer"></div>
+      <button type="button" id="addEditBreakSlotBtn" class="btn btn-secondary btn-small" style="margin:0.5rem 0 1rem;">+ Pause</button>
+      <hr><div class="form-group"><label for="editProject">Projekt:</label><select id="editProject" class="form-input"><option value="">Kein Projekt</option></select></div>
+      <div class="calculated-time"><div>Berechnete Arbeitszeit:</div><div class="calculated-hours" id="editCalculatedHours">--:--</div></div>
+      <div class="action-buttons"><button type="submit" class="btn btn-primary">Änderungen speichern</button><button type="button" id="cancelEditTimeEntryBtn" class="btn btn-secondary">Abbrechen</button></div>
     </form>
   </div>
 </div>
-<!-- Modal für Projekt erstellen -->
+
+<!-- Modal: Neues Projekt -->
 <div id="createProjectModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('createProjectModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>Neues Projekt erstellen</h2>
     <form id="createProjectForm">
-      <div class="form-group">
-        <label for="projectName">Projektname:</label>
-        <input type="text" id="projectName" required>
-      </div>
-      <div class="form-group">
-        <label for="projectDescription">Beschreibung:</label>
-        <textarea id="projectDescription" rows="3"></textarea>
-      </div>
-      <div class="form-group">
-        <label for="projectManager">Projektmanager:</label>
-        <select id="projectManager" required>
-          <option value="">Wählen Sie einen Manager</option>
-        </select>
-      </div>
-      <div class="action-buttons">
-        <button type="submit" class="btn btn-primary">Erstellen</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('createProjectModal')">Abbrechen</button>
-      </div>
+      <div class="form-group"><label for="projectName">Projektname:</label><input type="text" id="projectName" required></div>
+      <div class="form-group"><label for="projectDescription">Beschreibung:</label><textarea id="projectDescription" rows="3"></textarea></div>
+      <div class="form-group"><label for="projectManager">Manager:</label><select id="projectManager" required><option value="">Manager wählen</option></select></div>
+      <div class="action-buttons"><button type="submit" class="btn btn-primary">Erstellen</button><button type="button" id="cancelCreateProjectBtn" class="btn btn-secondary">Abbrechen</button></div>
     </form>
   </div>
 </div>
 
-<!-- Modal für Abwesenheit erstellen -->
+<!-- Modal: Abwesenheit beantragen -->
 <div id="createAbsenceModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('createAbsenceModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>Abwesenheit beantragen</h2>
     <form id="createAbsenceForm">
-      <div class="form-group">
-        <label for="absenceType">Typ:</label>
-        <select id="absenceType" required>
-          <option value="">Bitte wählen...</option>
-          <option value="VACATION">Urlaub</option>
-          <option value="ILLNESS">Krankheit</option>
-          <option value="HOME_OFFICE">Home Office</option>
-          <option value="TRAINING">Fortbildung</option>
-          <option value="OTHER">Sonstiges</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="startDate">Von:</label>
-        <input type="date" id="startDate" required>
-      </div>
-      <div class="form-group">
-        <label for="endDate">Bis:</label>
-        <input type="date" id="endDate" required>
-      </div>
-      <div class="action-buttons">
-        <button type="submit" class="btn btn-primary">Beantragen</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('createAbsenceModal')">Abbrechen</button>
-      </div>
+      <div class="form-group"><label for="absenceType">Typ:</label><select id="absenceType" required><option value="">Wählen...</option><option value="VACATION">Urlaub</option><option value="ILLNESS">Krankheit</option><option value="HOME_OFFICE">Home Office</option><option value="TRAINING">Fortbildung</option><option value="OTHER">Sonstiges</option></select></div>
+      <div class="form-group"><label for="startDate">Von:</label><input type="date" id="startDate" required></div>
+      <div class="form-group"><label for="endDate">Bis:</label><input type="date" id="endDate" required></div>
+      <div class="action-buttons"><button type="submit" class="btn btn-primary">Beantragen</button><button type="button" id="cancelCreateAbsenceBtn" class="btn btn-secondary">Abbrechen</button></div>
     </form>
   </div>
 </div>
 
-<!-- Modal für Duplikat-Info -->
+<!-- Modal: Duplikat-Info -->
 <div id="duplicateInfoModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('duplicateInfoModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>📅 Zeiteintrag bereits vorhanden</h2>
-
-    <div class="duplicate-info">
-      <h4>Für das gewählte Datum existiert bereits ein Zeiteintrag!</h4>
-      <p>Das System erlaubt nur einen Zeiteintrag pro Tag. Sie haben folgende Optionen:</p>
-
-      <ul>
-        <li><strong>Vorhandenen Eintrag bearbeiten:</strong> Klicken Sie auf "Einträge anzeigen" und bearbeiten Sie den bestehenden Eintrag</li>
-        <li><strong>Anderes Datum wählen:</strong> Wählen Sie ein Datum ohne vorhandenen Eintrag</li>
-        <li><strong>Live-Zeiterfassung verwenden:</strong> Nutzen Sie Start/Stopp für aktuelle Zeiterfassung</li>
-      </ul>
-    </div>
-
-    <div class="action-buttons">
-      <button class="btn btn-primary" onclick="viewTimeEntries(); closeModal('duplicateInfoModal');">Einträge anzeigen</button>
-      <button class="btn btn-info" onclick="openManualEntryModal(); closeModal('duplicateInfoModal');">Anderes Datum wählen</button>
-      <button class="btn btn-secondary" onclick="closeModal('duplicateInfoModal')">Schließen</button>
-    </div>
+    <div class="duplicate-info"><h4>Für das gewählte Datum existiert bereits ein Zeiteintrag!</h4><p>Optionen:</p><ul><li>Bearbeiten</li><li>Anderes Datum</li><li>Live-Timer</li></ul></div>
+    <div class="action-buttons"><button id="duplicateInfoViewEntriesBtn" class="btn btn-primary">Einträge anzeigen</button><button id="duplicateInfoChangeDateBtn" class="btn btn-info">Anderes Datum</button><button id="duplicateInfoCloseBtn" class="btn btn-secondary">Schließen</button></div>
   </div>
 </div>
 
+<!-- Modal: Projekt Details -->
 <div id="projectDetailModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('projectDetailModal')">&times;</span>
+    <span class="close">&times;</span>
     <h2>Projekt Details: <span id="detailProjectName"></span></h2>
     <div id="projectDetailContent">
-      <p><strong>Beschreibung:</strong> <span id="detailProjectDescription"></span></p>
-      <p><strong>Manager:</strong> <span id="detailProjectManager"></span></p>
-      <p><strong>Status:</strong> <span id="detailProjectStatus"></span></p>
-      <p><strong>Erstellt am:</strong> <span id="detailProjectCreatedAt"></span></p>
-      <p><strong>Zuletzt aktualisiert:</strong> <span id="detailProjectUpdatedAt"></span></p>
-      <hr>
-      <h3>Projekt-Statistiken</h3>
-      <p><strong>Gesamt gebuchte Stunden:</strong> <span id="detailProjectTotalHours"></span></p>
-      <p><strong>Anzahl beteiligter Mitarbeiter:</strong> <span id="detailProjectInvolvedEmployees"></span></p>
-      <h4 style="margin-top: 1rem;">Beteiligte Mitarbeiter:</h4>
-      <ul id="detailProjectUsersList">
-      </ul>
+      <div class="form-group">
+        <label>Name:</label>
+        <span id="detailProjectName"></span>
+      </div>
+      <div class="form-group">
+        <label>Beschreibung:</label>
+        <span id="detailProjectDescription"></span>
+      </div>
+      <div class="form-group">
+        <label>Manager:</label>
+        <span id="detailProjectManager"></span>
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <span id="detailProjectStatus"></span>
+      </div>
+      <div class="form-group">
+        <label>Erstellt am:</label>
+        <span id="detailProjectCreatedAt"></span>
+      </div>
+      <div class="form-group">
+        <label>Aktualisiert am:</label>
+        <span id="detailProjectUpdatedAt"></span>
+      </div>
+      <div class="form-group">
+        <label>Gesamtstunden:</label>
+        <span id="detailProjectTotalHours"></span>
+      </div>
+      <div class="form-group">
+        <label>Beteiligte Mitarbeiter:</label>
+        <span id="detailProjectInvolvedEmployees"></span>
+      </div>
+      <div class="form-group">
+        <label>Mitarbeiterliste:</label>
+        <ul id="detailProjectUsersList"></ul>
+      </div>
 
-      <div id="projectEditSection" style="display: none; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+      <!-- Projekt-Bearbeitung (nur für Admins/Manager) -->
+      <div id="projectEditSection" style="display: none;">
+        <hr>
         <h3>Projekt bearbeiten</h3>
         <form id="editProjectForm">
           <input type="hidden" id="editProjectId">
-
           <div class="form-group">
             <label for="editProjectStatus">Status:</label>
-            <select id="editProjectStatus" class="form-input">
+            <select id="editProjectStatus">
               <option value="true">Aktiv</option>
               <option value="false">Inaktiv</option>
             </select>
           </div>
-
           <div class="form-group">
-            <label for="editProjectManager">Projektmanager:</label>
-            <select id="editProjectManager" class="form-input">
+            <label for="editProjectManager">Manager:</label>
+            <select id="editProjectManager">
               <option value="">Nicht zugewiesen</option>
             </select>
           </div>
-
           <div class="action-buttons">
-            <button type="submit" class="btn btn-primary" id="saveProjectChangesBtn">Änderungen speichern</button>
-            <button type="button" class="btn btn-danger" id="deleteProjectBtn" style="display:none;">Projekt löschen (Admin)</button>
+            <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+            <button type="button" id="deleteProjectBtn" class="btn btn-danger" style="display: none;">Projekt deaktivieren</button>
           </div>
         </form>
       </div>
     </div>
-  </div>
-</div>
-
-<div id="userDetailModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal('userDetailModal')">&times;</span>
-    <h2>Benutzerdetails: <span id="detailUserName"></span></h2>
-    <div id="userDetailContent">
-      <p><strong>E-Mail:</strong> <span id="detailUserEmail"></span></p>
-      <p><strong>Status:</strong> <span id="detailUserStatus"></span></p>
-      <p><strong>Geplante Stunden/Tag:</strong> <span id="detailUserPlannedHours"></span></p>
-      <p><strong>Erstellt am:</strong> <span id="detailUserCreatedAt"></span></p>
-      <p><strong>Zuletzt aktualisiert:</strong> <span id="detailUserUpdatedAt"></span></p>
-      <hr>
-      <h3>Rollen verwalten</h3>
-      <div id="userRolesList"></div>
-      <div class="form-group" style="margin-top: 1rem;">
-        <label for="addRoleSelect">Rolle hinzufügen:</label>
-        <select id="addRoleSelect" class="form-input">
-        </select>
-        <button class="btn btn-secondary btn-small" onclick="addRoleToUser()">Hinzufügen</button>
-      </div>
-
-      <div class="form-group" style="margin-top: 1rem;">
-        <label for="userStatusSelect">Benutzerstatus ändern:</label>
-        <select id="userStatusSelect" class="form-input">
-          <option value="ACTIVE">Aktiv</option>
-          <option value="INACTIVE">Inaktiv</option>
-          <option value="LOCKED">Gesperrt</option>
-          <option value="VACATION">Im Urlaub</option>
-        </select>
-        <button class="btn btn-primary btn-small" onclick="updateUserStatus()">Status speichern</button>
-      </div>
-
-      <div class="action-buttons" style="margin-top: 2rem;">
-        <button class="btn btn-danger" onclick="resetUserPasswordFromDetails()">Passwort zurücksetzen</button>
-      </div>
+    <div class="action-buttons" style="margin-top:1rem;">
+      <button type="button" id="closeProjectDetailModalBtn" class="btn btn-secondary">Schließen</button>
     </div>
   </div>
 </div>
 
-<div id="createUserModal" class="modal">
+<!-- Modal: Benutzer Details -->
+<div id="userDetailModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('createUserModal')">&times;</span>
-    <h2>Neuen Benutzer anlegen</h2>
-    <form id="createUserForm">
+    <span class="close">&times;</span>
+    <h2>Benutzerdetails: <span id="detailUserName"></span></h2>
+    <div id="userDetailContent">
       <div class="form-group">
-        <label for="newFirstName">Vorname:</label>
-        <input type="text" id="newFirstName" class="form-input" required>
+        <label>Name:</label>
+        <span id="detailUserName"></span>
       </div>
       <div class="form-group">
-        <label for="newLastName">Nachname:</label>
-        <input type="text" id="newLastName" class="form-input" required>
+        <label>E-Mail:</label>
+        <span id="detailUserEmail"></span>
       </div>
       <div class="form-group">
-        <label for="newEmail">E-Mail-Adresse:</label>
-        <input type="email" id="newEmail" class="form-input" required>
+        <label>Status:</label>
+        <span id="detailUserStatus"></span>
       </div>
       <div class="form-group">
-        <label for="newUserRole">Rolle:</label>
-        <select id="newUserRole" class="form-input" required>
+        <label>Geplante Stunden/Tag:</label>
+        <span id="detailUserPlannedHours"></span>
+      </div>
+      <div class="form-group">
+        <label>Erstellt am:</label>
+        <span id="detailUserCreatedAt"></span>
+      </div>
+      <div class="form-group">
+        <label>Aktualisiert am:</label>
+        <span id="detailUserUpdatedAt"></span>
+      </div>
+      <div class="form-group">
+        <label>Rollen:</label>
+        <div id="userRolesList"></div>
+      </div>
+
+      <!-- Benutzer-Verwaltung -->
+      <hr>
+      <h3>Benutzer verwalten</h3>
+      <div class="form-group">
+        <label for="userStatusSelect">Status ändern:</label>
+        <select id="userStatusSelect">
+          <option value="ACTIVE">Aktiv</option>
+          <option value="INACTIVE">Inaktiv</option>
+          <option value="SUSPENDED">Gesperrt</option>
         </select>
+        <button type="button" id="updateUserStatusBtn" class="btn btn-warning btn-small" style="margin-left: 10px;">Status aktualisieren</button>
       </div>
       <div class="form-group">
-        <label for="newPlannedHours">Geplante Stunden pro Tag:</label>
-        <input type="number" id="newPlannedHours" class="form-input" value="8.0" min="1" step="0.5" required>
+        <label for="addRoleSelect">Rolle hinzufügen:</label>
+        <select id="addRoleSelect">
+          <option value="">Rolle auswählen</option>
+        </select>
+        <button type="button" id="addRoleBtn" class="btn btn-success btn-small" style="margin-left: 10px;">Rolle hinzufügen</button>
       </div>
-      <p class="system-info">ℹ️ Das Initialpasswort ist standardmässig der Nachname (kleingeschrieben).</p>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" id="createUserSubmitBtn">Benutzer anlegen</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('createUserModal')">Abbrechen</button>
+      <div class="form-group">
+        <button type="button" id="resetPasswordBtn" class="btn btn-danger">Passwort zurücksetzen</button>
       </div>
-    </form>
-    <div id="createUserFeedback" class="success" style="display: none;"></div>
-    <div id="createUserError" class="error" style="display: none;"></div>
+    </div>
+    <div class="action-buttons" style="margin-top:1rem;">
+      <button type="button" id="closeUserDetailModalBtn" class="btn btn-secondary">Schließen</button>
+    </div>
   </div>
 </div>
 
-<script>
-  // ========================================
-  // GLOBALE VARIABLEN
-  // ========================================
-  let currentUser = null;
-  let jwtToken = localStorage.getItem('jwtToken');
-  let timerInterval = null;
-  let startTime = null;
-  let activeTimeEntry = null;
-  let projects = [];
-  let DEBUG_MODE = true; // Für Entwicklung
-  let selectedUserForDetails = null; // Speichert den Benutzer, dessen Details angezeigt werden
-
-
-  // ========================================
-  // VERBESSERTE API-FUNKTIONEN
-  // ========================================
-  async function apiCall(url, options = {}) {
-    try {
-      const token = localStorage.getItem('jwtToken');
-
-      if (DEBUG_MODE) {
-        console.log('🔍 API Call:', {
-          url: url,
-          method: options.method || 'GET',
-          hasToken: !!token,
-          tokenStart: token ? token.substring(0, 20) + '...' : 'NONE'
-        });
-      }
-
-      if (!token) {
-        throw new Error('Kein JWT Token gefunden. Bitte melden Sie sich an.');
-      }
-
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          ...options.headers
-        },
-        body: options.body ? (typeof options.body === 'string' ? options.body : JSON.stringify(options.body)) : undefined
-      });
-
-      if (DEBUG_MODE) {
-        console.log('📥 API Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: url
-        });
-      }
-
-      if (response.status === 401) {
-        console.log('🔒 Token ungültig - Automatische Weiterleitung zur Anmeldung');
-        showError('Sitzung abgelaufen. Sie werden zur Anmeldung weitergeleitet...');
-        setTimeout(() => {
-          localStorage.clear();
-          window.location.href = '/';
-        }, 2000);
-        return;
-      }
-
-      if (response.status === 403) {
-        console.log('🚫 Zugriff verweigert (403) - Details:', {
-          url,
-          method: options.method || 'GET',
-          userEmail: localStorage.getItem('userEmail'),
-          userRoles: localStorage.getItem('userRoles')
-        });
-        throw new Error(`Zugriff verweigert (403). Möglicherweise fehlen Berechtigungen für: ${url}`);
-      }
-
-      if (!response.ok) {
-        // ✅ VERBESSERTE FEHLERBEHANDLUNG - Backend-Fehlermeldung extrahieren
-        let errorMessage = `HTTP ${response.status} ${response.statusText}`;
-
-        try {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await response.json();
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            } else if (errorData.error) {
-              errorMessage = errorData.error;
-            } else if (typeof errorData === 'string') {
-              errorMessage = errorData;
-            }
-          } else {
-            const errorText = await response.text();
-            if (errorText && errorText.trim()) {
-              errorMessage = errorText;
-            }
-          }
-        } catch (parseError) {
-          console.log('⚠️ Konnte Fehlermessage nicht parsen:', parseError);
-        }
-
-        if (DEBUG_MODE) {
-          console.log('❌ API Error Details:', {
-            status: response.status,
-            originalMessage: errorMessage,
-            url: url
-          });
-        }
-
-        // ✅ SPEZIELLE KENNZEICHNUNG für Duplikat-Fehler
-        if (errorMessage.includes('bereits ein Zeiteintrag') || errorMessage.includes('existiert bereits')) {
-          throw new Error('DUPLICATE_ENTRY|' + errorMessage);
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        if (DEBUG_MODE) {
-          console.log('✅ API Success Data:', data);
-        }
-        return data;
-      } else {
-        const text = await response.text();
-        if (DEBUG_MODE) {
-          console.log('✅ API Success Text:', text);
-        }
-        return text;
-      }
-    } catch (error) {
-      console.error('🔥 API Call Error:', error);
-      throw error;
-    }
-  }
-
-  // ========================================
-  // DASHBOARD-DATEN
-  // ========================================
-  async function loadDashboardData(forceRefresh = false) {
-    try {
-      console.log('📊 Lade Dashboard-Daten...', forceRefresh ? '(Force Refresh)' : '');
-      const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
-
-      // Zeiteinträge laden (Ihre bestehende Logik)
-      const timeEntriesResponse = await apiCall(`/api/time-entries${cacheBuster}`);
-      if (timeEntriesResponse && timeEntriesResponse.entries) {
-        const todayEntries = timeEntriesResponse.entries.filter(entry => {
-          const entryDate = new Date(entry.date);
-          const today = new Date();
-          return entryDate.toDateString() === today.toDateString();
-        });
-        document.getElementById('entryCount').textContent = todayEntries.length;
-        document.getElementById('totalHours').textContent = calculateWeekHours(timeEntriesResponse.entries);
-      }
-
-      // Projekte laden und Dropdowns füllen
-      const projectsResponse = await apiCall(`/api/projects/active${cacheBuster}`);
-      if (projectsResponse && projectsResponse.projects) {
-        projects = projectsResponse.projects; // Projekte global speichern für spätere Verwendung
-        document.getElementById('projectCount').textContent = projects.length;
-
-        // Dropdown für manuellen Eintrag füllen
-        populateProjectDropdown(document.getElementById('manualProject'), projects);
-        // Dropdown für Bearbeitungs-Modal füllen (wird später beim Öffnen des Modals spezifisch gesetzt)
-        populateProjectDropdown(document.getElementById('editProject'), projects);
-      }
-
-      // Abwesenheiten laden (Ihre bestehende Logik)
-      const absencesResponse = await apiCall(`/api/absences${cacheBuster}`);
-      if (absencesResponse && absencesResponse.absences) {
-        const pending = absencesResponse.absences.filter(absence => !absence.approved);
-        document.getElementById('pendingAbsences').textContent = pending.length;
-      }
-
-      document.getElementById('loading').style.display = 'none';
-      console.log('✅ Dashboard-Daten erfolgreich geladen, inkl. Projekte für Dropdowns');
-
-    } catch (error) {
-      console.error('❌ Fehler beim Laden der Dashboard-Daten:', error);
-      showError('Fehler beim Laden der Dashboard-Daten: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-      document.getElementById('loading').style.display = 'none';
-    }
-  }
-
-  // Hilfsfunktion zum Befüllen von Projekt-Dropdowns
-  function populateProjectDropdown(selectElement, projectList, selectedProjectId = null) {
-    if (!selectElement) return;
-    selectElement.innerHTML = '<option value="">Kein Projekt</option>'; // Standardoption
-    projectList.forEach(project => {
-      const option = document.createElement('option');
-      option.value = project.id;
-      option.textContent = project.name;
-      // Wenn eine selectedProjectId übergeben wird und sie mit der aktuellen Projekt-ID übereinstimmt,
-      // wird diese Option vorausgewählt.
-      if (selectedProjectId && project.id.toString() === selectedProjectId.toString()) {
-        option.selected = true;
-      }
-      selectElement.appendChild(option);
-    });
-  }
-
-  // ========================================
-  // ZEITERFASSUNG MIT DUPLIKAT-BEHANDLUNG
-  // ========================================
-  async function startTimeTracking() {
-    try {
-      console.log('🚀 Starte Zeiterfassung...');
-      hideAllMessages(); // Vorherige Nachrichten löschen
-
-      const today = new Date().toISOString().split('T')[0];
-      const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5);
-
-      const timeEntryData = {
-        date: today,
-        startTimes: [currentTime],
-        endTimes: [],
-        breaks: [],
-        projectId: null
-      };
-
-      console.log('📤 Sende Zeiterfassung-Daten:', timeEntryData);
-
-      const response = await apiCall('/api/time-entries', {
-        method: 'POST',
-        body: JSON.stringify(timeEntryData)
-      });
-
-      if (response) {
-        activeTimeEntry = response;
-        startTime = now;
-        startTimer();
-
-        document.getElementById('startTimer').style.display = 'none';
-        document.getElementById('stopTimer').style.display = 'inline-block';
-
-        showSuccess('✅ Zeiterfassung gestartet!');
-        console.log('✅ Zeiterfassung erfolgreich gestartet');
-
-        await loadDashboardData(true);
-      }
-    } catch (error) {
-      console.error('❌ Zeiterfassung Fehler:', error);
-
-      // ✅ SPEZIELLE BEHANDLUNG für Duplikat-Fehler
-      if (error.message.startsWith('DUPLICATE_ENTRY')) {
-        showDuplicateEntryInfo('heute');
-      } else if (error.message.includes('bereits ein Zeiteintrag')) {
-        showDuplicateEntryInfo('heute');
-      } else if (error.message.includes('403')) {
-        showError('🔒 Zugriff verweigert. Überprüfen Sie Ihre Berechtigungen oder melden Sie sich neu an.');
-      } else if (error.message.includes('401')) {
-        showError('🔒 Sitzung abgelaufen. Sie werden zur Anmeldung weitergeleitet...');
-        setTimeout(() => {
-          localStorage.clear();
-          window.location.href = '/';
-        }, 3000);
-      } else {
-        showError('❌ Fehler beim Starten der Zeiterfassung: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-      }
-    }
-  }
-
-  async function stopTimeTracking() {
-    if (!activeTimeEntry || !startTime) {
-      showError('Keine aktive Zeiterfassung gefunden');
-      return;
-    }
-
-    try {
-      const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5);
-
-      const updateData = {
-        date: activeTimeEntry.date || new Date().toISOString().split('T')[0],
-        startTimes: activeTimeEntry.startTimes || [startTime.toTimeString().slice(0, 5)],
-        endTimes: [currentTime],
-        breaks: activeTimeEntry.breaks || [],
-        projectId: activeTimeEntry.projectId
-      };
-
-      console.log('🛑 Stoppe Zeiterfassung:', updateData);
-
-      const response = await apiCall(`/api/time-entries/${activeTimeEntry.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(updateData)
-      });
-
-      if (response) {
-        const workedMinutes = Math.floor((now - startTime) / (1000 * 60));
-        const hours = Math.floor(workedMinutes / 60);
-        const minutes = workedMinutes % 60;
-        const actualHours = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-        stopTimer();
-
-        // ✅ VOLLSTÄNDIGES RESET
-        activeTimeEntry = null;
-        startTime = null;
-
-        document.getElementById('startTimer').style.display = 'inline-block';
-        document.getElementById('stopTimer').style.display = 'none';
-
-        showSuccess(`✅ Zeiterfassung gestoppt! Arbeitszeit: ${actualHours}`);
-
-        await loadDashboardData(true);
-        console.log('✅ Zeiterfassung erfolgreich gestoppt');
-      }
-    } catch (error) {
-      console.error('❌ Fehler beim Stoppen der Zeiterfassung:', error);
-      showError('❌ Fehler beim Stoppen der Zeiterfassung: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  // Timer-Funktionen
-  function startTimer() {
-    timerInterval = setInterval(updateTimer, 1000);
-    document.getElementById('timerDisplay').classList.add('timer-running');
-  }
-
-  function stopTimer() {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-    document.getElementById('timerDisplay').classList.remove('timer-running');
-    document.getElementById('timerDisplay').textContent = '00:00:00';
-  }
-
-  function updateTimer() {
-    if (!startTime) return;
-
-    const now = new Date();
-    const diff = now - startTime;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    document.getElementById('timerDisplay').textContent =
-            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  async function checkActiveTimer() {
-    // Vereinfacht - könnte hier prüfen ob bereits aktive Zeiterfassung läuft
-    console.log('🔍 Prüfe aktive Timer...');
-  }
-
-  // ========================================
-  // MANUELLER ZEITEINTRAG MIT DUPLIKAT-SCHUTZ
-  // ========================================
-  function openManualEntryModal() {
-    const today = new Date().toISOString().split('T')[0];
-
-    // Standard auf gestern setzen, da heute möglicherweise bereits belegt
-    // Für heute ist gedacht, dass man den "Zeit starten"-Button nutzt
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-    document.getElementById('manualDate').value = yesterdayStr;
-
-    loadProjectsForManualEntry();
-    document.getElementById('manualEntryModal').style.display = 'block';
-
-    // Standard-Arbeitszeiten setzen
-    document.getElementById('manualStartTime').value = '08:00';
-    document.getElementById('manualEndTime').value = '17:00';
-    //document.getElementById('manualBreakMinutes').value = '60';
-
-    document.getElementById('manualBreakStartTime').value = '12:00';
-    document.getElementById('manualBreakEndTime').value = '12:30';
-
-    calculateWorkTime();
-  }
-
-  // Manager laden für Projekterstellung PD
-  // Quelle: ChatGPT.com
-  async function loadManagersForProjectCreation() {
-    try {
-      // Alle Benutzer vom Admin-Endpunkt abrufen
-      const response = await apiCall('/api/admin/users');
-      const managerSelect = document.getElementById('projectManager');
-      managerSelect.innerHTML = '<option value="">Wählen Sie einen Manager</option>'; // Optionen zurücksetzen
-
-      if (response && Array.isArray(response)) {
-        response.forEach(user => {
-          // Prüfen, ob der Benutzer die Rolle "ADMIN" oder "MANAGER" hat
-          const userRoles = user.roles || [];
-          const isManagerOrAdmin = userRoles.some(role =>
-                  role === 'ADMIN' || role === 'ROLE_ADMIN' || role === 'MANAGER' || role === 'ROLE_MANAGER'
-          );
-
-          if (isManagerOrAdmin) {
-            const option = document.createElement('option');
-            option.value = user.id;
-            option.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
-            managerSelect.appendChild(option);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Manager:', error);
-      showError('Fehler beim Laden der Manager-Liste: ' + error.message);
-    }
-  }
-
-  // Passen Sie den createProjectForm Event Listener an
-  document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const projectName = document.getElementById('projectName').value;
-    const projectDescription = document.getElementById('projectDescription').value;
-    const projectManagerId = document.getElementById('projectManager').value; // Ausgewählte Manager-ID abrufen
-
-    if (!projectManagerId) { // Überprüfen, ob ein Manager ausgewählt wurde
-      showError('Bitte wählen Sie einen Projektmanager aus.');
-      return;
-    }
-
-    const projectData = {
-      name: projectName,
-      description: projectDescription,
-      managerId: parseInt(projectManagerId) // Sicherstellen, dass es eine Ganzzahl ist
-    };
-
-    try {
-      const response = await apiCall('/api/projects', {
-        method: 'POST',
-        body: JSON.stringify(projectData)
-      });
-
-      if (response) {
-        showSuccess('✅ Projekt erfolgreich erstellt!');
-        closeModal('createProjectModal');
-        document.getElementById('createProjectForm').reset();
-        await loadDashboardData(true);
-      }
-    } catch (error) {
-      showError('❌ Fehler beim Erstellen des Projekts: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  });
-
-  async function loadProjectsForManualEntry() {
-    try {
-      const response = await apiCall('/api/projects/active');
-      const projectSelect = document.getElementById('manualProject');
-
-      projectSelect.innerHTML = '<option value="">Kein Projekt</option>';
-
-      if (response && response.projects) {
-        response.projects.forEach(project => {
-          const option = document.createElement('option');
-          option.value = project.id;
-          option.textContent = project.name;
-          projectSelect.appendChild(option);
-        });
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Projekte:', error);
-    }
-  }
-
-  // Pausen Start und Endzeit angepasst - PD
-  // Quelle: ChatGPT.com
-  function calculateWorkTime() {
-    const startTimeStr = document.getElementById('manualStartTime').value;
-    const endTimeStr = document.getElementById('manualEndTime').value;
-    const breakStartTimeStr = document.getElementById('manualBreakStartTime').value;
-    const breakEndTimeStr = document.getElementById('manualBreakEndTime').value;
-
-    if (startTimeStr && endTimeStr) {
-      const startDate = new Date(`2000-01-01T${startTimeStr}`);
-      const endDate = new Date(`2000-01-01T${endTimeStr}`);
-      let workDurationMs = endDate - startDate;
-
-      let breakDurationMs = 0;
-      if (breakStartTimeStr && breakEndTimeStr) {
-        const breakStartDate = new Date(`2000-01-01T${breakStartTimeStr}`);
-        const breakEndDate = new Date(`2000-01-01T${breakEndTimeStr}`);
-        if (breakEndDate > breakStartDate) {
-          breakDurationMs = breakEndDate - breakStartDate;
-          workDurationMs -= breakDurationMs;
-        }
-      }
-
-      if (workDurationMs < 0) workDurationMs = 0;
-
-      const totalMinutes = Math.round(workDurationMs / (1000 * 60));
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-
-      document.getElementById('calculatedHours').textContent =
-              `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-      // Rückgabe der reinen Arbeitszeit und Pausenzeit in Minuten für die Validierung
-      return {
-        workTimeInMinutes: totalMinutes,
-        breakTimeInMinutes: Math.round(breakDurationMs / (1000 * 60))
-      };
-    } else {
-      document.getElementById('calculatedHours').textContent = '00:00';
-      return { workTimeInMinutes: 0, breakTimeInMinutes: 0 };
-    }
-  }
-
-  function validateBreakTime(workTimeInMinutes, breakTimeInMinutes) {
-    const workTimeHours = workTimeInMinutes / 60;
-
-    if (workTimeHours > 9) {
-      if (breakTimeInMinutes < 60) {
-        return "Bei einer Arbeitszeit von mehr als 9 Stunden ist mindestens 1 Stunde Pause erforderlich.";
-      }
-    } else if (workTimeHours > 7) {
-      if (breakTimeInMinutes < 30) {
-        return "Bei einer Arbeitszeit von mehr als 7 Stunden sind mindestens 30 Minuten Pause erforderlich.";
-      }
-    } else if (workTimeHours > 5.5) {
-      if (breakTimeInMinutes < 15) {
-        return "Bei einer Arbeitszeit von mehr als 5,5 Stunden sind mindestens 15 Minuten Pause erforderlich.";
-      }
-    }
-    return null; // Kein Fehler
-  }
-
-
-  // ========================================
-  // DUPLIKAT-BEHANDLUNG
-  // ========================================
-  function showDuplicateEntryInfo(dateText = 'das gewählte Datum') {
-    hideAllMessages();
-
-    // Zeige spezielle Duplikat-Info
-    showWarning(`📅 Für ${dateText} existiert bereits ein Zeiteintrag!
-
-Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
-• Vorhandenen Eintrag bearbeiten (Einträge anzeigen)
-• Anderes Datum für manuellen Eintrag wählen
-• Live-Zeiterfassung für heute verwenden (falls möglich)`);
-
-    // Automatisch nach 5 Sekunden Zeiteinträge anzeigen
-    setTimeout(() => {
-      viewTimeEntries();
-    }, 5000);
-  }
-
-  // ========================================
-  // DATEN-ANZEIGE FUNKTIONEN
-  // ========================================
-  async function viewTimeEntries() {
-    try {
-      console.log('📋 Lade Zeiteinträge...');
-      const response = await apiCall(`/api/time-entries?_t=${Date.now()}`);
-      if (response && response.entries) {
-        console.log(`✅ ${response.entries.length} Zeiteinträge geladen`);
-        displayData('Zeiteinträge', formatTimeEntriesTable(response.entries));
-      } else {
-        displayData('Zeiteinträge', '<p>Keine Zeiteinträge gefunden.</p>');
-      }
-    } catch (error) {
-      console.error('❌ Fehler beim Laden der Zeiteinträge:', error);
-      showError('Fehler beim Laden der Zeiteinträge: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  async function viewProjects() {
-    try {
-      const response = await apiCall('/api/projects/active');
-      if (response && response.projects) {
-        displayData('Aktive Projekte', formatProjectsTable(response.projects));
-      }
-    } catch (error) {
-      showError('Fehler beim Laden der Projekte: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  async function viewAbsences() {
-    try {
-      const response = await apiCall('/api/absences');
-      if (response && response.absences) {
-        displayData('Meine Abwesenheiten', formatAbsencesTable(response.absences));
-      }
-    } catch (error) {
-      showError('Fehler beim Laden der Abwesenheiten: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  async function viewUsers() {
-    try {
-      const response = await apiCall('/api/admin/users');
-      if (response) {
-        displayData('Alle Benutzer', formatUsersTable(response));
-      }
-    } catch (error) {
-      showError('Fehler beim Laden der Benutzer: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  async function viewSystemLogs() {
-    showError('System-Logs sind noch nicht implementiert');
-  }
-
-  function displayData(title, content) {
-    document.getElementById('dataTitle').textContent = title;
-    document.getElementById('dataContent').innerHTML = content;
-    document.getElementById('dataDisplay').style.display = 'block';
-    document.getElementById('dataDisplay').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function hideDataDisplay() {
-    document.getElementById('dataDisplay').style.display = 'none';
-  }
-
-  // ========================================
-  // TABELLEN-FORMATIERUNG
-  // ========================================
-  function formatTimeEntriesTable(entries) {
-    if (!entries || entries.length === 0) {
-      return '<p>Keine Zeiteinträge gefunden.</p>';
-    }
-
-    // Einträge nach Datum sortieren (neueste zuerst)
-    // Stellen Sie sicher, dass entry.date ein gültiges Datumsformat für new Date() ist
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-
-    let tableHtml = `<table class="data-table">
-                       <thead>
-                         <tr>
-                           <th>Datum</th>
-                           <th>Projekt</th>
-                           <th>Start</th>
-                           <th>Ende</th>
-                           <th>Pause(n)</th>
-                           <th>Effektiv</th>
-                           <th>Geplant</th>
-                           <th>Differenz</th>
-                           <th>Aktionen</th>
-                         </tr>
-                       </thead>
-                       <tbody>`;
-    entries.forEach(entry => {
-      const startTimesDisplay = entry.startTimes && entry.startTimes.length > 0
-              ? entry.startTimes.map(t => t ? t.substring(0,5) : '-').join(', ')
-              : '-';
-      const endTimesDisplay = entry.endTimes && entry.endTimes.length > 0
-              ? entry.endTimes.map(t => t ? t.substring(0,5) : '(läuft)').join(', ')
-              : (entry.startTimes && entry.startTimes.length > 0 ? '(läuft)' : '-');
-      const breaksFormatted = entry.breaks && entry.breaks.length > 0
-              ? entry.breaks.map(b => `${b.start ? b.start.substring(0,5) : '??'}-${b.end ? b.end.substring(0,5) : '??'}`).join('<br>')
-              : '-';
-
-      // Das entry-Objekt muss als String übergeben und im onclick geparst werden,
-      // um Probleme mit speziellen Zeichen im HTML-Attribut zu vermeiden.
-      const entryJsonString = JSON.stringify(entry).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-      tableHtml += `<tr>
-                        <td>${formatDate(entry.date)}</td>
-                        <td>${entry.project ? entry.project.name : 'Kein Projekt'}</td>
-                        <td>${startTimesDisplay}</td>
-                        <td>${endTimesDisplay}</td>
-                        <td>${breaksFormatted}</td>
-                        <td>${entry.actualHours || '-'}</td>
-                        <td>${entry.plannedHours || '-'}</td>
-                        <td>${entry.difference || '-'}</td>
-                        <td class="actions-cell">
-
-                            <button class="btn btn-secondary btn-small" onclick='openEditTimeEntryModal(${entryJsonString})'>Bearbeiten</button>
-
-                            <button class="btn btn-danger btn-small" onclick='deleteTimeEntryHandler(${entry.id})' style="margin-left:5px;">Löschen</button>
-                        </td>
-                      </tr>`;
-    });
-    tableHtml += '</tbody></table>';
-    return tableHtml;
-  }
-
-  // Handler für den Löschen-Button (optional, falls Sie ihn möchten)
-  async function deleteTimeEntryHandler(entryId) {
-    if (confirm('Sind Sie sicher, dass Sie diesen Zeiteintrag löschen möchten?')) {
-      try {
-        await apiCall(`/api/time-entries/${entryId}`, { method: 'DELETE' });
-        showSuccess('Zeiteintrag erfolgreich gelöscht.');
-        viewTimeEntries(); // Liste neu laden, um den gelöschten Eintrag zu entfernen
-        loadDashboardData(true); // Dashboard Statistiken aktualisieren
-      } catch (error) {
-        showError('Fehler beim Löschen des Zeiteintrags: ' + error.message);
-      }
-    }
-  }
-  let currentEditingTimeEntry = null;
-  let editTimeSlotIdCounter = 0; // Zähler für eindeutige IDs der Zeit-Slots im Edit-Modal
-  let editBreakSlotIdCounter = 0; // Zähler für eindeutige IDs der Pausen-Slots im Edit-Modal
-
-
-  // Funktion zum Öffnen und Befüllen des Bearbeitungsmodals
-  async function openEditTimeEntryModal(entry) {
-    console.log("Öffne Bearbeitungsmodal für Eintrag:", entry);
-    if (!entry || typeof entry !== 'object') {
-      showError("Ungültige Eintragsdaten für die Bearbeitung.");
-      return;
-    }
-    currentEditingTimeEntry = entry; // Den aktuellen Eintrag speichern
-
-    document.getElementById('editTimeEntryId').value = entry.id;
-    document.getElementById('editDate').value = entry.date; // Format YYYY-MM-DD wird vom Input-Typ "date" erwartet
-
-    // Container für Zeit- und Pausen-Slots leeren und neu befüllen
-    const timeSlotsContainer = document.getElementById('editTimeSlotsContainer');
-    timeSlotsContainer.innerHTML = '';
-    editTimeSlotIdCounter = 0; // Zähler zurücksetzen
-    if (entry.startTimes && entry.startTimes.length > 0) {
-      entry.startTimes.forEach((startTime, index) => {
-        const endTime = (entry.endTimes && entry.endTimes[index]) ? entry.endTimes[index] : '';
-        addEditTimeSlot(startTime, endTime);
-      });
-    } else {
-      addEditTimeSlot(); // Mindestens ein leerer Slot, falls keine Zeiten vorhanden sind
-    }
-
-    const breakSlotsContainer = document.getElementById('editBreakSlotsContainer');
-    breakSlotsContainer.innerHTML = '';
-    editBreakSlotIdCounter = 0; // Zähler zurücksetzen
-    if (entry.breaks && entry.breaks.length > 0) {
-      entry.breaks.forEach(breakItem => {
-        addEditBreakSlot(breakItem.start, breakItem.end);
-      });
-    }
-    // Kein default leerer Pausen-Slot, Pausen sind optional
-
-    // Projekte laden und das aktuell ausgewählte Projekt setzen
-    // Die globale 'projects'-Variable sollte bereits durch loadDashboardData() gefüllt sein.
-    if (projects && projects.length > 0) {
-      populateProjectDropdown(document.getElementById('editProject'), projects, entry.project ? entry.project.id : null);
-    } else {
-      // Fallback, falls Projekte noch nicht geladen wurden (sollte nicht passieren, wenn loadDashboardData vorher läuft)
-      try {
-        const projectsResponse = await apiCall('/api/projects/active');
-        if (projectsResponse && projectsResponse.projects) {
-          projects = projectsResponse.projects;
-          populateProjectDropdown(document.getElementById('editProject'), projects, entry.project ? entry.project.id : null);
-        }
-      } catch(err) {
-        showError("Projekte konnten nicht für das Bearbeitungsformular geladen werden.");
-      }
-    }
-
-    // Berechnete Stunden anzeigen (aus dem Eintrag, wird nicht live im Formular neu berechnet)
-    document.getElementById('editCalculatedHours').textContent = entry.actualHours || '--:--';
-
-    document.getElementById('editTimeEntryModal').style.display = 'block';
-  }
-
-  // Funktion zum Hinzufügen eines Arbeitszeit-Slots im Edit-Modal
-  function addEditTimeSlot(startTime = '', endTime = '') {
-    editTimeSlotIdCounter++;
-    const container = document.getElementById('editTimeSlotsContainer');
-    const slotDiv = document.createElement('div');
-    slotDiv.className = 'time-slot-container'; // Klasse für Styling
-    slotDiv.id = `edit-time-slot-${editTimeSlotIdCounter}`;
-    slotDiv.innerHTML = `
-        <div class="form-group time-slot-inputs">
-            <div>
-                <label for="editStartTime-${editTimeSlotIdCounter}">Start ${editTimeSlotIdCounter}:</label>
-                <input type="time" id="editStartTime-${editTimeSlotIdCounter}" name="editStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}" required>
-            </div>
-            <div>
-                <label for="editEndTime-${editTimeSlotIdCounter}">Ende ${editTimeSlotIdCounter}:</label>
-                <input type="time" id="editEndTime-${editTimeSlotIdCounter}" name="editEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
-            </div>
-        </div>
-        ${editTimeSlotIdCounter > 1 || (container.children.length > 0) ? // Nur wenn nicht der erste Slot ist ODER schon Slots da sind
-            `<div class="remove-slot-btn-container"><button type="button" class="btn btn-danger btn-small" onclick="removeEditTimeSlot('edit-time-slot-${editTimeSlotIdCounter}')">Slot ${editTimeSlotIdCounter} entfernen</button></div>` : ''}
-    `;
-    container.appendChild(slotDiv);
-  }
-
-  // Funktion zum Entfernen eines Arbeitszeit-Slots im Edit-Modal
-  function removeEditTimeSlot(slotId) {
-    const slotToRemove = document.getElementById(slotId);
-    if (slotToRemove) {
-      slotToRemove.remove();
-    }
-    // Optional: Labels neu nummerieren, wenn ein Slot entfernt wird (für bessere UX)
-    // Hier nicht implementiert, um es einfacher zu halten.
-  }
-
-  // Funktion zum Hinzufügen eines Pausen-Slots im Edit-Modal
-  function addEditBreakSlot(startTime = '', endTime = '') {
-    editBreakSlotIdCounter++;
-    const container = document.getElementById('editBreakSlotsContainer');
-    const slotDiv = document.createElement('div');
-    slotDiv.className = 'break-slot-container'; // Klasse für Styling
-    slotDiv.id = `edit-break-slot-${editBreakSlotIdCounter}`;
-    slotDiv.innerHTML = `
-        <div class="form-group break-slot-inputs">
-            <div>
-                <label for="editBreakStartTime-${editBreakSlotIdCounter}">Pause Start ${editBreakSlotIdCounter}:</label>
-                <input type="time" id="editBreakStartTime-${editBreakSlotIdCounter}" name="editBreakStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}">
-            </div>
-            <div>
-                <label for="editBreakEndTime-${editBreakSlotIdCounter}">Pause Ende ${editBreakSlotIdCounter}:</label>
-                <input type="time" id="editBreakEndTime-${editBreakSlotIdCounter}" name="editBreakEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
-            </div>
-        </div>
-        <div class="remove-slot-btn-container"><button type="button" class="btn btn-danger btn-small" onclick="removeEditBreakSlot('edit-break-slot-${editBreakSlotIdCounter}')">Pause ${editBreakSlotIdCounter} entfernen</button></div>
-    `;
-    container.appendChild(slotDiv);
-  }
-
-  // Funktion zum Entfernen eines Pausen-Slots im Edit-Modal
-  function removeEditBreakSlot(slotId) {
-    const slotToRemove = document.getElementById(slotId);
-    if (slotToRemove) {
-      slotToRemove.remove();
-    }
-  }
-
-  // Event Listener für das Absenden des Bearbeitungsformulars
-  document.getElementById('editTimeEntryForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const entryId = document.getElementById('editTimeEntryId').value;
-    const date = document.getElementById('editDate').value;
-    const projectId = document.getElementById('editProject').value || null; // Kann leer sein
-
-    const startTimes = [];
-    document.querySelectorAll('#editTimeSlotsContainer input[name="editStartTimes"]').forEach(input => {
-      if (input.value) startTimes.push(input.value);
-    });
-
-    const endTimes = [];
-    document.querySelectorAll('#editTimeSlotsContainer input[name="editEndTimes"]').forEach(input => {
-      // Erlaube leere Endzeiten, falls der Timer noch läuft (Backend muss das ggf. validieren)
-      endTimes.push(input.value || ''); // Sende leeren String statt null/undefined für optionale Endzeiten
-    });
-
-    const breaks = [];
-    document.querySelectorAll('#editBreakSlotsContainer .break-slot-container').forEach(slotContainer => {
-      const startInput = slotContainer.querySelector('input[name="editBreakStartTimes"]');
-      const endInput = slotContainer.querySelector('input[name="editBreakEndTimes"]');
-      if (startInput && startInput.value && endInput && endInput.value) {
-        breaks.push({ start: startInput.value, end: endInput.value });
-      } else if (startInput && startInput.value && (!endInput || !endInput.value)) {
-        // Optional: Fehlermeldung wenn nur eine Pausenzeit angegeben ist
-        showError("Für Pause " + (breaks.length + 1) + " fehlt die Endzeit.");
-        // Hier könnten Sie `return;` verwenden, um die Submittierung abzubrechen.
-      } else if ((!startInput || !startInput.value) && endInput && endInput.value) {
-        showError("Für Pause " + (breaks.length + 1) + " fehlt die Startzeit.");
-      }
-    });
-
-    // Validierung: Jeder Startzeit muss eine Endzeit zugeordnet sein, außer die Endzeit ist leer (läuft noch)
-    const finalEndTimes = [];
-    let validTimes = true;
-    if (startTimes.length > 0) {
-      for (let i = 0; i < startTimes.length; i++) {
-        const st = startTimes[i];
-        const et = endTimes[i] || ''; // Default zu leerem String, falls nicht vorhanden
-
-        if (et && st >= et) {
-          showError(`Die Endzeit für Arbeitszeit-Slot ${i + 1} muss nach der Startzeit liegen.`);
-          validTimes = false;
-          break;
-        }
-        finalEndTimes.push(et); // Füge die (ggf. leere) Endzeit hinzu
-      }
-    }
-    if (!validTimes) return;
-
-    for(const p of breaks) {
-      if (p.start >= p.end) {
-        showError(`Die Pausenendzeit muss nach der Pausenstartzeit liegen.`);
-        return;
-      }
-    }
-
-
-    const payload = {
-      date: date,
-      startTimes: startTimes,
-      endTimes: finalEndTimes, // Verwende die finalEndTimes
-      breaks: breaks,
-      projectId: projectId ? parseInt(projectId) : null // Stelle sicher, dass es eine Zahl oder null ist
-    };
-
-    console.log("Sende Update für Zeiteintrag:", entryId, "Payload:", payload);
-
-    try {
-      await apiCall(`/api/time-entries/${entryId}`, { method: 'PUT', body: payload });
-      showSuccess('Zeiteintrag erfolgreich aktualisiert!');
-      closeModal('editTimeEntryModal');
-      viewTimeEntries(); // Tabelle neu laden, um Änderungen anzuzeigen
-      loadDashboardData(true); // Dashboard Statistiken aktualisieren
-    } catch (error) {
-      showError('Fehler beim Aktualisieren des Zeiteintrags: ' + error.message);
-      console.error("Update Fehler Details:", error);
-    }
-  });
-
-
-
-  function formatProjectsTable(projects) {
-    if (!projects || projects.length === 0) {
-      return '<p>Keine aktiven Projekte gefunden.</p>';
-    }
-
-    let html = '<table class="data-table"><thead><tr><th>Name</th><th>Beschreibung</th><th>Manager</th><th>Status</th></tr></thead><tbody>';
-
-    projects.forEach(project => {
-      html += `<tr onclick="showProjectDetails(${project.id})">
-                    <td><strong>${project.name}</strong></td>
-                    <td>${project.description || '-'}</td>
-                    <td>${project.managerName || '-'}</td>
-                    <td><span style="color: ${project.active ? '#28a745' : '#dc3545'}">${project.active ? 'Aktiv' : 'Inaktiv'}</span></td>
-                </tr>`;
-    });
-
-    html += '</tbody></table>';
-    return html;
-  }
-
-  // Variable zum Speichern des aktuell angezeigten Projekts
-  let currentProjectForEditing = null;
-  let availableManagers = []; // Zum Speichern der Manager-Liste
-
-  // Funktion zum Laden der Manager für Bearbeitungs-Dropdown
-  async function loadManagersForEditDropdown() {
-    try {
-      const response = await apiCall('/api/admin/users');
-      availableManagers = []; // Liste zurücksetzen
-
-      if (response && Array.isArray(response)) {
-        response.forEach(user => {
-          const userRoles = user.roles || [];
-          const isManagerOrAdmin = userRoles.some(role =>
-                  role === 'ADMIN' || role === 'ROLE_ADMIN' || role === 'MANAGER' || role === 'ROLE_MANAGER'
-          );
-          if (isManagerOrAdmin) {
-            availableManagers.push(user);
-          }
-        });
-      }
-
-      const managerSelect = document.getElementById('editProjectManager');
-      managerSelect.innerHTML = '<option value="">Nicht zugewiesen</option>';
-      availableManagers.forEach(manager => {
-        const option = document.createElement('option');
-        option.value = manager.id;
-        option.textContent = `${manager.firstName} ${manager.lastName} (${manager.email})`;
-        managerSelect.appendChild(option);
-      });
-
-    } catch (error) {
-      console.error('Fehler beim Laden der Manager für das Bearbeitungs-Dropdown:', error);
-      showError('Fehler beim Laden der Manager-Liste für Bearbeitung.');
-    }
-  }
-
-  // Funktion zum Anzeigen der Projektdetails
-  async function showProjectDetails(projectId) {
-    try {
-      // Benutzerinformationen laden, um Rollen zu prüfen
-      const userRoles = JSON.parse(localStorage.getItem('userRoles') || '[]');
-      const isAdmin = userRoles.includes('ADMIN') || userRoles.includes('ROLE_ADMIN');
-      const isManager = userRoles.includes('MANAGER') || userRoles.includes('ROLE_MANAGER');
-      const canEdit = isAdmin || isManager; // Nur Admins und Manager können bearbeiten
-
-      const project = await apiCall(`/api/projects/${projectId}`);
-      if (project) {
-        currentProjectForEditing = project; // Projekt für Bearbeitung speichern
-
-        document.getElementById('detailProjectName').textContent = project.name;
-        document.getElementById('detailProjectDescription').textContent = project.description || 'N/A';
-        document.getElementById('detailProjectManager').textContent = project.managerName || 'Nicht zugewiesen';
-        document.getElementById('detailProjectStatus').textContent = project.active ? 'Aktiv' : 'Inaktiv';
-        document.getElementById('detailProjectStatus').style.color = project.active ? '#28a745' : '#dc3545';
-        document.getElementById('detailProjectCreatedAt').textContent = formatDateTimeDisplay(project.createdAt);
-        document.getElementById('detailProjectUpdatedAt').textContent = formatDateTimeDisplay(project.updatedAt);
-
-        document.getElementById('detailProjectTotalHours').textContent = project.statistics?.totalHoursWorked || '00:00';
-        document.getElementById('detailProjectInvolvedEmployees').textContent = project.statistics?.activeEmployees || 0;
-
-        const usersList = document.getElementById('detailProjectUsersList');
-        usersList.innerHTML = '';
-        if (project.involvedUsers && project.involvedUsers.length > 0) {
-          project.involvedUsers.forEach(user => {
-            const listItem = document.createElement('li');
-            listItem.textContent = `${user.firstName} ${user.lastName} (${user.email})`;
-            usersList.appendChild(listItem);
-          });
-        } else {
-          const listItem = document.createElement('li');
-          listItem.textContent = 'Keine Mitarbeiter haben Stunden auf dieses Projekt gebucht.';
-          usersList.appendChild(listItem);
-        }
-
-        //Bearbeitungsbereich anzeigen, wenn berechtigt
-        const projectEditSection = document.getElementById('projectEditSection');
-        if (canEdit) {
-          projectEditSection.style.display = 'block';
-          document.getElementById('editProjectId').value = project.id;
-          document.getElementById('editProjectStatus').value = project.active ? 'true' : 'false';
-
-          // Manager-Dropdown füllen und aktuellen Manager auswählen
-          await loadManagersForEditDropdown(); // Manager-Liste laden
-          const editProjectManagerSelect = document.getElementById('editProjectManager');
-          if (project.managerId) { // Angenommen, project.managerId ist die ID des Managers
-            editProjectManagerSelect.value = project.managerId;
-          } else {
-            editProjectManagerSelect.value = ''; // Kein Manager zugewiesen
-          }
-
-          // Löschen-Button nur für Admins anzeigen
-          document.getElementById('deleteProjectBtn').style.display = isAdmin ? 'inline-block' : 'none';
-
-        } else {
-          projectEditSection.style.display = 'none';
-        }
-
-        document.getElementById('projectDetailModal').style.display = 'block';
-      } else {
-        showError('Projekt Details nicht gefunden.');
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Projektdetails:', error);
-      showError('Fehler beim Laden der Projektdetails: ' + error.message);
-    }
-  }
-
-  // Event Listener für Projektänderungen
-  document.getElementById('editProjectForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const projectId = document.getElementById('editProjectId').value;
-    const newStatus = document.getElementById('editProjectStatus').value === 'true';
-    const newManagerId = document.getElementById('editProjectManager').value;
-
-    try {
-      if (currentProjectForEditing.active !== newStatus) {
-        if (newStatus) {
-          await apiCall(`/api/projects/${projectId}/activate`, { method: 'PATCH' });
-          showSuccess('Projekt erfolgreich aktiviert!');
-        } else {
-          await apiCall(`/api/projects/${projectId}/deactivate`, { method: 'PATCH' });
-          showSuccess('Projekt erfolgreich deaktiviert!');
-        }
-      }
-
-      // Manager-Änderung nur senden, wenn ein Manager ausgewählt wurde
-      if (newManagerId !== (currentProjectForEditing.managerId || '')) {
-        if (newManagerId === '') {
-          // Manager entfernen
-          await apiCall(`/api/projects/${projectId}/manager`, { method: 'DELETE' });
-          showSuccess('Manager erfolgreich entfernt!');
-        } else {
-          // Manager zuweisen
-          await apiCall(`/api/projects/${projectId}/manager`, {
-            method: 'POST',
-            body: { managerId: parseInt(newManagerId) }
-          });
-          showSuccess('Manager erfolgreich zugewiesen!');
-        }
-      }
-
-      closeModal('projectDetailModal');
-      await loadDashboardData(true); // Dashboard-Daten neu laden
-    } catch (error) {
-      console.error('Fehler beim Speichern der Projektänderungen:', error);
-      showError('Fehler beim Speichern der Projektänderungen: ' + error.message);
-    }
-  });
-
-  // Event Listener für das Löschen eines Projekts
-  document.getElementById('deleteProjectBtn').addEventListener('click', async function() {
-    const projectId = document.getElementById('editProjectId').value;
-    if (confirm('Sind Sie sicher, dass Sie dieses Projekt löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      try {
-        // Annahme: Es gibt einen DELETE /api/projects/{id} Endpunkt
-        // Derzeit existiert im Controller nur DELETE /api/time-entries/{id} und kein direkter DELETE für Projekte.
-        // Falls benötigt, muss dieser Endpunkt im ProjectController implementiert werden, z.B.:
-        // @DeleteMapping("/{id}") @PreAuthorize("hasAuthority('ADMIN')") public ResponseEntity<?> deleteProject(@PathVariable Long id) { projectService.deleteProject(id); return ResponseEntity.ok().build(); }
-        // Da dieser Endpunkt im bereitgestellten Code nicht existiert, wird dieser Teil nur als Beispiel gezeigt.
-        // Stattdessen können wir die existierende Deaktivierungsfunktion nutzen, wenn ein echtes Löschen nicht erwünscht ist.
-        // Für den Zweck des "Löschens" nutzen wir vorerst die Deaktivierung:
-        // Quelle ChatGPT.com
-        await apiCall(`/api/projects/${projectId}/deactivate`, { method: 'PATCH' });
-        showSuccess('Projekt erfolgreich deaktiviert (Löschen nicht direkt implementiert)!');
-
-        closeModal('projectDetailModal');
-        await loadDashboardData(true);
-      } catch (error) {
-        console.error('Fehler beim Löschen des Projekts:', error);
-        showError('Fehler beim Löschen des Projekts: ' + error.message);
-      }
-    }
-  });
-
-  // Hilfsfunktion zur Formatierung von Datum und Uhrzeit für die Anzeige
-  function formatDateTimeDisplay(dateTimeString) {
-    if (!dateTimeString) return '-';
-    const date = new Date(dateTimeString);
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('de-DE', options);
-  }
-
-  function formatAbsencesTable(absences) {
-    if (!absences || absences.length === 0) {
-      return '<p>Keine Abwesenheiten gefunden.</p>';
-    }
-
-    let html = '<table class="data-table"><thead><tr><th>Typ</th><th>Von</th><th>Bis</th><th>Tage</th><th>Status</th><th>Genehmiger</th></tr></thead><tbody>';
-
-    absences.forEach(absence => {
-      const typeLabels = {
-        'VACATION': 'Urlaub',
-        'ILLNESS': 'Krankheit',
-        'HOME_OFFICE': 'Home Office',
-        'TRAINING': 'Fortbildung',
-        'PUBLIC_HOLIDAY': 'Feiertag',
-        'UNPAID_LEAVE': 'Unbezahlter Urlaub',
-        'SPECIAL_LEAVE': 'Sonderurlaub',
-        'OTHER': 'Sonstiges'
-      };
-
-      const dayCount = calculateDaysBetween(absence.startDate, absence.endDate);
-
-      html += `<tr>
-                    <td>${typeLabels[absence.type] || absence.type}</td>
-                    <td>${formatDate(absence.startDate)}</td>
-                    <td>${formatDate(absence.endDate)}</td>
-                    <td>${dayCount}</td>
-                    <td><span style="color: ${absence.approved ? '#28a745' : '#ffc107'}">${absence.approved ? 'Genehmigt' : 'Ausstehend'}</span></td>
-                    <td>${absence.approverName || '-'}</td>
-                </tr>`;
-    });
-
-    html += '</tbody></table>';
-    return html;
-  }
-
-  function formatUsersTable(users) {
-    if (!users || users.length === 0) {
-      return '<p>Keine Benutzer gefunden.</p>';
-    }
-
-    let html = '<table class="data-table"><thead><tr><th>Name</th><th>E-Mail</th><th>Rollen</th><th>Status</th><th>Erstellt</th></tr></thead><tbody>';
-
-    users.forEach(user => {
-      const roles = user.roles ? user.roles.map(role => role.replace('ROLE_', '')).join(', ') : '-';
-      const statusColor = user.active ? '#28a745' : '#dc3545';
-      const statusText = user.active ? 'Aktiv' : 'Inaktiv';
-
-      html += `<tr onclick="showUserDetails(${user.id})">
-                    <td>${user.firstName} ${user.lastName}</td>
-                    <td>${user.email}</td>
-                    <td>${roles}</td>
-                    <td><span style="color: ${statusColor}">${statusText}</span></td>
-                    <td>${formatDate(user.createdAt)}</td>
-                </tr>`;
-    });
-
-    html += '</tbody></table>';
-    return html;
-  }
-
-  async function showUserDetails(userId) {
-    try {
-      const user = await apiCall(`/api/admin/users/${userId}`);
-      selectedUserForDetails = user;
-
-      document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
-      document.getElementById('detailUserEmail').textContent = user.email;
-      document.getElementById('detailUserStatus').textContent = user.status;
-      document.getElementById('detailUserPlannedHours').textContent = user.plannedHoursPerDay;
-      document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt);
-      document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt);
-
-      const userStatusSelect = document.getElementById('userStatusSelect');
-      userStatusSelect.value = user.status;
-
-      const userRolesList = document.getElementById('userRolesList');
-      userRolesList.innerHTML = '';
-      if (user.roles && user.roles.length > 0) {
-        user.roles.forEach(role => {
-          const roleItem = document.createElement('span');
-          roleItem.className = 'user-role-tag';
-          roleItem.textContent = role.replace('ROLE_', '');
-
-          if (user.roles.length > 1 && role !== 'ADMIN' && role !== 'ROLE_ADMIN') {
-            const removeButton = document.createElement('button');
-            removeButton.className = 'btn btn-danger btn-small';
-            removeButton.textContent = 'x';
-            removeButton.style.marginLeft = '5px';
-            removeButton.onclick = () => removeRoleFromUser(user.id, role); // role als String übergeben
-            roleItem.appendChild(removeButton);
-          }
-          userRolesList.appendChild(roleItem);
-        });
-      } else {
-        userRolesList.textContent = 'Keine Rollen zugewiesen.';
-      }
-
-      await loadRolesForAddDropdown(user.roles);
-
-      document.getElementById('userDetailModal').style.display = 'block';
-    } catch (error) {
-      console.error('Fehler beim Laden der Benutzerdetails:', error);
-      showError('Fehler beim Laden der Benutzerdetails: ' + error.message);
-    }
-  }
-
-  async function loadRolesForAddDropdown(currentRoles) {
-    try {
-      const allRolesResponse = await apiCall('/api/admin/roles'); // Alle Rollen vom Backend holen
-      const addRoleSelect = document.getElementById('addRoleSelect');
-      addRoleSelect.innerHTML = '<option value="">Rolle auswählen</option>';
-
-      const currentRoleNames = new Set(currentRoles.map(role => role.replace('ROLE_', '')));
-
-      if (allRolesResponse && Array.isArray(allRolesResponse)) {
-        allRolesResponse.forEach(role => {
-          const cleanRoleName = role.name.replace('ROLE_', '');
-          // Zeige nur Rollen, die der Benutzer noch nicht hat
-          if (!currentRoleNames.has(cleanRoleName)) {
-            const option = document.createElement('option');
-            option.value = role.name; // Sendet Rollennamen an das Backend
-            option.textContent = cleanRoleName;
-            addRoleSelect.appendChild(option);
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Rollen für Dropdown:', error);
-      showError('Fehler beim Laden der Rollen für das Hinzufügen-Dropdown: ' + error.message);
-    }
-  }
-
-  async function addRoleToUser() {
-    if (!selectedUserForDetails) return;
-
-    const roleToAdd = document.getElementById('addRoleSelect').value;
-    if (!roleToAdd) {
-      showError('Bitte wählen Sie eine Rolle zum Hinzufügen aus.');
-      return;
-    }
-
-    try {
-      await apiCall(`/api/admin/users/${selectedUserForDetails.id}/roles?roleName=${roleToAdd}`, { method: 'POST' });
-
-      showSuccess(`Rolle "${roleToAdd.replace('ROLE_', '')}" erfolgreich hinzugefügt.`);
-      closeModal('userDetailModal');
-      await loadDashboardData(true); // Dashboard aktualisieren
-    } catch (error) {
-      showError('Fehler beim Hinzufügen der Rolle: ' + error.message);
-    }
-  }
-
-  async function removeRoleFromUser(userId, roleName) {
-    if (!confirm(`Sind Sie sicher, dass Sie die Rolle "${roleName.replace('ROLE_', '')}" entfernen möchten?`)) {
-      return;
-    }
-    try {
-      await apiCall(`/api/admin/users/${userId}/roles?roleName=${roleName}`, { method: 'DELETE' });
-
-      showSuccess(`Rolle "${roleName.replace('ROLE_', '')}" erfolgreich entfernt.`);
-      closeModal('userDetailModal');
-      await loadDashboardData(true); // Dashboard aktualisieren
-    } catch (error) {
-      showError('Fehler beim Entfernen der Rolle: ' + error.message);
-    }
-  }
-
-  async function updateUserStatus() {
-    if (!selectedUserForDetails) return;
-
-    const newStatus = document.getElementById('userStatusSelect').value;
-    if (!newStatus) {
-      showError('Bitte wählen Sie einen Status aus.');
-      return;
-    }
-
-    try {
-      await apiCall(`/api/admin/users/${selectedUserForDetails.id}/status?status=${newStatus}`, { method: 'PATCH' }); //
-
-      showSuccess(`Status für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} auf "${newStatus}" geändert.`);
-      closeModal('userDetailModal');
-      await loadDashboardData(true); // Dashboard aktualisieren
-    } catch (error) {
-      showError('Fehler beim Aktualisieren des Status: ' + error.message);
-    }
-  }
-
-  async function resetUserPassword(userId, userName) {
-    if (!confirm(`Passwort für ${userName} wirklich zurücksetzen?`)) {
-      return;
-    }
-
-    try {
-      const response = await apiCall(`/api/admin/users/${userId}/reset-password`, {
-        method: 'POST'
-      });
-
-      // Überprüft Antwort und zeigt temporäres Passwort an
-      if (response && response.temporaryPassword) {
-        alert(`Neues temporäres Passwort für ${userName}:\n\n${response.temporaryPassword}\n\nBitte sicher weiterleiten!`);
-        showSuccess(`Passwort für ${userName} erfolgreich zurückgesetzt.`);
-      } else {
-        throw new Error('Fehler beim Zurücksetzen: Keine temporäre Passwort erhalten.');
-      }
-
-    } catch (error) {
-      console.error('Fehler beim Zurücksetzen:', error);
-      showError('Fehler beim Zurücksetzen des Passworts: ' + error.message);
-    }
-  }
-
-  async function resetUserPasswordFromDetails() {
-    if (!selectedUserForDetails) return;
-    const userId = selectedUserForDetails.id;
-    const userName = `${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName}`;
-    await resetUserPassword(userId, userName);
-    closeModal('userDetailModal');
-  }
-
-  async function openCreateUserModal() {
-    const createUserForm = document.getElementById('createUserForm');
-    createUserForm.reset(); // Formular zurücksetzen
-
-    // Feedback- und Fehlermeldungen ausblenden
-    document.getElementById('createUserFeedback').style.display = 'none';
-    document.getElementById('createUserError').style.display = 'none';
-
-    // Rollen für das Dropdown laden
-    const newUserRoleSelect = document.getElementById('newUserRole');
-    try {
-      const allRolesResponse = await apiCall('/api/admin/roles'); // Alle Rollen vom Backend holen
-      newUserRoleSelect.innerHTML = ''; // Vorherige Optionen löschen
-      if (allRolesResponse && Array.isArray(allRolesResponse)) {
-        allRolesResponse.forEach(role => {
-          const option = document.createElement('option');
-          option.value = role.name;
-          option.textContent = role.name.replace('ROLE_', ''); // "ROLE_" entfernen für bessere Anzeige
-          newUserRoleSelect.appendChild(option);
-        });
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Rollen für Benutzererstellung:', error);
-      document.getElementById('createUserError').textContent = 'Fehler beim Laden der Rollen: ' + error.message;
-      document.getElementById('createUserError').style.display = 'block';
-    }
-
-    document.getElementById('createUserModal').style.display = 'block';
-  }
-
-  // ========================================
-  // MODAL-FUNKTIONEN
-  // ========================================
-  async function openCreateProjectModal() {
-    await loadManagersForProjectCreation(); // Manager beim Öffnen des Modals laden
-    document.getElementById('createProjectModal').style.display = 'block';
-  }
-
-  function openCreateAbsenceModal() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('startDate').min = today;
-    document.getElementById('endDate').min = today;
-    document.getElementById('createAbsenceModal').style.display = 'block';
-  }
-
-  function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-  }
-
-  // ========================================
-  // EVENT LISTENERS
-  // ========================================
-  function initializeEventListeners() {
-    // Manueller Zeiteintrag - Event Listeners
-    document.getElementById('manualStartTime').addEventListener('change', calculateWorkTime);
-    document.getElementById('manualEndTime').addEventListener('change', calculateWorkTime);
-    document.getElementById('manualBreakStartTime').addEventListener('change', calculateWorkTime);
-    document.getElementById('manualBreakEndTime').addEventListener('change', calculateWorkTime);
-
-    document.getElementById('manualEntryForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const date = document.getElementById('manualDate').value;
-      const startTime = document.getElementById('manualStartTime').value;
-      const endTime = document.getElementById('manualEndTime').value;
-      const breakStartTime = document.getElementById('manualBreakStartTime').value;
-      const breakEndTime = document.getElementById('manualBreakEndTime').value;
-      const projectId = document.getElementById('manualProject').value || null;
-
-      if (new Date(`2000-01-01T${endTime}`) <= new Date(`2000-01-01T${startTime}`)) {
-        showError('⚠️ Endzeit muss nach der Startzeit liegen');
-        return;
-      }
-
-      if ((breakStartTime && !breakEndTime) || (!breakStartTime && breakEndTime)) {
-        showError('⚠️ Bitte geben Sie sowohl Start- als auch Endzeit für die Pause an oder lassen Sie beide Felder leer.');
-        return;
-      }
-      if (breakStartTime && breakEndTime && new Date(`2000-01-01T${breakEndTime}`) <= new Date(`2000-01-01T${breakStartTime}`)) {
-        showError('⚠️ Pausen-Endzeit muss nach der Pausen-Startzeit liegen.');
-        return;
-      }
-
-      // Arbeitszeit und Pausenzeit berechnen
-      const { workTimeInMinutes, breakTimeInMinutes } = calculateWorkTime(); // calculateWorkTime gibt jetzt ein Objekt zurück
-
-      // Pausenregelung validieren
-      const breakValidationError = validateBreakTime(workTimeInMinutes, breakTimeInMinutes);
-      if (breakValidationError) {
-        showError(`⚠️ Gesetzliche Pausenregelung nicht eingehalten: ${breakValidationError}`);
-        return;
-      }
-
-      try {
-        // ... (restlicher Code für den API-Aufruf) ...
-        const calculatedTime = document.getElementById('calculatedHours').textContent; // Beachten Sie, dass dies die Arbeitszeit *inklusive* Pause ist, wenn die Pausenfelder leer sind. Die reine Arbeitszeit ist `workTimeInMinutes`.
-        const breaksArray = [];
-
-        if (breakStartTime && breakEndTime) {
-          breaksArray.push({
-            start: breakStartTime,
-            end: breakEndTime
-          });
-        }
-
-        const timeEntryData = {
-          date: date,
-          startTimes: [startTime],
-          endTimes: [endTime],
-          breaks: breaksArray,
-          projectId: projectId
-        };
-
-        console.log('📝 Erstelle manuellen Zeiteintrag:', timeEntryData);
-
-        const response = await apiCall('/api/time-entries', {
-          method: 'POST',
-          body: JSON.stringify(timeEntryData)
-        });
-
-        if (response) {
-          showSuccess(`✅ Zeiteintrag erfolgreich erstellt! Arbeitszeit: ${formatMinutesToHours(workTimeInMinutes)}`); // Angepasste Erfolgsmeldung
-          closeModal('manualEntryModal');
-          document.getElementById('manualEntryForm').reset();
-          // Felder für Pausenzeiten explizit zurücksetzen, falls sie nicht Teil des Standard-Formular-Resets sind
-          document.getElementById('manualBreakStartTime').value = '';
-          document.getElementById('manualBreakEndTime').value = '';
-          calculateWorkTime();
-
-          await loadDashboardData(true);
-          console.log('✅ Manueller Zeiteintrag erfolgreich erstellt');
-        }
-      } catch (error) {
-        console.error('❌ Fehler beim Erstellen des manuellen Zeiteintrags:', error);
-
-        // ✅ SPEZIELLE BEHANDLUNG für manuellen Eintrag-Duplikat:
-        if (error.message.startsWith('DUPLICATE_ENTRY') || error.message.includes('bereits ein Zeiteintrag')) {
-          const selectedDate = new Date(date).toLocaleDateString('de-DE');
-          showDuplicateEntryInfo(`den ${selectedDate}`);
-
-          // Modal schließen und alternatives Datum vorschlagen
-          closeModal('manualEntryModal');
-
-          setTimeout(() => {
-            document.getElementById('duplicateInfoModal').style.display = 'block';
-          }, 1000);
-
-        } else {
-          showError('❌ Fehler beim Erstellen des Zeiteintrags: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-        }
-      }
-    });
-
-    // Projekt erstellen
-    document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const projectData = {
-        name: document.getElementById('projectName').value,
-        description: document.getElementById('projectDescription').value
-      };
-
-      try {
-        const response = await apiCall('/api/projects', {
-          method: 'POST',
-          body: JSON.stringify(projectData)
-        });
-
-        if (response) {
-          showSuccess('✅ Projekt erfolgreich erstellt!');
-          closeModal('createProjectModal');
-          document.getElementById('createProjectForm').reset();
-          await loadDashboardData(true);
-        }
-      } catch (error) {
-        showError('❌ Fehler beim Erstellen des Projekts: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-      }
-    });
-
-    // Abwesenheit erstellen
-    document.getElementById('createAbsenceForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
-
-      if (new Date(endDate) < new Date(startDate)) {
-        showError('⚠️ Das Enddatum muss nach dem Startdatum liegen');
-        return;
-      }
-
-      const absenceData = {
-        type: document.getElementById('absenceType').value,
-        startDate: startDate,
-        endDate: endDate
-      };
-
-      try {
-        const response = await apiCall('/api/absences', {
-          method: 'POST',
-          body: JSON.stringify(absenceData)
-        });
-
-        if (response) {
-          showSuccess('✅ Abwesenheit erfolgreich beantragt!');
-          closeModal('createAbsenceModal');
-          document.getElementById('createAbsenceForm').reset();
-          await loadDashboardData(true);
-        }
-      } catch (error) {
-        showError('❌ Fehler beim Beantragen der Abwesenheit: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-      }
-    });
-
-    // Startdatum Änderung
-    document.getElementById('startDate').addEventListener('change', function() {
-      const startDate = this.value;
-      const endDateInput = document.getElementById('endDate');
-      endDateInput.min = startDate;
-
-      if (endDateInput.value && new Date(endDateInput.value) < new Date(startDate)) {
-        endDateInput.value = startDate;
-      }
-    });
-
-    // Modal außerhalb klicken zum Schließen
-    window.addEventListener('click', function(event) {
-      const modals = document.querySelectorAll('.modal');
-      modals.forEach(modal => {
-        if (event.target === modal) {
-          modal.style.display = 'none';
-        }
-      });
-    });
-
-    // Keyboard Shortcuts
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-          if (modal.style.display === 'block') {
-            modal.style.display = 'none';
-          }
-        });
-
-        if (document.getElementById('dataDisplay').style.display === 'block') {
-          hideDataDisplay();
-        }
-      }
-
-      // Zeiterfassung Toggle
-      if (e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        if (activeTimeEntry) {
-          stopTimeTracking();
-        } else {
-          startTimeTracking();
-        }
-      }
-
-      // Debug Shortcuts
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        debugToken();
-      }
-    });
-  }
-
-  // Benutzer erstellen
-  document.getElementById('createUserForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const firstName = document.getElementById('newFirstName').value;
-    const lastName = document.getElementById('newLastName').value;
-    const email = document.getElementById('newEmail').value;
-    const role = document.getElementById('newUserRole').value;
-    const plannedHours = parseFloat(document.getElementById('newPlannedHours').value);
-
-    // Feedback- und Fehlermeldungen zurücksetzen
-    const feedbackDiv = document.getElementById('createUserFeedback');
-    const errorDiv = document.getElementById('createUserError');
-    feedbackDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-
-    // Lade-Status für Button
-    const submitBtn = document.getElementById('createUserSubmitBtn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Erstelle Benutzer...';
-
-    try {
-      const userData = {
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        // Passwort wird vom Backend generiert (Nachname klein)
-        // plannedHoursPerDay wird vom Backend gesetzt, kann aber auch hier übergeben werden
-        plannedHoursPerDay: plannedHours,
-        role: role
-      };
-
-      const response = await apiCall('/api/admin/users', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      });
-
-      if (response) {
-        feedbackDiv.textContent = `✅ Benutzer "${response.firstName} ${response.lastName}" erfolgreich erstellt! Initialpasswort: ${response.temporaryPassword}`;
-        feedbackDiv.style.display = 'block';
-        document.getElementById('createUserForm').reset(); // Formular zurücksetzen
-
-        // Automatisch nach 5 Sekunden schliessen und Liste aktualisieren
-        setTimeout(() => {
-          closeModal('createUserModal');
-          loadDashboardData(true); // Benutzerliste im Dashboard aktualisieren
-        }, 5000);
-      }
-    } catch (error) {
-      errorDiv.textContent = '❌ Fehler beim Erstellen des Benutzers: ' + error.message;
-      errorDiv.style.display = 'block';
-      console.error('Fehler beim Erstellen des Benutzers:', error);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Benutzer anlegen';
-    }
-  });
-
-  // ========================================
-  // HILFSFUNKTIONEN
-  // ========================================
-  function calculateWeekHours(entries) {
-    const now = new Date();
-    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-
-    let totalMinutes = 0;
-    entries.forEach(entry => {
-      const entryDate = new Date(entry.date);
-      if (entryDate >= weekStart && entryDate <= weekEnd) {
-        totalMinutes += parseTimeToMinutes(entry.actualHours);
-      }
-    });
-
-    return formatMinutesToHours(totalMinutes);
-  }
-
-  function parseTimeToMinutes(timeString) {
-    if (!timeString) return 0;
-    const parts = timeString.split(':');
-    return parseInt(parts[0]) * 60 + parseInt(parts[1] || 0);
-  }
-
-  function formatMinutesToHours(minutes) {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}:${mins.toString().padStart(2, '0')}`;
-  }
-
-  function formatDate(dateString) {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('de-DE');
-  }
-
-  function calculateDaysBetween(startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
-  }
-
-  async function logout() {
-    try {
-      await apiCall('/api/auth/logout', {
-        method: 'POST'
-      });
-    } catch (error) {
-      console.log('Logout-API-Fehler:', error);
-    }
-
-    localStorage.clear();
-    window.location.href = '/';
-  }
-
-  // ========================================
-  // NACHRICHTENSYSTEM
-  // ========================================
-  function hideAllMessages() {
-    document.getElementById('errorMessage').style.display = 'none';
-    document.getElementById('successMessage').style.display = 'none';
-    document.getElementById('warningMessage').style.display = 'none';
-  }
-
-  function showError(message) {
-    hideAllMessages();
-    const errorDiv = document.getElementById('errorMessage');
-
-    if (message.includes('\n') || message.includes('•')) {
-      errorDiv.innerHTML = `❌ ${message.replace(/\n/g, '<br>').replace(/•/g, '&bull;')}`;
-    } else {
-      errorDiv.textContent = `❌ ${message}`;
-    }
-
-    errorDiv.style.display = 'block';
-
-    const timeoutDuration = message.length > 100 ? 12000 : 8000;
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-    }, timeoutDuration);
-  }
-
-  function showSuccess(message) {
-    hideAllMessages();
-    const successDiv = document.getElementById('successMessage');
-    successDiv.textContent = `✅ ${message}`;
-    successDiv.style.display = 'block';
-    setTimeout(() => {
-      successDiv.style.display = 'none';
-    }, 5000);
-  }
-
-  function showWarning(message) {
-    hideAllMessages();
-    const warningDiv = document.getElementById('warningMessage');
-
-    if (message.includes('\n') || message.includes('•')) {
-      warningDiv.innerHTML = `⚠️ ${message.replace(/\n/g, '<br>').replace(/•/g, '&bull;')}`;
-    } else {
-      warningDiv.textContent = `⚠️ ${message}`;
-    }
-
-    warningDiv.style.display = 'block';
-
-    setTimeout(() => {
-      warningDiv.style.display = 'none';
-    }, 10000);
-  }
-
-  // ========================================
-  // DEBUG UND SYSTEM-FUNKTIONEN
-  // ========================================
-  function debugToken() {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-      console.log('❌ Kein Token gefunden');
-      showError('Kein JWT Token gefunden');
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const tokenInfo = {
-        user: payload.sub || payload.email,
-        roles: payload.roles || payload.authorities,
-        issued: new Date(payload.iat * 1000),
-        expires: new Date(payload.exp * 1000),
-        isExpired: new Date() > new Date(payload.exp * 1000),
-        currentTime: new Date()
-      };
-
-      console.log('🔍 Token Info:', tokenInfo);
-
-      if (tokenInfo.isExpired) {
-        showError('❌ Token ist abgelaufen! Bitte melden Sie sich neu an.');
-      } else {
-        const remaining = Math.floor((tokenInfo.expires - tokenInfo.currentTime) / (1000 * 60));
-        showSuccess(`✅ Token ist gültig. Läuft ab in ${remaining} Minuten.`);
-      }
-
-      return tokenInfo;
-    } catch (e) {
-      console.log('❌ Token kann nicht dekodiert werden:', e);
-      showError('Token ist ungültig');
-    }
-  }
-
-  async function checkSystemStatus() {
-    try {
-      console.log('🔍 Prüfe System-Status...');
-
-      // Test API Connection
-      const testResponse = await apiCall('/api/time-entries');
-      console.log('✅ API Verbindung OK');
-
-      // Test Token
-      const tokenInfo = debugToken();
-
-      // Test Data
-      if (testResponse && testResponse.entries) {
-        console.log(`✅ Daten verfügbar: ${testResponse.entries.length} Einträge`);
-      }
-
-      showSuccess('✅ System-Status: Alles funktioniert');
-
-    } catch (error) {
-      console.error('❌ System-Status Fehler:', error);
-      showError('❌ System-Problem: ' + error.message.replace('DUPLICATE_ENTRY|', ''));
-    }
-  }
-
-  // Test für Duplikat-Behandlung
-  async function testDuplicateHandling() {
-    try {
-      console.log('🧪 Teste Duplikat-Behandlung...');
-
-      const today = new Date().toISOString().split('T')[0];
-      const testData = {
-        date: today,
-        startTimes: ['09:00'],
-        endTimes: ['17:00'],
-        breaks: [],
-        projectId: null
-      };
-
-      // Zweimal den gleichen Eintrag versuchen
-      await apiCall('/api/time-entries', {
-        method: 'POST',
-        body: JSON.stringify(testData)
-      });
-
-      console.log('✅ Erster Eintrag erstellt');
-
-      // Zweiter Versuch sollte Duplikat-Fehler ergeben
-      await apiCall('/api/time-entries', {
-        method: 'POST',
-        body: JSON.stringify(testData)
-      });
-
-      console.log('⚠️ Zweiter Eintrag sollte nicht erstellt werden');
-
-    } catch (error) {
-      console.log('🔍 Erwarteter Duplikat-Fehler:', error.message);
-
-      if (error.message.startsWith('DUPLICATE_ENTRY')) {
-        console.log('✅ Duplikat-Behandlung funktioniert korrekt');
-        showSuccess('✅ Duplikat-Behandlung funktioniert korrekt');
-      } else {
-        console.log('⚠️ Unerwartete Fehlermeldung:', error.message);
-      }
-    }
-  }
-
-  // ========================================
-  // AUTO-REFRESH & FINALISIERUNG
-  // ========================================
-  setInterval(() => {
-    if (document.visibilityState === 'visible' && !activeTimeEntry) {
-      loadDashboardData();
-    }
-  }, 5 * 60 * 1000);
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      console.log('🔧 Service Worker support detected');
-    });
-  }
-
-  console.log('🎉 Time Recording Dashboard vollständig geladen!');
-  console.log('⌨️ Shortcuts: Strg+Enter = Zeit starten/stoppen, ESC = Modals schließen');
-  console.log('🔧 Debug: debugToken(), checkSystemStatus(), testDuplicateHandling()');
-  console.log('📋 Ein Zeiteintrag pro Tag - Duplikat-Schutz aktiv');
-
-  // ========================================
-  // DASHBOARD ADMIN-FIX - In Ihre dashboard.html einfügen
-  // ========================================
-
-  // Verbesserte loadUserInfo-Funktion
-  async function loadUserInfo() {
-    console.log('🔍 ===== ADMIN DEBUG START =====');
-
-    const userEmail = localStorage.getItem('userEmail');
-    const userRolesString = localStorage.getItem('userRoles');
-
-    console.log('🔍 User Email:', userEmail);
-    console.log('🔍 User Roles (raw):', userRolesString);
-
-    if (userEmail) {
-      document.getElementById('userEmail').textContent = userEmail;
-    }
-
-    // Rollen parsen
-    let userRoles = [];
-    try {
-      if (userRolesString) {
-        userRoles = JSON.parse(userRolesString);
-      }
-    } catch (e) {
-      console.error('❌ Fehler beim Parsen der Rollen:', e);
-      userRoles = [];
-    }
-
-    console.log('🔍 User Roles (parsed):', userRoles);
-    console.log('🔍 User Roles Typ:', typeof userRoles, 'isArray:', Array.isArray(userRoles));
-
-    // ⭐ KRITISCHE Admin-Erkennung
-    let isAdmin = false;
-
-    if (Array.isArray(userRoles)) {
-      userRoles.forEach((role, index) => {
-        console.log(`🔍 Rolle ${index}: "${role}" (${typeof role})`);
-
-        const roleStr = role.toString().toUpperCase();
-        const isAdminRole = roleStr === 'ADMIN' ||
-                roleStr === 'ROLE_ADMIN' ||
-                roleStr.includes('ADMIN');
-
-        console.log(`🔍 Rolle "${role}" → Admin-Check: ${isAdminRole}`);
-
-        if (isAdminRole) {
-          isAdmin = true;
-        }
-      });
-    } else {
-      console.log('⚠️ userRoles ist kein Array!');
-    }
-
-    console.log('🔍 Final isAdmin Ergebnis:', isAdmin);
-
-    // UI entsprechend anpassen
-    const adminCard = document.getElementById('adminCard');
-    const createProjectBtn = document.getElementById('createProjectBtn');
-
-    if (isAdmin) {
-      console.log('✅ Admin erkannt - UI wird aktiviert');
-      if (adminCard) {
-        adminCard.style.display = 'block';
-        console.log('✅ Admin Card angezeigt');
-      }
-      if (createProjectBtn) {
-        createProjectBtn.style.display = 'inline-block';
-        console.log('✅ Create Project Button angezeigt');
-      }
-    } else {
-      console.log('❌ Kein Admin erkannt - UI bleibt verborgen');
-      if (adminCard) {
-        adminCard.style.display = 'none';
-      }
-      if (createProjectBtn) {
-        createProjectBtn.style.display = 'none';
-      }
-    }
-
-    console.log('🔍 ===== ADMIN DEBUG END =====');
-
-    if (DEBUG_MODE) {
-      console.log('👤 User Info:', {
-        email: userEmail,
-        roles: userRoles,
-        isAdmin: isAdmin
-      });
-    }
-  }
-
-  // ========================================
-  // SOFORT-TEST FUNKTION
-  // ========================================
-  function debugAdminStatus() {
-    console.log('🔧 === ADMIN STATUS DEBUG ===');
-
-    // LocalStorage prüfen
-    console.log('📱 LocalStorage Daten:');
-    console.log('  - jwtToken:', localStorage.getItem('jwtToken') ? 'VORHANDEN' : 'FEHLT');
-    console.log('  - userEmail:', localStorage.getItem('userEmail'));
-    console.log('  - userRoles:', localStorage.getItem('userRoles'));
-
-    // Admin Card Status prüfen
-    const adminCard = document.getElementById('adminCard');
-    console.log('🎯 Admin Card Status:');
-    console.log('  - Element gefunden:', !!adminCard);
-    console.log('  - Display Style:', adminCard ? adminCard.style.display : 'NICHT GEFUNDEN');
-    console.log('  - Computed Style:', adminCard ? window.getComputedStyle(adminCard).display : 'NICHT GEFUNDEN');
-
-    // Rollen-Analyse
-    try {
-      const roles = JSON.parse(localStorage.getItem('userRoles') || '[]');
-      console.log('🔍 Rollen-Analyse:');
-      if (Array.isArray(roles)) {
-        roles.forEach((role, i) => {
-          const isAdmin = role.toString().toUpperCase().includes('ADMIN');
-          console.log(`  - Rolle ${i}: "${role}" → Admin: ${isAdmin}`);
-        });
-      }
-    } catch (e) {
-      console.error('❌ Fehler bei Rollen-Analyse:', e);
-    }
-
-    console.log('🔧 === DEBUG END ===');
-  }
-
-  // Funktion für manuellen Admin-Panel Test
-  function forceShowAdminPanel() {
-    console.log('🔧 FORCE: Admin-Panel wird erzwungen...');
-
-    // Admin-Panel anzeigen
-    const adminCard = document.getElementById('adminCard');
-    if (adminCard) {
-      adminCard.style.display = 'block';
-      console.log('✅ Admin Card erzwungen angezeigt');
-    }
-
-    // Create Project Button anzeigen
-    const createProjectBtn = document.getElementById('createProjectBtn');
-    if (createProjectBtn) {
-      createProjectBtn.style.display = 'inline-block';
-      console.log('✅ Create Project Button erzwungen angezeigt');
-    }
-
-    // LocalStorage temporär anpassen
-    localStorage.setItem('userRoles', JSON.stringify(['ROLE_ADMIN']));
-    console.log('✅ userRoles temporär auf ROLE_ADMIN gesetzt');
-
-    console.log('🔧 Admin-Panel wurde erzwungen angezeigt!');
-  }
-
-  // ========================================
-  // INITIALISIERUNG
-  // ========================================
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dashboard wird initialisiert...');
-
-    if (!jwtToken) {
-      console.log('❌ Kein JWT Token gefunden');
-      window.location.href = '/';
-      return;
-    }
-
-    // ⭐ WICHTIG: loadUserInfo mit Debug aufrufen
-    loadUserInfo();
-
-    // Debug-Funktionen im Browser-Console verfügbar machen
-    window.debugAdminStatus = debugAdminStatus;
-    window.forceShowAdminPanel = forceShowAdminPanel;
-
-    // Andere Initialisierungen...
-    loadDashboardData();
-    checkActiveTimer();
-    initializeEventListeners();
-
-    console.log('🎉 Dashboard initialisiert!');
-    console.log('🔧 Debug-Funktionen verfügbar: debugAdminStatus(), forceShowAdminPanel()');
-  });
-</script>
+<!-- Modal: Neuen Benutzer anlegen -->
+<div id="createUserModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Neuen Benutzer anlegen</h2>
+    <form id="createUserForm">
+      <div class="form-group"><label for="newFirstName">Vorname:</label><input type="text" id="newFirstName" class="form-input" required></div>
+      <div class="form-group"><label for="newLastName">Nachname:</label><input type="text" id="newLastName" class="form-input" required></div>
+      <div class="form-group"><label for="newEmail">E-Mail:</label><input type="email" id="newEmail" class="form-input" required></div>
+      <div class="form-group"><label for="newUserRole">Rolle:</label><select id="newUserRole" class="form-input" required></select></div>
+      <div class="form-group"><label for="newPlannedHours">Sollstd./Tag:</label><input type="number" id="newPlannedHours" class="form-input" value="8.0" min="1" step="0.5" required></div>
+      <p class="system-info">ℹ️ Initialpasswort: Nachname (klein).</p>
+      <div class="form-actions"><button type="submit" id="createUserSubmitBtn" class="btn btn-primary">Anlegen</button><button type="button" id="cancelCreateUserBtn" class="btn btn-secondary">Abbrechen</button></div>
+    </form>
+    <div id="createUserFeedback" class="success" style="display: none;"></div><div id="createUserError" class="error" style="display: none;"></div>
+  </div>
+</div>
+
+<!-- Modal: Passwort ändern -->
+<div id="changePasswordModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>🔑 Passwort ändern</h2>
+    <form id="changePasswordForm">
+      <div class="form-group"><label for="oldPassword">Altes Passwort:</label><input type="password" id="oldPassword" class="form-input" required></div>
+      <div class="form-group"><label for="newPassword">Neues Passwort:</label><input type="password" id="newPassword" class="form-input" required minlength="6"></div>
+      <div class="form-group"><label for="confirmNewPassword">Neues Passwort bestätigen:</label><input type="password" id="confirmNewPassword" class="form-input" required minlength="6"></div>
+      <div class="action-buttons"><button type="submit" class="btn btn-primary">Passwort ändern</button><button type="button" id="cancelChangePasswordBtn" class="btn btn-secondary">Abbrechen</button></div>
+    </form>
+  </div>
+</div>
+
+<script src="js/apiClient.js"></script>
+<script src="js/uiHelpers.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/timeEntry.js"></script>
+<script src="js/projectManagement.js"></script>
+<script src="js/absenceManagement.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/dashboard.js"></script>
 </body>
 </html>

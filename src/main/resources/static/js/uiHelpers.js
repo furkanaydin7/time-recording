@@ -1,0 +1,384 @@
+// * @author EK
+
+function closeModal(modalId) {
+    console.log('Versuche Modal zu schließen:', modalId);
+
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.warn('Modal nicht gefunden:', modalId);
+        return;
+    }
+
+    modal.style.display = 'none';
+    console.log('Modal geschlossen:', modalId);
+
+    // Formulare zurücksetzen
+    const forms = modal.querySelectorAll('form');
+    forms.forEach(form => {
+        if (!form.id.includes('edit') || confirm('Änderungen verwerfen?')) {
+            form.reset();
+        }
+    });
+
+    hideAllMessages();
+}
+
+function openModal(modalId) {
+    console.log('Öffne Modal:', modalId); // Debug
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Alle anderen Modals schließen
+        document.querySelectorAll('.modal').forEach(m => {
+            if (m.id !== modalId) {
+                m.style.display = 'none';
+            }
+        });
+
+        modal.style.display = 'block';
+
+        // Fokus auf erstes Input-Element setzen
+        const firstInput = modal.querySelector('input, select, textarea');
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100);
+        }
+    } else {
+        console.warn('Modal nicht gefunden:', modalId);
+    }
+}
+
+function setupModalOutsideClickHandlers() {
+    window.addEventListener('click', function(event) {
+        // Prüfen, ob auf das Modal-Overlay geklickt wurde (nicht auf den Inhalt)
+        if (event.target.classList.contains('modal')) {
+            const modalId = event.target.id;
+            if (modalId) {
+                closeModal(modalId);
+            }
+        }
+    });
+}
+
+function setupModalEscapeHandler() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Finde das aktuell geöffnete Modal
+            const openModal = document.querySelector('.modal[style*="display: block"], .modal[style*="display:block"]');
+            if (openModal) {
+                closeModal(openModal.id);
+            }
+
+            // Auch dataDisplay schließen
+            const dataDisplay = document.getElementById('dataDisplay');
+            if (dataDisplay && dataDisplay.style.display === 'block') {
+                hideDataDisplay();
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupModalOutsideClickHandlers();
+    setupModalEscapeHandler();
+});
+
+function displayData(title, content) {
+    document.getElementById('dataTitle').textContent = title;
+    document.getElementById('dataContent').innerHTML = content;
+    document.getElementById('dataDisplay').style.display = 'block';
+    document.getElementById('dataDisplay').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideDataDisplay() {
+    document.getElementById('dataDisplay').style.display = 'none';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function formatDateTimeDisplay(dateTimeString) {
+    if (!dateTimeString) return '-';
+    const date = new Date(dateTimeString);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+    return date.toLocaleDateString('de-DE', options);
+}
+
+function hideAllMessages() {
+    const errorMessageDiv = document.getElementById('errorMessage');
+    const successMessageDiv = document.getElementById('successMessage');
+    const warningMessageDiv = document.getElementById('warningMessage');
+
+    if (errorMessageDiv) errorMessageDiv.style.display = 'none';
+    if (successMessageDiv) successMessageDiv.style.display = 'none';
+    if (warningMessageDiv) warningMessageDiv.style.display = 'none';
+}
+
+function showError(message) {
+    hideAllMessages();
+    const errorDiv = document.getElementById('errorMessage');
+    if (!errorDiv) {
+        console.error("Error-Div not found. Message:", message);
+        alert("Fehler: " + message); // Fallback
+        return;
+    }
+
+    if (message.includes('\n') || message.includes('•')) {
+        errorDiv.innerHTML = `❌ ${message.replace(/\n/g, '<br>').replace(/•/g, '&bull;')}`;
+    } else {
+        errorDiv.textContent = `❌ ${message}`;
+    }
+    errorDiv.style.display = 'block';
+    const timeoutDuration = message.length > 100 ? 12000 : 8000;
+    setTimeout(() => {
+        if (errorDiv) errorDiv.style.display = 'none';
+    }, timeoutDuration);
+}
+
+function showSuccess(message) {
+    hideAllMessages();
+    const successDiv = document.getElementById('successMessage');
+    if (!successDiv) {
+        console.log("Success-Div not found. Message:", message);
+        alert("Erfolg: " + message); // Fallback
+        return;
+    }
+    successDiv.textContent = `✅ ${message}`;
+    successDiv.style.display = 'block';
+    setTimeout(() => {
+        if (successDiv) successDiv.style.display = 'none';
+    }, 5000);
+}
+
+function showWarning(message) {
+    hideAllMessages();
+    const warningDiv = document.getElementById('warningMessage');
+    if (!warningDiv) {
+        console.warn("Warning-Div not found. Message:", message);
+        alert("Warnung: " + message); // Fallback
+        return;
+    }
+    if (message.includes('\n') || message.includes('•')) {
+        warningDiv.innerHTML = `⚠️ ${message.replace(/\n/g, '<br>').replace(/•/g, '&bull;')}`;
+    } else {
+        warningDiv.textContent = `⚠️ ${message}`;
+    }
+    warningDiv.style.display = 'block';
+    setTimeout(() => {
+        if (warningDiv) warningDiv.style.display = 'none';
+    }, 10000);
+}
+
+
+function formatTimeEntriesTable(entries) {
+    if (!entries || entries.length === 0) {
+        return '<p>Keine Zeiteinträge gefunden.</p>';
+    }
+    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    let tableHtml = `<table class="data-table">
+                     <thead>
+                       <tr>
+                         <th>Datum</th>
+                         <th>Projekt</th>
+                         <th>Start</th>
+                         <th>Ende</th>
+                         <th>Pause(n)</th>
+                         <th>Effektiv</th>
+                         <th>Geplant</th>
+                         <th>Differenz</th>
+                         <th>Aktionen</th>
+                       </tr>
+                     </thead>
+                     <tbody>`;
+    entries.forEach(entry => {
+        const startTimesDisplay = entry.startTimes && entry.startTimes.length > 0
+            ? entry.startTimes.map(t => t ? String(t).substring(0,5) : '-').join(', ')
+            : '-';
+        const endTimesDisplay = entry.endTimes && entry.endTimes.length > 0
+            ? entry.endTimes.map(t => t ? String(t).substring(0,5) : '(läuft)').join(', ')
+            : (entry.startTimes && entry.startTimes.length > 0 ? '(läuft)' : '-');
+        const breaksFormatted = entry.breaks && entry.breaks.length > 0
+            ? entry.breaks.map(b => `${b.start ? String(b.start).substring(0,5) : '??'}-${b.end ? String(b.end).substring(0,5) : '??'}`).join('<br>')
+            : '-';
+        const entryJsonString = JSON.stringify(entry).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+        tableHtml += `<tr>
+                      <td>${formatDate(entry.date)}</td>
+                      <td>${entry.project ? entry.project.name : 'Kein Projekt'}</td>
+                      <td>${startTimesDisplay}</td>
+                      <td>${endTimesDisplay}</td>
+                      <td>${breaksFormatted}</td>
+                      <td>${entry.actualHours || '-'}</td>
+                      <td>${entry.plannedHours || '-'}</td>
+                      <td>${entry.difference || '-'}</td>
+                      <td class="actions-cell">
+                          <button class="btn btn-secondary btn-small" onclick='openEditTimeEntryModal(${entryJsonString})'>Bearbeiten</button>
+                          <button class="btn btn-danger btn-small" onclick='deleteTimeEntryHandler(${entry.id})' style="margin-left:5px;">Löschen</button>
+                      </td>
+                    </tr>`;
+    });
+    tableHtml += '</tbody></table>';
+    return tableHtml;
+}
+
+function formatProjectsTable(projects) {
+    if (!projects || projects.length === 0) {
+        return '<p>Keine aktiven Projekte gefunden.</p>';
+    }
+    let html = '<table class="data-table"><thead><tr><th>Name</th><th>Beschreibung</th><th>Manager</th><th>Status</th></tr></thead><tbody>';
+    projects.forEach(project => {
+        html += `<tr onclick="showProjectDetails(${project.id})" style="cursor:pointer;">
+                  <td><strong>${project.name}</strong></td>
+                  <td>${project.description || '-'}</td>
+                  <td>${project.managerName || '-'}</td>
+                  <td><span style="color: ${project.active ? '#28a745' : '#dc3545'}">${project.active ? 'Aktiv' : 'Inaktiv'}</span></td>
+              </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function formatAbsencesTable(absences) {
+    if (!absences || absences.length === 0) {
+        return '<p>Keine Abwesenheiten gefunden.</p>';
+    }
+    let html = '<table class="data-table"><thead><tr><th>Typ</th><th>Von</th><th>Bis</th><th>Tage</th><th>Status</th><th>Genehmiger</th><th>Antragsteller</th></tr></thead><tbody>';
+    absences.forEach(absence => {
+        const typeLabels = {
+            'VACATION': 'Urlaub', 'ILLNESS': 'Krankheit', 'HOME_OFFICE': 'Home Office',
+            'TRAINING': 'Fortbildung', 'PUBLIC_HOLIDAY': 'Feiertag',
+            'UNPAID_LEAVE': 'Unbezahlter Urlaub', 'SPECIAL_LEAVE': 'Sonderurlaub', 'OTHER': 'Sonstiges'
+        };
+        const dayCount = calculateDaysBetween(absence.startDate, absence.endDate);
+        html += `<tr>
+                  <td>${typeLabels[absence.type] || absence.type}</td>
+                  <td>${formatDate(absence.startDate)}</td>
+                  <td>${formatDate(absence.endDate)}</td>
+                  <td>${dayCount}</td>
+                  <td><span style="color: ${absence.approved ? '#28a745' : '#ffc107'}">${absence.approved ? 'Genehmigt' : (absence.approved === false ? 'Abgelehnt' : 'Ausstehend')}</span></td>
+                  <td>${absence.approverName || '-'}</td>
+                  <td>${absence.firstName || ''} ${absence.lastName || ''}</td>
+              </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function formatUsersTable(users) {
+    if (!users || users.length === 0) {
+        return '<p>Keine Benutzer gefunden.</p>';
+    }
+    let html = '<table class="data-table"><thead><tr><th>Name</th><th>E-Mail</th><th>Rollen</th><th>Status</th><th>Erstellt</th></tr></thead><tbody>';
+    users.forEach(user => {
+        const roles = user.roles ? user.roles.map(role => String(role).replace('ROLE_', '')).join(', ') : '-';
+        const statusColor = user.active ? '#28a745' : '#dc3545';
+        const statusText = user.active ? 'Aktiv' : 'Inaktiv';
+        html += `<tr onclick="showUserDetails(${user.id})" style="cursor:pointer;">
+                  <td>${user.firstName} ${user.lastName}</td>
+                  <td>${user.email}</td>
+                  <td>${roles}</td>
+                  <td><span style="color: ${statusColor}">${user.status || statusText}</span></td>
+                  <td>${formatDate(user.createdAt)}</td>
+              </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function addEditTimeSlot(startTime = '', endTime = '') {
+    editTimeSlotIdCounter++;
+    const container = document.getElementById('editTimeSlotsContainer');
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'time-slot-container form-row';
+    slotDiv.id = `edit-time-slot-${editTimeSlotIdCounter}`;
+    slotDiv.innerHTML = `
+        <div class="form-group">
+            <label for="editStartTime-${editTimeSlotIdCounter}">Start ${editTimeSlotIdCounter}:</label>
+            <input type="time" id="editStartTime-${editTimeSlotIdCounter}" name="editStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}" required>
+        </div>
+        <div class="form-group">
+            <label for="editEndTime-${editTimeSlotIdCounter}">Ende ${editTimeSlotIdCounter}:</label>
+            <input type="time" id="editEndTime-${editTimeSlotIdCounter}" name="editEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
+        </div>
+        ${editTimeSlotIdCounter > 1 || (container.children.length > 0) ?
+        `<div class="remove-slot-btn-container" style="align-self: flex-end; margin-bottom: 1rem;"><button type="button" class="btn btn-danger btn-small" onclick="removeEditTimeSlot('edit-time-slot-${editTimeSlotIdCounter}')">Slot entfernen</button></div>` : ''}
+    `;
+    container.appendChild(slotDiv);
+}
+
+function removeEditTimeSlot(slotId) {
+    const slotToRemove = document.getElementById(slotId);
+    if (slotToRemove) {
+        slotToRemove.remove();
+    }
+}
+
+function addEditBreakSlot(startTime = '', endTime = '') {
+    editBreakSlotIdCounter++;
+    const container = document.getElementById('editBreakSlotsContainer');
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'break-slot-container form-row';
+    slotDiv.id = `edit-break-slot-${editBreakSlotIdCounter}`;
+    slotDiv.innerHTML = `
+        <div class="form-group">
+            <label for="editBreakStartTime-${editBreakSlotIdCounter}">Pause Start ${editBreakSlotIdCounter}:</label>
+            <input type="time" id="editBreakStartTime-${editBreakSlotIdCounter}" name="editBreakStartTimes" class="form-input" value="${startTime ? String(startTime).substring(0,5) : ''}">
+        </div>
+        <div class="form-group">
+            <label for="editBreakEndTime-${editBreakSlotIdCounter}">Pause Ende ${editBreakSlotIdCounter}:</label>
+            <input type="time" id="editBreakEndTime-${editBreakSlotIdCounter}" name="editBreakEndTimes" class="form-input" value="${endTime ? String(endTime).substring(0,5) : ''}">
+        </div>
+        <div class="remove-slot-btn-container" style="align-self: flex-end; margin-bottom: 1rem;"><button type="button" class="btn btn-danger btn-small" onclick="removeEditBreakSlot('edit-break-slot-${editBreakSlotIdCounter}')">Pause entfernen</button></div>
+    `;
+    container.appendChild(slotDiv);
+}
+
+function removeEditBreakSlot(slotId) {
+    const slotToRemove = document.getElementById(slotId);
+    if (slotToRemove) {
+        slotToRemove.remove();
+    }
+}
+
+function parseTimeToMinutes(timeString) {
+    if (!timeString || typeof timeString !== 'string') return 0;
+    const parts = timeString.split(':');
+    if (parts.length !== 2) return 0;
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
+    return hours * 60 + minutes;
+}
+
+function formatMinutesToHours(totalMinutes) {
+    if (isNaN(totalMinutes) || totalMinutes < 0) totalMinutes = 0;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = Math.round(totalMinutes % 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+function calculateDaysBetween(startDate, endDate) {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays;
+}
+
+function populateProjectDropdown(selectElement, projectList, selectedProjectId = null) {
+    if (!selectElement) return;
+    selectElement.innerHTML = '<option value="">Kein Projekt</option>';
+    if (projectList && Array.isArray(projectList)) {
+        projectList.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            if (selectedProjectId && project.id && project.id.toString() === selectedProjectId.toString()) {
+                option.selected = true;
+            }
+            selectElement.appendChild(option);
+        });
+    }
+}
