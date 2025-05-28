@@ -39,7 +39,7 @@ public class TimeEntryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("@timeEntryServiceImpl.isOwnerOfTimeEntry(#id) or hasAuthority('ADMIN')")
     public ResponseEntity<?> deleteTimeEntry(@PathVariable Long id) {
         timeEntryService.deleteTimeEntry(id);
         return ResponseEntity.ok().body(Map.of("message", "Eintrag gelöscht"));
