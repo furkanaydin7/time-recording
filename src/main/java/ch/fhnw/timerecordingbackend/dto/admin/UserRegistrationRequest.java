@@ -27,7 +27,6 @@ public class UserRegistrationRequest {
     @Size(min = 5, max = 255, message = "E-Mail muss zwischen 5 und 255 Zeichen lang sein")
     private String email;
 
-    @NotBlank(message = "Passwort darf nicht leer sein")
     @Size(min = 6, message = "Passwort muss mindestens 6 Zeichen lang sein")
     private String password;
 

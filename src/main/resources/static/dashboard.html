@@ -400,6 +400,32 @@
       .data-table tbody tr:hover {
         background-color: #e9ecef; /* Ein leichter Hover-Effekt */
       }
+
+      /* styles for user roles */
+      .user-role-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e0e7ff; /* light blue */
+        color: #3f51b5; /* dark blue */
+        padding: 0.3em 0.6em;
+        border-radius: 12px;
+        font-size: 0.75em;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        white-space: nowrap;
+      }
+      .user-role-tag .btn-danger.btn-small {
+        margin-left: 5px;
+        padding: 0.1em 0.4em;
+        line-height: 1;
+        font-size: 0.8em;
+        border-radius: 50%;
+        background-color: #ef5350; /* red */
+        color: white;
+      }
+      .user-role-tag .btn-danger.btn-small:hover {
+        background-color: #d32f2f; /* darker red */
+      }
     }
   </style>
 </head>
@@ -499,6 +525,7 @@
       <p>Verwalten Sie Benutzer, Projekte und Systemeinstellungen.</p>
       <div class="action-buttons">
         <button class="btn btn-success" onclick="viewUsers()">Benutzer verwalten</button>
+        <button class="btn btn-primary" onclick="openCreateUserModal()">Neuen Benutzer anlegen</button>
         <button class="btn btn-secondary" onclick="viewSystemLogs()">System-Logs</button>
         <button class="btn btn-warning" onclick="debugToken()">Debug Token</button>
         <button class="btn btn-info" onclick="checkSystemStatus()">System Check</button>
@@ -714,6 +741,81 @@
   </div>
 </div>
 
+<div id="userDetailModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('userDetailModal')">&times;</span>
+    <h2>Benutzerdetails: <span id="detailUserName"></span></h2>
+    <div id="userDetailContent">
+      <p><strong>E-Mail:</strong> <span id="detailUserEmail"></span></p>
+      <p><strong>Status:</strong> <span id="detailUserStatus"></span></p>
+      <p><strong>Geplante Stunden/Tag:</strong> <span id="detailUserPlannedHours"></span></p>
+      <p><strong>Erstellt am:</strong> <span id="detailUserCreatedAt"></span></p>
+      <p><strong>Zuletzt aktualisiert:</strong> <span id="detailUserUpdatedAt"></span></p>
+      <hr>
+      <h3>Rollen verwalten</h3>
+      <div id="userRolesList"></div>
+      <div class="form-group" style="margin-top: 1rem;">
+        <label for="addRoleSelect">Rolle hinzufügen:</label>
+        <select id="addRoleSelect" class="form-input">
+        </select>
+        <button class="btn btn-secondary btn-small" onclick="addRoleToUser()">Hinzufügen</button>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label for="userStatusSelect">Benutzerstatus ändern:</label>
+        <select id="userStatusSelect" class="form-input">
+          <option value="ACTIVE">Aktiv</option>
+          <option value="INACTIVE">Inaktiv</option>
+          <option value="LOCKED">Gesperrt</option>
+          <option value="VACATION">Im Urlaub</option>
+        </select>
+        <button class="btn btn-primary btn-small" onclick="updateUserStatus()">Status speichern</button>
+      </div>
+
+      <div class="action-buttons" style="margin-top: 2rem;">
+        <button class="btn btn-danger" onclick="resetUserPasswordFromDetails()">Passwort zurücksetzen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="createUserModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('createUserModal')">&times;</span>
+    <h2>Neuen Benutzer anlegen</h2>
+    <form id="createUserForm">
+      <div class="form-group">
+        <label for="newFirstName">Vorname:</label>
+        <input type="text" id="newFirstName" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="newLastName">Nachname:</label>
+        <input type="text" id="newLastName" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="newEmail">E-Mail-Adresse:</label>
+        <input type="email" id="newEmail" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label for="newUserRole">Rolle:</label>
+        <select id="newUserRole" class="form-input" required>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="newPlannedHours">Geplante Stunden pro Tag:</label>
+        <input type="number" id="newPlannedHours" class="form-input" value="8.0" min="1" step="0.5" required>
+      </div>
+      <p class="system-info">ℹ️ Das Initialpasswort ist standardmässig der Nachname (kleingeschrieben).</p>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="createUserSubmitBtn">Benutzer anlegen</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('createUserModal')">Abbrechen</button>
+      </div>
+    </form>
+    <div id="createUserFeedback" class="success" style="display: none;"></div>
+    <div id="createUserError" class="error" style="display: none;"></div>
+  </div>
+</div>
+
 <script>
   // ========================================
   // GLOBALE VARIABLEN
@@ -725,6 +827,8 @@
   let activeTimeEntry = null;
   let projects = [];
   let DEBUG_MODE = true; // Für Entwicklung
+  let selectedUserForDetails = null; // Speichert den Benutzer, dessen Details angezeigt werden
+
 
   // ========================================
   // VERBESSERTE API-FUNKTIONEN
@@ -1581,18 +1685,209 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
 
     users.forEach(user => {
       const roles = user.roles ? user.roles.map(role => role.replace('ROLE_', '')).join(', ') : '-';
+      const statusColor = user.active ? '#28a745' : '#dc3545';
+      const statusText = user.active ? 'Aktiv' : 'Inaktiv';
 
-      html += `<tr>
+      html += `<tr onclick="showUserDetails(${user.id})">
                     <td>${user.firstName} ${user.lastName}</td>
                     <td>${user.email}</td>
                     <td>${roles}</td>
-                    <td><span style="color: ${user.active ? '#28a745' : '#dc3545'}">${user.active ? 'Aktiv' : 'Inaktiv'}</span></td>
+                    <td><span style="color: ${statusColor}">${statusText}</span></td>
                     <td>${formatDate(user.createdAt)}</td>
                 </tr>`;
     });
 
     html += '</tbody></table>';
     return html;
+  }
+
+  async function showUserDetails(userId) {
+    try {
+      const user = await apiCall(`/api/admin/users/${userId}`);
+      selectedUserForDetails = user;
+
+      document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
+      document.getElementById('detailUserEmail').textContent = user.email;
+      document.getElementById('detailUserStatus').textContent = user.status;
+      document.getElementById('detailUserPlannedHours').textContent = user.plannedHoursPerDay;
+      document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt);
+      document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt);
+
+      const userStatusSelect = document.getElementById('userStatusSelect');
+      userStatusSelect.value = user.status;
+
+      const userRolesList = document.getElementById('userRolesList');
+      userRolesList.innerHTML = '';
+      if (user.roles && user.roles.length > 0) {
+        user.roles.forEach(role => {
+          const roleItem = document.createElement('span');
+          roleItem.className = 'user-role-tag';
+          roleItem.textContent = role.replace('ROLE_', '');
+
+          if (user.roles.length > 1 && role !== 'ADMIN' && role !== 'ROLE_ADMIN') {
+            const removeButton = document.createElement('button');
+            removeButton.className = 'btn btn-danger btn-small';
+            removeButton.textContent = 'x';
+            removeButton.style.marginLeft = '5px';
+            removeButton.onclick = () => removeRoleFromUser(user.id, role); // role als String übergeben
+            roleItem.appendChild(removeButton);
+          }
+          userRolesList.appendChild(roleItem);
+        });
+      } else {
+        userRolesList.textContent = 'Keine Rollen zugewiesen.';
+      }
+
+      await loadRolesForAddDropdown(user.roles);
+
+      document.getElementById('userDetailModal').style.display = 'block';
+    } catch (error) {
+      console.error('Fehler beim Laden der Benutzerdetails:', error);
+      showError('Fehler beim Laden der Benutzerdetails: ' + error.message);
+    }
+  }
+
+  async function loadRolesForAddDropdown(currentRoles) {
+    try {
+      const allRolesResponse = await apiCall('/api/admin/roles'); // Alle Rollen vom Backend holen
+      const addRoleSelect = document.getElementById('addRoleSelect');
+      addRoleSelect.innerHTML = '<option value="">Rolle auswählen</option>';
+
+      const currentRoleNames = new Set(currentRoles.map(role => role.replace('ROLE_', '')));
+
+      if (allRolesResponse && Array.isArray(allRolesResponse)) {
+        allRolesResponse.forEach(role => {
+          const cleanRoleName = role.name.replace('ROLE_', '');
+          // Zeige nur Rollen, die der Benutzer noch nicht hat
+          if (!currentRoleNames.has(cleanRoleName)) {
+            const option = document.createElement('option');
+            option.value = role.name; // Sendet Rollennamen an das Backend
+            option.textContent = cleanRoleName;
+            addRoleSelect.appendChild(option);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Rollen für Dropdown:', error);
+      showError('Fehler beim Laden der Rollen für das Hinzufügen-Dropdown: ' + error.message);
+    }
+  }
+
+  async function addRoleToUser() {
+    if (!selectedUserForDetails) return;
+
+    const roleToAdd = document.getElementById('addRoleSelect').value;
+    if (!roleToAdd) {
+      showError('Bitte wählen Sie eine Rolle zum Hinzufügen aus.');
+      return;
+    }
+
+    try {
+      await apiCall(`/api/admin/users/${selectedUserForDetails.id}/roles?roleName=${roleToAdd}`, { method: 'POST' });
+
+      showSuccess(`Rolle "${roleToAdd.replace('ROLE_', '')}" erfolgreich hinzugefügt.`);
+      closeModal('userDetailModal');
+      await loadDashboardData(true); // Dashboard aktualisieren
+    } catch (error) {
+      showError('Fehler beim Hinzufügen der Rolle: ' + error.message);
+    }
+  }
+
+  async function removeRoleFromUser(userId, roleName) {
+    if (!confirm(`Sind Sie sicher, dass Sie die Rolle "${roleName.replace('ROLE_', '')}" entfernen möchten?`)) {
+      return;
+    }
+    try {
+      await apiCall(`/api/admin/users/${userId}/roles?roleName=${roleName}`, { method: 'DELETE' });
+
+      showSuccess(`Rolle "${roleName.replace('ROLE_', '')}" erfolgreich entfernt.`);
+      closeModal('userDetailModal');
+      await loadDashboardData(true); // Dashboard aktualisieren
+    } catch (error) {
+      showError('Fehler beim Entfernen der Rolle: ' + error.message);
+    }
+  }
+
+  async function updateUserStatus() {
+    if (!selectedUserForDetails) return;
+
+    const newStatus = document.getElementById('userStatusSelect').value;
+    if (!newStatus) {
+      showError('Bitte wählen Sie einen Status aus.');
+      return;
+    }
+
+    try {
+      await apiCall(`/api/admin/users/${selectedUserForDetails.id}/status?status=${newStatus}`, { method: 'PATCH' }); //
+
+      showSuccess(`Status für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} auf "${newStatus}" geändert.`);
+      closeModal('userDetailModal');
+      await loadDashboardData(true); // Dashboard aktualisieren
+    } catch (error) {
+      showError('Fehler beim Aktualisieren des Status: ' + error.message);
+    }
+  }
+
+  async function resetUserPassword(userId, userName) {
+    if (!confirm(`Passwort für ${userName} wirklich zurücksetzen?`)) {
+      return;
+    }
+
+    try {
+      const response = await apiCall(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST'
+      });
+
+      // Überprüft Antwort und zeigt temporäres Passwort an
+      if (response && response.temporaryPassword) {
+        alert(`Neues temporäres Passwort für ${userName}:\n\n${response.temporaryPassword}\n\nBitte sicher weiterleiten!`);
+        showSuccess(`Passwort für ${userName} erfolgreich zurückgesetzt.`);
+      } else {
+        throw new Error('Fehler beim Zurücksetzen: Keine temporäre Passwort erhalten.');
+      }
+
+    } catch (error) {
+      console.error('Fehler beim Zurücksetzen:', error);
+      showError('Fehler beim Zurücksetzen des Passworts: ' + error.message);
+    }
+  }
+
+  async function resetUserPasswordFromDetails() {
+    if (!selectedUserForDetails) return;
+    const userId = selectedUserForDetails.id;
+    const userName = `${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName}`;
+    await resetUserPassword(userId, userName);
+    closeModal('userDetailModal');
+  }
+
+  async function openCreateUserModal() {
+    const createUserForm = document.getElementById('createUserForm');
+    createUserForm.reset(); // Formular zurücksetzen
+
+    // Feedback- und Fehlermeldungen ausblenden
+    document.getElementById('createUserFeedback').style.display = 'none';
+    document.getElementById('createUserError').style.display = 'none';
+
+    // Rollen für das Dropdown laden
+    const newUserRoleSelect = document.getElementById('newUserRole');
+    try {
+      const allRolesResponse = await apiCall('/api/admin/roles'); // Alle Rollen vom Backend holen
+      newUserRoleSelect.innerHTML = ''; // Vorherige Optionen löschen
+      if (allRolesResponse && Array.isArray(allRolesResponse)) {
+        allRolesResponse.forEach(role => {
+          const option = document.createElement('option');
+          option.value = role.name;
+          option.textContent = role.name.replace('ROLE_', ''); // "ROLE_" entfernen für bessere Anzeige
+          newUserRoleSelect.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Rollen für Benutzererstellung:', error);
+      document.getElementById('createUserError').textContent = 'Fehler beim Laden der Rollen: ' + error.message;
+      document.getElementById('createUserError').style.display = 'block';
+    }
+
+    document.getElementById('createUserModal').style.display = 'block';
   }
 
   // ========================================
@@ -1832,6 +2127,64 @@ Das System erlaubt nur einen Zeiteintrag pro Tag. Optionen:
       }
     });
   }
+
+  // Benutzer erstellen
+  document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const firstName = document.getElementById('newFirstName').value;
+    const lastName = document.getElementById('newLastName').value;
+    const email = document.getElementById('newEmail').value;
+    const role = document.getElementById('newUserRole').value;
+    const plannedHours = parseFloat(document.getElementById('newPlannedHours').value);
+
+    // Feedback- und Fehlermeldungen zurücksetzen
+    const feedbackDiv = document.getElementById('createUserFeedback');
+    const errorDiv = document.getElementById('createUserError');
+    feedbackDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+
+    // Lade-Status für Button
+    const submitBtn = document.getElementById('createUserSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Erstelle Benutzer...';
+
+    try {
+      const userData = {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        // Passwort wird vom Backend generiert (Nachname klein)
+        // plannedHoursPerDay wird vom Backend gesetzt, kann aber auch hier übergeben werden
+        plannedHoursPerDay: plannedHours,
+        role: role
+      };
+
+      const response = await apiCall('/api/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      });
+
+      if (response) {
+        feedbackDiv.textContent = `✅ Benutzer "${response.firstName} ${response.lastName}" erfolgreich erstellt! Initialpasswort: ${response.temporaryPassword}`;
+        feedbackDiv.style.display = 'block';
+        document.getElementById('createUserForm').reset(); // Formular zurücksetzen
+
+        // Automatisch nach 5 Sekunden schliessen und Liste aktualisieren
+        setTimeout(() => {
+          closeModal('createUserModal');
+          loadDashboardData(true); // Benutzerliste im Dashboard aktualisieren
+        }, 5000);
+      }
+    } catch (error) {
+      errorDiv.textContent = '❌ Fehler beim Erstellen des Benutzers: ' + error.message;
+      errorDiv.style.display = 'block';
+      console.error('Fehler beim Erstellen des Benutzers:', error);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Benutzer anlegen';
+    }
+  });
 
   // ========================================
   // HILFSFUNKTIONEN

@@ -2,6 +2,7 @@ package ch.fhnw.timerecordingbackend.controller;
 
 import ch.fhnw.timerecordingbackend.dto.admin.UserRegistrationRequest;
 import ch.fhnw.timerecordingbackend.dto.admin.UserResponse;
+import ch.fhnw.timerecordingbackend.model.Role;
 import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 import ch.fhnw.timerecordingbackend.service.UserService;
@@ -72,6 +73,16 @@ public class AdminController {
     }
 
     /**
+     * Gibt eine Liste aller Rollen zurück
+     * @return ResponseEntity mit Liste aller Rollen
+     */
+    @GetMapping("/roles")
+    public ResponseEntity<List<Role>> getAllRoles() {
+        List<Role> roles = userService.getAllRoles();
+        return ResponseEntity.ok(roles);
+    }
+
+    /**
      * Erstellt einen neuen User mit den übergebenen Daten
      * @param request
      * @return ResponseEntity mit dem neu erstellten UserResponse-DTO
@@ -84,12 +95,20 @@ public class AdminController {
         user.setEmail(request.getEmail());
         user.setPlannedHoursPerDay(request.getPlannedHoursPerDay());
 
-        // Hier das Passwort verschlüsseln
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // Passwort setzten
+        String passwordToEncode = request.getPassword();
+        if (passwordToEncode == null || passwordToEncode.isEmpty()) {
+            passwordToEncode = request.getLastName().toLowerCase(); // Nachname als Standardpasswort
+        }
+        user.setPassword(passwordEncoder.encode(passwordToEncode));
 
         User createdUser = userService.createUser(user, request.getRole());
 
-        return new ResponseEntity<>(convertToUserResponse(createdUser), HttpStatus.CREATED);
+        // Ausgabe des Passworts zur Kontrolle
+        UserResponse response = convertToUserResponse(createdUser);
+        response.setTemporaryPassword(passwordToEncode);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /**
@@ -165,7 +184,7 @@ public class AdminController {
      */
     @DeleteMapping("/users/{id}/roles")
     public ResponseEntity<UserResponse> removeRoleFromUser(@PathVariable Long id, @RequestParam String roleName) {
-        User updatedUser = userService.removeRoleFromUser(id, roleName);
+        User updatedUser = userService.removeRoleFromUser(id, roleName); // <-- Korrigierter Methodenname
         return ResponseEntity.ok(convertToUserResponse(updatedUser));
     }
 
