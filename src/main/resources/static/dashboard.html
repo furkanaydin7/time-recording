@@ -543,11 +543,11 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="manualBreakStartTime">Pause Startzeit (optional):</label>
+          <label for="manualBreakStartTime">Pause Startzeit:</label>
           <input type="time" id="manualBreakStartTime">
         </div>
         <div class="form-group">
-          <label for="manualBreakEndTime">Pause Endzeit (optional):</label>
+          <label for="manualBreakEndTime">Pause Endzeit:</label>
           <input type="time" id="manualBreakEndTime">
         </div>
       </div>
@@ -1004,7 +1004,10 @@
     // Standard-Arbeitszeiten setzen
     document.getElementById('manualStartTime').value = '08:00';
     document.getElementById('manualEndTime').value = '17:00';
-    document.getElementById('manualBreakMinutes').value = '60';
+    //document.getElementById('manualBreakMinutes').value = '60';
+
+    document.getElementById('manualBreakStartTime').value = '12:00';
+    document.getElementById('manualBreakEndTime').value = '12:30';
 
     calculateWorkTime();
   }
