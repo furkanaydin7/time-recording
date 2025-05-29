@@ -50,6 +50,10 @@ function bindDashboardEventListeners() {
     // --- Zeiterfassung Karte ---
     document.getElementById('startTimer')?.addEventListener('click', startTimeTracking);
     document.getElementById('stopTimer')?.addEventListener('click', stopTimeTracking);
+    // Die Buttons mit onclick im HTML werden hier mit IDs versehen und Listener gebunden
+    // Wenn du `document.querySelector('button[onclick="..."]'` verwendest, stelle sicher, dass
+    // das onclick-Attribut im HTML bleibt oder entferne es und verlasse dich nur auf die ID.
+    // Es ist sauberer, onclick-Attribute zu entfernen und alles über addEventListener zu machen.
 
     const openManualEntryModalBtn = document.getElementById('openManualEntryModalBtn');
     if (openManualEntryModalBtn) openManualEntryModalBtn.addEventListener('click', openManualEntryModal);
@@ -65,19 +69,6 @@ function bindDashboardEventListeners() {
     const createProjectBtn = document.getElementById('createProjectBtn');
     if (createProjectBtn) createProjectBtn.addEventListener('click', openCreateProjectModal);
 
-
-    // Admin Panel Buttons
-    document.querySelector('button[onclick="viewUsers()"]')?.setAttribute('id', 'viewUsersBtn');
-    document.getElementById('viewUsersBtn')?.addEventListener('click', viewUsers);
-    document.querySelector('button[onclick="openCreateUserModal()"]')?.setAttribute('id', 'openCreateUserModalBtn');
-    document.getElementById('openCreateUserModalBtn')?.addEventListener('click', openCreateUserModal);
-    document.getElementById('viewRegistrationRequestsBtn')?.addEventListener('click', viewRegistrationRequests);
-    document.querySelector('button[onclick="viewSystemLogs()"]')?.setAttribute('id', 'viewSystemLogsBtn');
-    document.getElementById('viewSystemLogsBtn')?.addEventListener('click', viewSystemLogs);
-    document.querySelector('button[onclick="debugToken()"]')?.setAttribute('id', 'debugTokenBtn');
-    document.getElementById('debugTokenBtn')?.addEventListener('click', debugToken);
-    document.querySelector('button[onclick="checkSystemStatus()"]')?.setAttribute('id', 'checkSystemStatusBtn');
-    document.getElementById('checkSystemStatusBtn')?.addEventListener('click', checkSystemStatus);
 
     // --- Abwesenheiten Karte ---
     const viewAbsencesBtn = document.getElementById('viewAbsencesBtn');
