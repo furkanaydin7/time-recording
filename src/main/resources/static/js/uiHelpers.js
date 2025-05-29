@@ -15,7 +15,7 @@ function closeModal(modalId) {
     // Formulare zurücksetzen
     const forms = modal.querySelectorAll('form');
     forms.forEach(form => {
-        if (!form.id.includes('edit') || confirm('Änderungen verwerfen?')) {
+        if (!form.id.includes('edit') || confirm('Änderungen speichern?')) {
             form.reset();
         }
     });

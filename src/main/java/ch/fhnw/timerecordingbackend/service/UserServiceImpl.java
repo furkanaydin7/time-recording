@@ -194,13 +194,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ValidationException("Benutzer nicht gefunden"));
 
-        // altes Passwort überprüfen
-        if (!request.getOldPassword().equals(user.getPassword())) {
+        // Altes Passwort korrekt überprüfen
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new ValidationException("Altes Passwort ist falsch");
         }
 
-        // Neues Passwort setzen
-        user.setPassword(request.getNewPassword());
+        // Neues Passwort verschlüsseln und setzen
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
