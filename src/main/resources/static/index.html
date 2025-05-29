@@ -288,7 +288,7 @@
                     if (token) {
                         localStorage.setItem('jwtToken', token);
                         localStorage.setItem('tokenType', data.tokenType || 'Bearer');
-                        localStorage.setItem('userEmail', data.user ? data.user.email : email);
+                        localStorage.setItem('userEmail', data.email || email);
                         localStorage.setItem('userId', data.user ? data.user.id : data.userId);
                         localStorage.setItem('userRoles', JSON.stringify(data.user ? data.user.roles || [] : []));
                     }
