@@ -170,7 +170,7 @@ public class BackupServiceImpl implements BackupService {
         response.setStartDate(absence.getStartDate());
         response.setEndDate(absence.getEndDate());
         response.setType(absence.getType());
-        response.setApproved(absence.isApproved());
+        response.setStatus(absence.getStatus());
         response.setCreatedAt(absence.getCreatedAt());
         response.setUpdatedAt(absence.getUpdatedAt());
         response.setUserId(absence.getUser().getId());
@@ -178,8 +178,8 @@ public class BackupServiceImpl implements BackupService {
         response.setLastName(absence.getUser().getLastName());
         response.setEmail(absence.getUser().getEmail());
         if (absence.getApprover() != null) {
-            response.setApproverId(absence.getApprover().getId());
-            response.setApproverName(absence.getApprover().getFullName());
+            response.setProcessedById(absence.getApprover().getId());
+            response.setProcessedByName(absence.getApprover().getFullName());
         }
         return response;
     }

@@ -2,6 +2,7 @@ package ch.fhnw.timerecordingbackend.repository;
 
 import ch.fhnw.timerecordingbackend.model.Absence;
 import ch.fhnw.timerecordingbackend.model.User;
+import ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus;
 import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -41,30 +42,34 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
     List<Absence> findByUserAndType(User user, AbsenceType type);
 
     /**
-     * Liefert alle genehmigten Abwesenheiten zurück.
-     * @return Liste mit genehmigten Abwesenheiten.
+     * Liefert alle Abwesenheiten mit einem bestimmten Status zurück.
+     * @param status Der gewünschte Abwesenheitsstatus (PENDING, APPROVED, REJECTED)
+     * @return Liste mit Abwesenheiten des angegebenen Status.
      */
-    List<Absence> findByApprovedTrue();
+    List<Absence> findByStatus(AbsenceStatus status);
 
     /**
-     * Liefert alle nicht genehmigten Abwesenheiten zurück.
-     * @return Liste mit nicht genehmigten Abwesenheiten.
+     * Liefert alle Abwesenheiten eines Benutzers mit einem bestimmten Status zurück.
+     * @param user Der Benutzer.
+     * @param status Der gewünschte Abwesenheitsstatus.
+     * @return Liste mit Abwesenheiten des Benutzers mit dem angegebenen Status.
      */
-    List<Absence> findByApprovedFalse();
+    List<Absence> findByUserAndStatus(User user, AbsenceStatus status);
 
     /**
-     * Liefert alle genehmigten und nicht genehmigten Abwesenheiten eines Benutzers zurück.
-     * @param user
-     * @return Liste mit genehmigten und nicht genehmigten Abwesenheiten eines Benutzers.
+     * Liefert alle Abwesenheiten zurück, die nicht genehmigt sind (PENDING oder REJECTED).
+     * @return Liste der nicht genehmigten Abwesenheiten.
      */
-    List<Absence> findByUserAndApprovedTrue(User user);
+    @Query("SELECT a FROM Absence a WHERE a.status = ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus.PENDING OR a.status = ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus.REJECTED")
+    List<Absence> findByStatusNotApproved();
 
     /**
-     * Liefert alle nicht genehmigten Abwesenheiten eines Benutzers zurück.
-     * @param user
-     * @return Liste mit nicht genehmigten Abwesenheiten eines Benutzers.
+     * Liefert alle Abwesenheiten eines Benutzers zurück, die nicht genehmigt sind (PENDING oder REJECTED).
+     * @param user Der Benutzer.
+     * @return Liste der nicht genehmigten Abwesenheiten des Benutzers.
      */
-    List<Absence> findByUserAndApprovedFalse(User user);
+    @Query("SELECT a FROM Absence a WHERE a.user = :user AND (a.status = ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus.PENDING OR a.status = ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus.REJECTED)")
+    List<Absence> findByUserAndStatusNotApproved(@Param("user") User user);
 
     /**
      * Überprüft ob ein Benutzer einen bestimmten Tag abwesend war.
@@ -73,7 +78,7 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
      * @return true, wenn der Benutzer einen bestimmten Tag abwesend war, sonst false
      * Quelle: ChatGPT.com
      */
-    @Query("SELECT COUNT(a) > 0 FROM Absence a WHERE a.user.id = :userId AND :date BETWEEN a.startDate AND a.endDate AND a.approved = true")
+    @Query("SELECT COUNT(a) > 0 FROM Absence a WHERE a.user.id = :userId AND :date BETWEEN a.startDate AND a.endDate AND a.status = ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus.APPROVED")
     boolean hasApprovedAbsenceOnDate(@Param("userId") Long userId, @Param("date") LocalDate date);
 
     /**

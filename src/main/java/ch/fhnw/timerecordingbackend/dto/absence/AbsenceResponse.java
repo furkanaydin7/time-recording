@@ -1,6 +1,7 @@
 
 package ch.fhnw.timerecordingbackend.dto.absence;
 
+import ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus;
 import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
 
 import java.time.LocalDate;
@@ -31,15 +32,15 @@ public class AbsenceResponse {
     private String email;
 
     // Genehmiger-Informationen (NEU!)
-    private Long approverId;
-    private String approverName;
-    private LocalDateTime approvalDate;
+    private Long processedById;
+    private String processedByName;
+    private LocalDateTime processedDate;
 
     // Ablehnungs-Informationen (NEU!)
     private String rejectionReason;
 
     // Status für UI (NEU!)
-    private boolean approved; // Für Backward Compatibility
+    private AbsenceStatus status; // Für Backward Compatibility
 
     public AbsenceResponse() {}
 
@@ -86,22 +87,22 @@ public class AbsenceResponse {
     }
 
     // Genehmiger-Informationen
-    public Long getApproverId() { return approverId; }
-    public void setApproverId(Long approverId) { this.approverId = approverId; }
+    public Long getProcessedById() { return processedById; }
+    public void setProcessedById(Long processedById) { this.processedById = processedById; }
 
-    public String getApproverName() { return approverName; }
-    public void setApproverName(String approverName) { this.approverName = approverName; }
+    public String getProcessedByName() { return processedByName; }
+    public void setProcessedByName(String processedByName) { this.processedByName = processedByName; }
 
-    public LocalDateTime getApprovalDate() { return approvalDate; }
-    public void setApprovalDate(LocalDateTime approvalDate) { this.approvalDate = approvalDate; }
+    public LocalDateTime getProcessedDate() { return processedDate; }
+    public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }
 
     // Ablehnungs-Informationen
     public String getRejectionReason() { return rejectionReason; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     // Backward Compatibility
-    public boolean isApproved() { return approved; }
-    public void setApproved(boolean approved) { this.approved = approved; }
+    public AbsenceStatus getStatus() { return status; } // Getter für Status
+    public void setStatus(AbsenceStatus status) { this.status = status; } // Setter für Status
 
     public long getDurationInDays() {
         if (startDate != null && endDate != null) {
@@ -117,6 +118,7 @@ public class AbsenceResponse {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", type=" + type +
+                ", status=" + status +
                 ", email='" + email + '\'' +
                 '}';
     }

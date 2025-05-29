@@ -246,20 +246,46 @@ function formatAbsencesTable(absences) {
     let html = '<table class="data-table"><thead><tr><th>Typ</th><th>Von</th><th>Bis</th><th>Tage</th><th>Status</th><th>Genehmiger</th><th>Antragsteller</th></tr></thead><tbody>';
     absences.forEach(absence => {
         const typeLabels = {
-            'VACATION': 'Urlaub', 'ILLNESS': 'Krankheit', 'HOME_OFFICE': 'Home Office',
-            'TRAINING': 'Fortbildung', 'PUBLIC_HOLIDAY': 'Feiertag',
-            'UNPAID_LEAVE': 'Unbezahlter Urlaub', 'SPECIAL_LEAVE': 'Sonderurlaub', 'OTHER': 'Sonstiges'
+            'VACATION': 'Urlaub',
+            'ILLNESS': 'Krankheit',
+            'HOME_OFFICE': 'Home Office',
+            'TRAINING': 'Fortbildung',
+            'PUBLIC_HOLIDAY': 'Feiertag',
+            'UNPAID_LEAVE': 'Unbezahlter Urlaub',
+            'SPECIAL_LEAVE': 'Sonderurlaub',
+            'OTHER': 'Sonstiges'
         };
+
         const dayCount = calculateDaysBetween(absence.startDate, absence.endDate);
+
+        let statusText = 'Unbekannt';
+        let statusColor = '#666'; // Standardfarbe für unbekannt
+
+        if (absence.status === 'APPROVED') {
+            statusText = 'Genehmigt';
+            statusColor = '#28a745'; // Grün
+        } else if (absence.status === 'REJECTED') {
+            statusText = 'Abgelehnt';
+            statusColor = '#dc3545'; // Rot
+        } else if (absence.status === 'PENDING') {
+            statusText = 'Ausstehend';
+            statusColor = '#ffc107'; // Gelb
+        }
+
+        let processedByDisplay = '-'; // Standardwert
+        if (absence && absence.processedByName) { // Prüfen, ob 'processedByName' existiert und einen Wert hat
+            processedByDisplay = absence.processedByName;
+        }
+
         html += `<tr>
-                  <td>${typeLabels[absence.type] || absence.type}</td>
-                  <td>${formatDate(absence.startDate)}</td>
-                  <td>${formatDate(absence.endDate)}</td>
-                  <td>${dayCount}</td>
-                  <td><span style="color: ${absence.approved ? '#28a745' : '#ffc107'}">${absence.approved ? 'Genehmigt' : (absence.approved === false ? 'Abgelehnt' : 'Ausstehend')}</span></td>
-                  <td>${absence.approverName || '-'}</td>
-                  <td>${absence.firstName || ''} ${absence.lastName || ''}</td>
-              </tr>`;
+                    <td>${typeLabels[absence.type] || absence.type}</td>
+                    <td>${formatDate(absence.startDate)}</td>
+                    <td>${formatDate(absence.endDate)}</td>
+                    <td>${dayCount}</td>
+                    <td><span style="color: ${statusColor}">${statusText}</span></td>
+                    <td>${processedByDisplay}</td>
+                    <td>${absence.firstName || ''} ${absence.lastName || ''}</td>
+                </tr>`;
     });
     html += '</tbody></table>';
     return html;

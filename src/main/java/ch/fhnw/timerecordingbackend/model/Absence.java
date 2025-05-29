@@ -1,5 +1,6 @@
 package ch.fhnw.timerecordingbackend.model;
 
+import ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus;
 import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
 import jakarta.persistence.*;
 
@@ -34,8 +35,10 @@ public class Absence {
     @Column(nullable = false)
     private AbsenceType type;
 
+    // Ersetze 'approved' und 'approver' durch 'status' und 'rejectionReason'
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean approved = false;  // ZURÜCK ZU BOOLEAN!
+    private AbsenceStatus status = AbsenceStatus.PENDING; // Standardwert ist PENDING
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approver_id")
@@ -64,7 +67,7 @@ public class Absence {
      * @param approver
      */
     public void approve(User approver) {
-        this.approved = true;
+        this.status = AbsenceStatus.APPROVED;
         this.approver = approver;
         this.updatedAt = LocalDateTime.now();
     }
@@ -73,7 +76,7 @@ public class Absence {
      * Abwesenheit ablehnen
      */
     public void reject() {
-        this.approved = false;
+        this.status = AbsenceStatus.REJECTED;
         this.approver = null;
     }
 
@@ -112,8 +115,8 @@ public class Absence {
     public AbsenceType getType() { return type; }
     public void setType(AbsenceType type) { this.type = type; }
 
-    public boolean isApproved() { return approved; }
-    public void setApproved(boolean approved) { this.approved = approved; }
+    public AbsenceStatus getStatus() { return status; }
+    public void setStatus(AbsenceStatus status) { this.status = status; }
 
     public User getApprover() { return approver; }
     public void setApprover(User approver) { this.approver = approver; }
@@ -132,7 +135,7 @@ public class Absence {
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", type=" + type +
-                ", approved=" + approved +
+                ", status=" + status +
                 '}';
     }
 }

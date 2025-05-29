@@ -1,6 +1,7 @@
 package ch.fhnw.timerecordingbackend.util;
 
 import ch.fhnw.timerecordingbackend.model.*;
+import ch.fhnw.timerecordingbackend.model.enums.AbsenceStatus;
 import ch.fhnw.timerecordingbackend.model.enums.AbsenceType;
 import ch.fhnw.timerecordingbackend.model.enums.UserStatus;
 import ch.fhnw.timerecordingbackend.repository.*;
@@ -271,7 +272,7 @@ public class DataInitializer implements CommandLineRunner {
             vacation.setStartDate(LocalDate.now().plusDays(7));
             vacation.setEndDate(LocalDate.now().plusDays(11));
             vacation.setType(AbsenceType.VACATION);
-            vacation.setApproved(true);
+            vacation.setStatus(AbsenceStatus.APPROVED);
             vacation.setApprover(admin);
             vacation.setCreatedAt(LocalDateTime.now());
             vacation.setUpdatedAt(LocalDateTime.now());
@@ -287,7 +288,7 @@ public class DataInitializer implements CommandLineRunner {
             training.setStartDate(LocalDate.now().plusDays(14));
             training.setEndDate(LocalDate.now().plusDays(16));
             training.setType(AbsenceType.TRAINING);
-            training.setApproved(false);
+            training.setStatus(AbsenceStatus.PENDING);
             training.setCreatedAt(LocalDateTime.now());
             training.setUpdatedAt(LocalDateTime.now());
 
@@ -304,7 +305,7 @@ public class DataInitializer implements CommandLineRunner {
             homeOffice.setStartDate(LocalDate.now().plusDays(2));
             homeOffice.setEndDate(LocalDate.now().plusDays(4));
             homeOffice.setType(AbsenceType.HOME_OFFICE);
-            homeOffice.setApproved(true);
+            homeOffice.setStatus(AbsenceStatus.APPROVED);
             homeOffice.setApprover(admin);
             homeOffice.setCreatedAt(LocalDateTime.now());
             homeOffice.setUpdatedAt(LocalDateTime.now());
@@ -321,7 +322,7 @@ public class DataInitializer implements CommandLineRunner {
             specialLeave.setStartDate(LocalDate.now().plusDays(21));
             specialLeave.setEndDate(LocalDate.now().plusDays(21)); // Nur ein Tag
             specialLeave.setType(AbsenceType.SPECIAL_LEAVE);
-            specialLeave.setApproved(false);
+            specialLeave.setStatus(AbsenceStatus.PENDING);
             specialLeave.setCreatedAt(LocalDateTime.now());
             specialLeave.setUpdatedAt(LocalDateTime.now());
 
