@@ -73,6 +73,7 @@ function bindDashboardEventListeners() {
     document.getElementById('viewUsersBtn')?.addEventListener('click', viewUsers);
     document.querySelector('button[onclick="openCreateUserModal()"]')?.setAttribute('id', 'openCreateUserModalBtn');
     document.getElementById('openCreateUserModalBtn')?.addEventListener('click', openCreateUserModal);
+    document.getElementById('viewRegistrationRequestsBtn')?.addEventListener('click', viewRegistrationRequests);
     document.querySelector('button[onclick="viewSystemLogs()"]')?.setAttribute('id', 'viewSystemLogsBtn');
     document.getElementById('viewSystemLogsBtn')?.addEventListener('click', viewSystemLogs);
     document.querySelector('button[onclick="debugToken()"]')?.setAttribute('id', 'debugTokenBtn');
