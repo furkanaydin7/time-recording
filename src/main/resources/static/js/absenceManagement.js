@@ -115,3 +115,52 @@ function validateAbsenceDates() {
 document.addEventListener('DOMContentLoaded', function() {
     validateAbsenceDates();
 });
+
+async function viewPendingAbsencesForApproval() {
+    try {
+        console.log('📋 Lade ausstehende Abwesenheiten zur Genehmigung...');
+        hideDataDisplay();
+        const response = await apiCall(`/api/absences/pending?_t=${Date.now()}`);
+        if (response && response.absences) {
+            console.log(`✅ ${response.absences.length} ausstehende Abwesenheiten geladen`);
+            if (response.absences.length === 0) {
+                displayData('Ausstehende Abwesenheitsanträge', '<p>Keine Anträge zur Genehmigung vorhanden.</p>');
+            } else {
+                displayData('Ausstehende Abwesenheitsanträge', formatPendingAbsencesTableForApproval(response.absences));
+            }
+        } else {
+            displayData('Ausstehende Abwesenheitsanträge', '<p>Keine Anträge gefunden oder Fehler beim Laden.</p>');
+        }
+    } catch (error) {
+        console.error('❌ Fehler beim Laden der ausstehenden Abwesenheiten:', error);
+        showError('Fehler beim Laden der ausstehenden Abwesenheiten: ' + (error.message || "Unbekannt"));
+    }
+}
+
+async function approveAbsenceRequest(absenceId) {
+    if (!confirm('Möchten Sie diesen Abwesenheitsantrag genehmigen?')) return;
+    try {
+        await apiCall(`/api/absences/${absenceId}/approve`, { method: 'PATCH' });
+        showSuccess('Abwesenheitsantrag erfolgreich genehmigt.');
+        viewPendingAbsencesForApproval();
+        if (typeof loadDashboardPageData === 'function') {
+            loadDashboardPageData(true);
+        }
+    } catch (error) {
+        showError('Fehler beim Genehmigen des Antrags: ' + (error.message || "Unbekannt"));
+    }
+}
+
+async function rejectAbsenceRequest(absenceId) {
+    if (!confirm('Möchten Sie diesen Abwesenheitsantrag ablehnen?')) return;
+    try {
+        await apiCall(`/api/absences/${absenceId}/reject`, { method: 'PATCH' });
+        showSuccess('Abwesenheitsantrag erfolgreich abgelehnt.');
+        viewPendingAbsencesForApproval();
+        if (typeof loadDashboardPageData === 'function') {
+            loadDashboardPageData(true);
+        }
+    } catch (error) {
+        showError('Fehler beim Ablehnen des Antrags: ' + (error.message || "Unbekannt"));
+    }
+}

@@ -94,10 +94,14 @@ public interface AbsenceService {
     List<Absence> findApprovedAbsences();
 
     /**
-     * Findet alle nicht genehmigten Abwesenheiten
-     * @return Liste aller nicht genehmigten Abwesenheiten
+     * Findet alle nicht genehmigten Abwesenheiten, gefiltert nach der Rolle des aktuellen Benutzers.
+     * Admins sehen alle. Manager sehen die ihrer direkten Mitarbeiter.
+     * @param currentUser Der aktuell angemeldete Benutzer.
+     * @return Liste aller nicht genehmigten Abwesenheiten.
      */
-    List<Absence> findPendingAbsences();
+    List<Absence> findPendingAbsences(User currentUser);
+
+    List<Absence> findRejectedAbsencesByUser(User user);
 
     /**
      * Findet alle genehmigten Abwesenheiten eines Benutzers

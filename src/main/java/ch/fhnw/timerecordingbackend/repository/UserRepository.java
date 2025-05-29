@@ -63,4 +63,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<User> searchUsers(@Param("searchTerm") String searchTerm);
 
+    /**
+     * Findet alle Benutzer, die dem angegebenen Manager direkt unterstellt sind.
+     * @param manager Der Manager-Benutzer.
+     * @return Eine Liste der direkt unterstellten Benutzer.
+     */
+    List<User> findByManager(User manager);
+
 }

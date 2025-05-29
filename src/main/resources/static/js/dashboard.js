@@ -64,6 +64,7 @@ function bindDashboardEventListeners() {
     document.getElementById('viewAbsencesBtn')?.addEventListener('click', viewAbsences);
     document.querySelector('button[onclick="openCreateAbsenceModal()"]')?.setAttribute('id', 'openCreateAbsenceModalBtn');
     document.getElementById('openCreateAbsenceModalBtn')?.addEventListener('click', openCreateAbsenceModal);
+    document.getElementById('viewPendingAbsencesBtn')?.addEventListener('click', viewPendingAbsencesForApproval);
 
 
     // Admin Panel Buttons

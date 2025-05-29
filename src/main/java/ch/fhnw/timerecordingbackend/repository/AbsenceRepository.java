@@ -116,4 +116,12 @@ public interface AbsenceRepository extends JpaRepository<Absence, Long> {
     @Query("SELECT a FROM Absence a WHERE a.user.id = :userId AND a.endDate >= :today ORDER BY a.startDate ASC")
     List<Absence> findCurrentAndFutureAbsencesByUserId(@Param("userId") Long userId, @Param("today") LocalDate today);
 
+    /**
+     * Findet alle Abwesenheiten für eine Liste von Benutzern mit einem bestimmten Status.
+     * @param users Eine Liste von Benutzern.
+     * @param status Der gewünschte Abwesenheitsstatus.
+     * @return Eine Liste von Abwesenheiten.
+     */
+    List<Absence> findByUserInAndStatus(List<User> users, AbsenceStatus status);
+
 }

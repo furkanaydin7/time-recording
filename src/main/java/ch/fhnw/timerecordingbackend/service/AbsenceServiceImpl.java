@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -242,12 +243,21 @@ public class AbsenceServiceImpl implements AbsenceService{
     }
 
     @Override
-    public List<Absence> findPendingAbsences() {
-        return absenceRepository.findByStatus(AbsenceStatus.PENDING);
-    }
+    public List<Absence> findPendingAbsences(User currentUser) {
+        if (currentUser == null) {
+            return Collections.emptyList();
+        }
 
-    public List<Absence> findRejectedAbsences() {
-        return absenceRepository.findByStatus(AbsenceStatus.REJECTED);
+        if (currentUser.hasRole("ADMIN")) {
+            return absenceRepository.findByStatus(AbsenceStatus.PENDING);
+        } else if (currentUser.hasRole("MANAGER")) {
+            List<User> directReports = userRepository.findByManager(currentUser);
+            if (directReports == null || directReports.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return absenceRepository.findByUserInAndStatus(directReports, AbsenceStatus.PENDING);
+        }
+        return Collections.emptyList();
     }
 
     @Override

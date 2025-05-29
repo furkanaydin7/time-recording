@@ -291,6 +291,56 @@ function formatAbsencesTable(absences) {
     return html;
 }
 
+function formatPendingAbsencesTableForApproval(absences) {
+    if (!absences || absences.length === 0) {
+        return '<p>Keine ausstehenden Abwesenheitsanträge gefunden.</p>';
+    }
+    absences.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // Älteste zuerst
+
+    let html = `<table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Antragsteller</th>
+                      <th>Typ</th>
+                      <th>Von</th>
+                      <th>Bis</th>
+                      <th>Tage</th>
+                      <th>Status</th>
+                      <th>Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
+
+    absences.forEach(absence => {
+        const typeLabels = {
+            'VACATION': 'Urlaub', 'ILLNESS': 'Krankheit', 'HOME_OFFICE': 'Home Office',
+            'TRAINING': 'Fortbildung', 'PUBLIC_HOLIDAY': 'Feiertag',
+            'UNPAID_LEAVE': 'Unbezahlter Urlaub', 'SPECIAL_LEAVE': 'Sonderurlaub', 'OTHER': 'Sonstiges'
+        };
+        const dayCount = calculateDaysBetween(absence.startDate, absence.endDate);
+        const applicantName = `${absence.firstName || ''} ${absence.lastName || ''}`.trim() || absence.email || 'Unbekannt';
+
+        // Für diese Tabelle ist der Status immer "Ausstehend"
+        const statusText = 'Ausstehend';
+        const statusColor = '#ffc107';
+
+        html += `<tr>
+                   <td>${applicantName}</td>
+                   <td>${typeLabels[absence.type] || absence.type}</td>
+                   <td>${formatDate(absence.startDate)}</td>
+                   <td>${formatDate(absence.endDate)}</td>
+                   <td>${dayCount}</td>
+                   <td><span style="color: ${statusColor}">${statusText}</span></td>
+                   <td class="actions-cell">
+                       <button class="btn btn-success btn-small" onclick="approveAbsenceRequest(${absence.id})">Genehmigen</button>
+                       <button class="btn btn-danger btn-small" onclick="rejectAbsenceRequest(${absence.id})" style="margin-left:5px;">Ablehnen</button>
+                   </td>
+                 </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
 function formatUsersTable(users) {
     if (!users || users.length === 0) {
         return '<p>Keine Benutzer gefunden.</p>';

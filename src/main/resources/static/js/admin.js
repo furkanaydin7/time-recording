@@ -141,12 +141,15 @@ function initializeAdminFeatures() {
     } catch (e) { console.error('Fehler beim Parsen der Rollen:', e); userRoles = []; }
 
     let isAdmin = false;
+    let isManager = false;
     if (Array.isArray(userRoles)) {
         isAdmin = userRoles.some(role => String(role).toUpperCase() === 'ADMIN' || String(role).toUpperCase() === 'ROLE_ADMIN');
+        isManager = userRoles.some(role => String(role).toUpperCase().includes('MANAGER'));
     }
 
     const adminCard = document.getElementById('adminCard');
     const createProjectBtn = document.getElementById('createProjectBtn');
+    const viewPendingAbsencesBtn = document.getElementById('viewPendingAbsencesBtn');
 
     if (isAdmin) {
         if (adminCard) adminCard.style.display = 'block';
@@ -154,6 +157,12 @@ function initializeAdminFeatures() {
     } else {
         if (adminCard) adminCard.style.display = 'none';
         if (createProjectBtn) createProjectBtn.style.display = 'none';
+    }
+
+    if (isAdmin || isManager) {
+        if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.style.display = 'inline-block';
+    } else {
+        if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.style.display = 'none';
     }
 
     if (DEBUG_MODE) {
