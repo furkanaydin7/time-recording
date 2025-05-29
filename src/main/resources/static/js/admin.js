@@ -86,7 +86,45 @@ async function openCreateUserModal() {
     openModal('createUserModal');
 
 }
+async function showUserDetails(userId) {
+    try {
+        const user = await apiCall(`/api/admin/users/${userId}`); // apiCall muss global sein
+        selectedUserForDetails = user;
+        document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
+        document.getElementById('detailUserEmail').textContent = user.email;
+        // ... (Rest der Logik zum Befüllen des userDetailModal) ...
 
+        await loadRolesForAddDropdown(user.roles || []); // loadRolesForAddDropdown muss global sein
+        openModal('userDetailModal'); // openModal muss global sein
+    } catch (error) {
+        showError('Fehler beim Laden der Benutzerdetails: ' + (error.message || "Unbekannt")); // showError muss global sein
+    }
+}
+async function loadRolesForAddDropdown(currentUserRoles) {
+    try {
+        const allRolesResponse = await apiCall('/api/admin/roles'); // apiCall muss global sein
+        const addRoleSelect = document.getElementById('addRoleSelect');
+        if (!addRoleSelect) return;
+        addRoleSelect.innerHTML = '<option value="">Rolle auswählen</option>';
+
+        const currentRoleNamesSet = new Set((currentUserRoles || []).map(r => String(r)));
+
+        if (allRolesResponse && Array.isArray(allRolesResponse)) {
+            allRolesResponse.forEach(roleObj => {
+                // Zeige nur Rollen, die der Benutzer noch nicht hat
+                if (!currentRoleNamesSet.has(roleObj.name)) {
+                    const option = document.createElement('option');
+                    option.value = roleObj.name; // Sendet den Rollennamen an das Backend
+                    option.textContent = String(roleObj.name).replace('ROLE_', '');
+                    addRoleSelect.appendChild(option);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Fehler beim Laden der Rollen für Dropdown:', error);
+        showError('Fehler beim Laden der Rollen für das Hinzufügen-Dropdown: ' + (error.message || "Unbekannt")); // showError muss global sein
+    }
+}
 
 //async function testDuplicateHandling() {
 
@@ -178,140 +216,5 @@ async function handleCreateUserSubmit(event) {
         }
     }
 }
-async function showUserDetails(userId) {
-    try {
-        const user = await apiCall(`/api/admin/users/${userId}`);
-        selectedUserForDetails = user;
-        document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
-        document.getElementById('detailUserEmail').textContent = user.email;
-        document.getElementById('detailUserStatus').textContent = user.status;
-        document.getElementById('detailUserPlannedHours').textContent = user.plannedHoursPerDay;
-        document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt);
-        document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt);
 
-        document.getElementById('userStatusSelect').value = user.status;
 
-        const userRolesList = document.getElementById('userRolesList');
-        userRolesList.innerHTML = '';
-        if (user.roles && user.roles.length > 0) {
-            user.roles.forEach(role => {
-                const roleItem = document.createElement('span');
-                roleItem.className = 'user-role-tag';
-                roleItem.textContent = String(role).replace('ROLE_', '');
-                if (user.roles.length > 1 && !String(role).includes('ADMIN')) {
-                    const removeButton = document.createElement('button');
-                    removeButton.className = 'btn btn-danger btn-small';
-                    removeButton.innerHTML = '&times;'; // 'x' Zeichen
-                    removeButton.style.marginLeft = '5px';
-                    removeButton.title = `Rolle ${String(role).replace('ROLE_', '')} entfernen`;
-                    n
-                    removeButton.onclick = () => removeRoleFromUser(user.id, role);
-                    roleItem.appendChild(removeButton);
-                }
-                userRolesList.appendChild(roleItem);
-            });
-        } else {
-            userRolesList.textContent = 'Keine Rollen zugewiesen.';
-        }
-
-        await loadRolesForAddDropdown(user.roles || []);
-        openModal('userDetailModal');
-    } catch (error) {
-        showError('Fehler beim Laden der Benutzerdetails: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function loadRolesForAddDropdown(currentUserRoles) {
-    try {
-        const allRolesResponse = await apiCall('/api/admin/roles');
-        const addRoleSelect = document.getElementById('addRoleSelect');
-        if (!addRoleSelect) return;
-        addRoleSelect.innerHTML = '<option value="">Rolle auswählen</option>';
-
-        const currentRoleNamesSet = new Set((currentUserRoles || []).map(r => String(r)));
-
-        if (allRolesResponse && Array.isArray(allRolesResponse)) {
-            allRolesResponse.forEach(roleObj => {
-                if (!currentRoleNamesSet.has(roleObj.name)) {
-                    const option = document.createElement('option');
-                    option.value = roleObj.name;
-                    option.textContent = String(roleObj.name).replace('ROLE_', '');
-                    addRoleSelect.appendChild(option);
-                }
-            });
-        }
-    } catch (error) {
-        showError('Fehler beim Laden der Rollen für Dropdown: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function addRoleToUser() {
-    if (!selectedUserForDetails) return;
-    const roleToAdd = document.getElementById('addRoleSelect').value;
-    if (!roleToAdd) {
-        showError('Bitte wählen Sie eine Rolle zum Hinzufügen aus.');
-        return;
-    }
-    try {
-
-        await apiCall(`/api/admin/users/${selectedUserForDetails.id}/roles?roleName=${roleToAdd}`, {method: 'POST'});
-        showSuccess(`Rolle "${String(roleToAdd).replace('ROLE_', '')}" erfolgreich hinzugefügt.`);
-
-        await showUserDetails(selectedUserForDetails.id);
-        viewUsers();
-    } catch (error) {
-        showError('Fehler beim Hinzufügen der Rolle: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function removeRoleFromUser(userId, roleName) {
-    if (!confirm(`Sind Sie sicher, dass Sie die Rolle "${String(roleName).replace('ROLE_', '')}" entfernen möchten?`)) return;
-    try {
-
-        await apiCall(`/api/admin/users/${userId}/roles?roleName=${roleName}`, {method: 'DELETE'});
-        showSuccess(`Rolle "${String(roleName).replace('ROLE_', '')}" erfolgreich entfernt.`);
-        await showUserDetails(userId);
-        viewUsers();
-    } catch (error) {
-        showError('Fehler beim Entfernen der Rolle: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function updateUserStatus() {
-    if (!selectedUserForDetails) return;
-    const newStatus = document.getElementById('userStatusSelect').value;
-    if (!newStatus) {
-        showError('Bitte wählen Sie einen Status aus.');
-        return;
-    }
-    try {
-
-        await apiCall(`/api/admin/users/${selectedUserForDetails.id}/status?status=${newStatus}`, {method: 'PATCH'});
-        showSuccess(`Status für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} auf "${newStatus}" geändert.`);
-        await showUserDetails(selectedUserForDetails.id); // Modal neu laden
-        viewUsers();
-    } catch (error) {
-        showError('Fehler beim Aktualisieren des Status: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function resetUserPassword(userId, userName) {
-    if (!confirm(`Passwort für ${userName} wirklich zurücksetzen? Das neue Passwort ist der Nachname (kleingeschrieben).`)) return;
-    try {
-
-        const response = await apiCall(`/api/admin/users/${userId}/reset-password`, {method: 'POST'});
-        if (response && response.temporaryPassword) {
-            alert(`Neues temporäres Passwort für ${userName}:\n\n${response.temporaryPassword}\n\nBitte sicher weiterleiten!`);
-            showSuccess(`Passwort für ${userName} erfolgreich zurückgesetzt.`);
-        } else {
-            throw new Error('Kein temporäres Passwort erhalten.');
-        }
-    } catch (error) {
-        showError('Fehler beim Zurücksetzen des Passworts: ' + (error.message || "Unbekannt"));
-    }
-}
-
-async function resetUserPasswordFromDetails() {
-    if (!selectedUserForDetails) return;
-    await resetUserPassword(selectedUserForDetails.id, `${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName}`);
-}

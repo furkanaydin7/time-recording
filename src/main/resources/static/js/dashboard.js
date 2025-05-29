@@ -130,6 +130,7 @@ function bindDashboardEventListeners() {
         });
     }
 
+
     window.addEventListener('click', function(event) {
         document.querySelectorAll('.modal').forEach(modal => {
             if (event.target === modal) closeModal(modal.id);
