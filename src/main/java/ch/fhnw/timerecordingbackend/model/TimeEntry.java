@@ -66,6 +66,9 @@ public class TimeEntry {
      * Konstruktoren
      */
     public TimeEntry() {
+        this.actualHours = "00:00";
+        this.plannedHours = "00:00";
+        this.difference = "00:00";
     }
 
     public TimeEntry(User user, LocalDate date, String actualHours, String plannedHours, String difference) {

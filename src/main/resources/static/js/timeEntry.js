@@ -70,23 +70,13 @@ async function startTimeTracking() {
 
 
         if (response && response.entryId) {
-
-            const fullEntry = await apiCall(`/api/time-entries/${response.entryId}`);
-            if (fullEntry) {
-                activeTimeEntry = fullEntry;
-
-                activeTimeEntry = {
-                    id: response.entryId,
-                    date: today,
-                    startTimes: [currentTime],
-                    endTimes: [],
-                    breaks: [],
-                    project: window.projects.find(p => p.id === selectedProjectIdForTimer) || null
-                };
-
-            } else {
-                // Minimales activeTimeEntry, falls GET /id nicht geht
-                activeTimeEntry = { id: response.entryId, date: today, startTimes: [currentTime], endTimes: [], breaks: [] };
+            activeTimeEntry = {
+                id: response.entryId,
+                date: today,
+                startTimes: [currentTime],
+                endTimes: [],
+                breaks: [],
+                project: window.projects.find(p => p.id === selectedProjectIdForTimer) || null
             }
 
             startTimeForTimer = new Date(response.startTime); // startTime ist ein String wie "2025-05-28T14:30:00"
