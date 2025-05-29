@@ -51,6 +51,7 @@
         <button class="btn btn-primary" id="viewAbsencesBtn">Abwesenheiten anzeigen</button>
         <button class="btn btn-secondary" id="openCreateAbsenceModalBtn">Abwesenheit beantragen</button>
         <button class="btn btn-warning" id="viewPendingAbsencesBtn" style="display: none;">Ausstehende Anträge</button>
+        <button class="btn btn-info" id="viewTeamOrAllApprovedAbsencesBtn" style="display: none;">Genehmigte Abw. (Team/Alle)</button>
       </div>
     </div>
     <div class="card" id="adminCard" style="display: none;">
@@ -312,6 +313,43 @@
       <div class="form-group"><label for="newPassword">Neues Passwort:</label><input type="password" id="newPassword" class="form-input" required minlength="6"></div>
       <div class="form-group"><label for="confirmNewPassword">Neues Passwort bestätigen:</label><input type="password" id="confirmNewPassword" class="form-input" required minlength="6"></div>
       <div class="action-buttons"><button type="submit" class="btn btn-primary">Passwort ändern</button><button type="button" id="cancelChangePasswordBtn" class="btn btn-secondary">Abbrechen</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Abwesenheit bearbeiten -->
+<div id="editAbsenceModal" class="modal">
+  <div class="modal-content">
+    <span class="close" data-modal-id-to-close="editAbsenceModal">&times;</span>
+    <h2>Abwesenheit bearbeiten</h2>
+    <form id="editAbsenceForm">
+      <input type="hidden" id="editAbsenceId">
+      <div class="form-group">
+        <label for="editAbsenceType">Typ:</label>
+        <select id="editAbsenceType" required>
+          <option value="VACATION">Urlaub</option>
+          <option value="ILLNESS">Krankheit</option>
+          <option value="HOME_OFFICE">Home Office</option>
+          <option value="TRAINING">Fortbildung</option>
+          <option value="OTHER">Sonstiges</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editAbsenceStartDate">Von:</label>
+        <input type="date" id="editAbsenceStartDate" required>
+      </div>
+      <div class="form-group">
+        <label for="editAbsenceEndDate">Bis:</label>
+        <input type="date" id="editAbsenceEndDate" required>
+      </div>
+      <div class="form-group">
+        <label for="editAbsenceComment">Kommentar (optional):</label>
+        <textarea id="editAbsenceComment" rows="3"></textarea>
+      </div>
+      <div class="action-buttons">
+        <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+        <button type="button" id="cancelEditAbsenceBtn" class="btn btn-secondary">Abbrechen</button>
+      </div>
     </form>
   </div>
 </div>

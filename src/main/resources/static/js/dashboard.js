@@ -65,6 +65,7 @@ function bindDashboardEventListeners() {
     document.querySelector('button[onclick="openCreateAbsenceModal()"]')?.setAttribute('id', 'openCreateAbsenceModalBtn');
     document.getElementById('openCreateAbsenceModalBtn')?.addEventListener('click', openCreateAbsenceModal);
     document.getElementById('viewPendingAbsencesBtn')?.addEventListener('click', viewPendingAbsencesForApproval);
+    document.getElementById('viewTeamOrAllApprovedAbsencesBtn')?.addEventListener('click', viewTeamOrAllApprovedAbsencesHandler);
 
 
     // Admin Panel Buttons
@@ -92,6 +93,7 @@ function bindDashboardEventListeners() {
     document.getElementById('editTimeEntryForm')?.addEventListener('submit', handleEditTimeEntrySubmit);
     document.getElementById('createProjectForm')?.addEventListener('submit', handleCreateProjectSubmit);
     document.getElementById('createAbsenceForm')?.addEventListener('submit', handleCreateAbsenceSubmit);
+    document.getElementById('editAbsenceForm')?.addEventListener('submit', handleEditAbsenceSubmit);
     document.getElementById('editProjectForm')?.addEventListener('submit', handleEditProjectSubmit);
     document.getElementById('deleteProjectBtn')?.addEventListener('click', handleDeleteProject);
     document.getElementById('createUserForm')?.addEventListener('submit', handleCreateUserSubmit);
@@ -250,6 +252,7 @@ function bindDashboardEventListeners() {
         { id: 'cancelEditTimeEntryBtn', modal: 'editTimeEntryModal' },
         { id: 'cancelCreateProjectBtn', modal: 'createProjectModal' },
         { id: 'cancelCreateAbsenceBtn', modal: 'createAbsenceModal' },
+        { id: 'cancelEditAbsenceBtn', modal: 'editAbsenceModal' },
         { id: 'cancelCreateUserBtn', modal: 'createUserModal' },
         { id: 'cancelChangePasswordBtn', modal: 'changePasswordModal' },
         { id: 'closeProjectDetailModalBtn', modal: 'projectDetailModal' },

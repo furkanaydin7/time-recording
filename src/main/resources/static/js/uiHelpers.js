@@ -243,7 +243,24 @@ function formatAbsencesTable(absences) {
     if (!absences || absences.length === 0) {
         return '<p>Keine Abwesenheiten gefunden.</p>';
     }
-    let html = '<table class="data-table"><thead><tr><th>Typ</th><th>Von</th><th>Bis</th><th>Tage</th><th>Status</th><th>Genehmiger</th><th>Antragsteller</th></tr></thead><tbody>';
+
+    // Sortieren, sodass die neuesten Anträge oben sind
+    absences.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    let html = '<table class="data-table">' +
+        '<thead>' +
+        '<tr>' +
+        '<th>Typ</th>' +
+        '<th>Von</th>' +
+        '<th>Bis</th>' +
+        '<th>Tage</th>' +
+        '<th>Status</th>' +
+        '<th>Genehmiger</th>' +
+        '<th>Antragsteller</th>' +
+        '<th>Aktionen</th>'+
+        '</tr>' +
+        '</thead>' +
+        '<tbody>';
     absences.forEach(absence => {
         const typeLabels = {
             'VACATION': 'Urlaub',
@@ -277,6 +294,23 @@ function formatAbsencesTable(absences) {
             processedByDisplay = absence.processedByName;
         }
 
+        // JSON-String des Abwesenheitsobjekts für die Übergabe an die Bearbeitungsfunktion
+        // Sonderzeichen im JSON-String für HTML-Attribute escapen
+        const absenceJsonString = JSON.stringify(absence)
+            .replace(/'/g, "&apos;")
+            .replace(/"/g, "&quot;");
+
+        let actionsHtml = '';
+        // Buttons nur anzeigen, wenn der Status PENDING ist
+        if (absence.status === 'PENDING') {
+            actionsHtml = `
+                <button class="btn btn-secondary btn-small" onclick='openEditAbsenceModal(${absenceJsonString})'>Bearbeiten</button>
+                <button class="btn btn-danger btn-small" onclick='cancelAbsenceHandler(${absence.id})' style="margin-left:5px;">Stornieren</button>
+            `;
+        } else {
+            actionsHtml = '-';
+        }
+
         html += `<tr>
                     <td>${typeLabels[absence.type] || absence.type}</td>
                     <td>${formatDate(absence.startDate)}</td>
@@ -285,6 +319,7 @@ function formatAbsencesTable(absences) {
                     <td><span style="color: ${statusColor}">${statusText}</span></td>
                     <td>${processedByDisplay}</td>
                     <td>${absence.firstName || ''} ${absence.lastName || ''}</td>
+                    <td class="actions-cell">${actionsHtml}</td>
                 </tr>`;
     });
     html += '</tbody></table>';

@@ -211,6 +211,7 @@ function initializeAdminFeatures() {
     const adminCard = document.getElementById('adminCard');
     const createProjectBtn = document.getElementById('createProjectBtn');
     const viewPendingAbsencesBtn = document.getElementById('viewPendingAbsencesBtn');
+    const viewTeamOrAllApprovedAbsencesBtn = document.getElementById('viewTeamOrAllApprovedAbsencesBtn');
 
     if (isAdmin) {
         if (adminCard) adminCard.style.display = 'block';
@@ -222,8 +223,10 @@ function initializeAdminFeatures() {
 
     if (isAdmin || isManager) {
         if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.style.display = 'inline-block';
+        if (viewTeamOrAllApprovedAbsencesBtn) viewTeamOrAllApprovedAbsencesBtn.style.display = 'inline-block';
     } else {
         if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.style.display = 'none';
+        if (viewTeamOrAllApprovedAbsencesBtn) viewTeamOrAllApprovedAbsencesBtn.style.display = 'none';
     }
 
     if (DEBUG_MODE) {

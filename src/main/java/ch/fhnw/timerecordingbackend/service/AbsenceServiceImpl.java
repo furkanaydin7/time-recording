@@ -259,6 +259,27 @@ public class AbsenceServiceImpl implements AbsenceService{
         }
         return Collections.emptyList();
     }
+    @Override
+    public List<Absence> getApprovedAbsencesForUserView(User currentUser) {
+        if (currentUser == null) {
+            throw new AccessDeniedException("Benutzer nicht authentifiziert.");
+        }
+
+        if (currentUser.hasRole("ADMIN")) {
+            // Admins sehen alle genehmigten Abwesenheiten aller Benutzer
+            return absenceRepository.findByStatus(AbsenceStatus.APPROVED);
+        } else if (currentUser.hasRole("MANAGER")) {
+            // Manager sehen genehmigte Abwesenheiten ihrer direkten Mitarbeiter
+            List<User> directReports = userRepository.findByManager(currentUser);
+            if (directReports == null || directReports.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return absenceRepository.findByUserInAndStatus(directReports, AbsenceStatus.APPROVED);
+        }
+        // Für andere Rollen (z.B. EMPLOYEE direkt) geben wir eine leere Liste zurück,
+        // da dieser Endpunkt für sie nicht gedacht ist (sollte durch @PreAuthorize abgefangen werden).
+        return Collections.emptyList();
+    }
 
     @Override
     public List<Absence> findApprovedAbsencesByUser(User user) {

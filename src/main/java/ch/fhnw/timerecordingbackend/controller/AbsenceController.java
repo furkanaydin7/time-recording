@@ -97,12 +97,23 @@ public class AbsenceController {
     }
 
     /**
-     * Abwesenheit löschen (nur Admin oder Besitzer)
+     * Abwesenheit löschen (nur Admin oder Besitzer unter Bedingungen)
      * DELETE /api/absences/{id}
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN') or @absenceController.isAbsenceOwner(#id)")
     public ResponseEntity<Map<String, String>> deleteAbsence(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+        Absence absenceToDelete = absenceService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Abwesenheit nicht gefunden mit ID: " + id));
+
+        // Wenn der Benutzer kein Admin ist, prüfen, ob die Abwesenheit stornierbar ist
+        if (!currentUser.getRoles().stream().anyMatch(role -> role.getName().equals("ADMIN"))) {
+            if (absenceToDelete.getStatus() == AbsenceStatus.APPROVED || absenceToDelete.getStatus() == AbsenceStatus.REJECTED) {
+                throw new IllegalArgumentException("Genehmigte oder abgelehnte Abwesenheiten können nicht vom Mitarbeiter storniert werden.");
+            }
+        }
+
         absenceService.deleteAbsence(id);
         return ResponseEntity.ok(Map.of("message", "Abwesenheit gelöscht"));
     }
@@ -275,6 +286,25 @@ public class AbsenceController {
         return absenceService.findById(absenceId)
                 .map(absence -> absence.getUser().getId().equals(currentUser.getId()))
                 .orElse(false);
+    }
+
+    /**
+     * Alle genehmigten Abwesenheiten für Admins oder die des eigenen Teams für Manager anzeigen.
+     * GET /api/absences/view/approved
+     */
+    @GetMapping("/view/approved")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    public ResponseEntity<Map<String, List<AbsenceResponse>>> getAllApprovedAbsencesForView() {
+        User currentUser = getCurrentUser(); // Diese Methode nutzt SecurityContextHolder
+        List<Absence> absences = absenceService.getApprovedAbsencesForUserView(currentUser);
+
+        List<AbsenceResponse> responses = absences.stream()
+                .map(this::convertToAbsenceResponse) // Ihre bestehende Konvertierungsmethode
+                .collect(Collectors.toList());
+
+        String title = currentUser.hasRole("ADMIN") ? "Alle genehmigten Abwesenheiten" : "Genehmigte Abwesenheiten (Team)";
+
+        return ResponseEntity.ok(Map.of("absences", responses));
     }
 
     /**

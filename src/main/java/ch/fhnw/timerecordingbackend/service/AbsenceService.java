@@ -88,6 +88,14 @@ public interface AbsenceService {
     Absence rejectAbsence(Long id, Long rejecterId);
 
     /**
+     * Ruft genehmigte Abwesenheiten für die Übersichtsseite ab,
+     * gefiltert nach der Rolle des aktuellen Benutzers (Admin oder Manager).
+     * @param currentUser Der aktuell angemeldete Benutzer.
+     * @return Liste der relevanten genehmigten Abwesenheiten.
+     */
+    List<Absence> getApprovedAbsencesForUserView(User currentUser);
+
+    /**
      * Findet alle genehmigten Abwesenheiten
      * @return Liste aller genehmigten Abwesenheiten
      */
