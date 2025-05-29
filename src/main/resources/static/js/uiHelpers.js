@@ -330,7 +330,17 @@ function formatPendingAbsencesTableForApproval(absences) {
     if (!absences || absences.length === 0) {
         return '<p>Keine ausstehenden Abwesenheitsanträge gefunden.</p>';
     }
-    absences.sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // Älteste zuerst
+    absences.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    // Aktuelle Benutzerrollen für die bedingte Anzeige von Buttons abrufen
+    const userRolesString = localStorage.getItem('userRoles');
+    let currentUserRoles = [];// Älteste zuerst
+    try {
+        if (userRolesString) currentUserRoles = JSON.parse(userRolesString); //
+    } catch (e) {
+        console.error('Fehler beim Parsen der Rollen für Tabellenformatierung (Pending):', e);
+    }
+    const isAdmin = currentUserRoles.some(role => String(role).toUpperCase() === 'ADMIN');
 
     let html = `<table class="data-table">
                   <thead>
@@ -359,6 +369,20 @@ function formatPendingAbsencesTableForApproval(absences) {
         const statusText = 'Ausstehend';
         const statusColor = '#ffc107';
 
+        // JSON-String des Abwesenheitsobjekts für die Übergabe an die Bearbeitungsfunktion
+        const absenceJsonString = JSON.stringify(absence)
+            .replace(/'/g, "&apos;")
+            .replace(/"/g, "&quot;");
+
+        let actionsCellHtml = '';
+
+        // Genehmigen und Ablehnen Buttons sind immer da für die Benutzer (Admins/Manager), die diese Ansicht sehen
+        actionsCellHtml += `<button class="btn btn-success btn-small" onclick="approveAbsenceRequest(${absence.id})">Genehmigen</button>`;
+        actionsCellHtml += `<button class="btn btn-danger btn-small" onclick="rejectAbsenceRequest(${absence.id})" style="margin-left:5px;">Ablehnen</button>`;
+
+        if (isAdmin) {
+            actionsCellHtml += `<button class="btn btn-secondary btn-small" onclick='openEditAbsenceModal(${absenceJsonString})' style="margin-left:5px;">Bearbeiten</button>`;
+        }
         html += `<tr>
                    <td>${applicantName}</td>
                    <td>${typeLabels[absence.type] || absence.type}</td>
@@ -367,8 +391,7 @@ function formatPendingAbsencesTableForApproval(absences) {
                    <td>${dayCount}</td>
                    <td><span style="color: ${statusColor}">${statusText}</span></td>
                    <td class="actions-cell">
-                       <button class="btn btn-success btn-small" onclick="approveAbsenceRequest(${absence.id})">Genehmigen</button>
-                       <button class="btn btn-danger btn-small" onclick="rejectAbsenceRequest(${absence.id})" style="margin-left:5px;">Ablehnen</button>
+                       ${actionsCellHtml}
                    </td>
                  </tr>`;
     });
