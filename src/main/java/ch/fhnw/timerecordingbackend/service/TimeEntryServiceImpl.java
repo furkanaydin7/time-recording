@@ -7,6 +7,7 @@ import ch.fhnw.timerecordingbackend.model.TimeEntry;
 import ch.fhnw.timerecordingbackend.model.User;
 import ch.fhnw.timerecordingbackend.repository.ProjectRepository;
 import ch.fhnw.timerecordingbackend.repository.TimeEntryRepository;
+import ch.fhnw.timerecordingbackend.repository.UserRepository; // Import UserRepository
 import ch.fhnw.timerecordingbackend.security.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,13 +23,6 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service-Implementierung für Zeiterfassung und Zeiteintragsverwaltung
- * Stellt alle Funktionen für CRUD-Operationen und Start/Stopp-Tracking bereit
- * @author FA
- * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * Quelle: ChatGPT
- */
 @Service
 @Transactional
 public class TimeEntryServiceImpl implements TimeEntryService {
@@ -42,43 +36,39 @@ public class TimeEntryServiceImpl implements TimeEntryService {
     @Autowired
     private SecurityUtils securityUtils;
 
+    @Autowired // UserRepository hinzugefügt für getCurrentUserOrThrow und andere Benutzeroperationen
+    private UserRepository userRepository;
+
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public boolean isOwnerOfTimeEntry(Long timeEntryId) {
         User currentUser = securityUtils.getCurrentUser();
         if (currentUser == null) {
-            // Sollte nicht passieren, wenn @PreAuthorize("isAuthenticated()") vorher prüft,
-            // aber als zusätzliche Sicherheit.
             return false;
         }
-        // Prüfen, ob der Zeiteintrag existiert und dem aktuellen Benutzer gehört
         return timeEntryRepository.findById(timeEntryId)
                 .map(timeEntry -> timeEntry.getUser().getId().equals(currentUser.getId()))
-                .orElse(false); // Eintrag nicht gefunden, also kein Besitzer
+                .orElse(false);
     }
 
     @Override
     public TimeEntryResponse createTimeEntry(TimeEntryRequest request) {
         User currentUser = getCurrentUserOrThrow();
 
-        // Prüfen, ob bereits ein Eintrag für das Datum existiert
         Optional<TimeEntry> existingEntry = timeEntryRepository.findByUserAndDate(currentUser, request.getDate());
         if (existingEntry.isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Für dieses Datum existiert bereits ein Zeiteintrag");
         }
 
-        // Validierung der Zeitangaben
         validateTimeData(request);
 
         TimeEntry timeEntry = new TimeEntry();
         timeEntry.setUser(currentUser);
         timeEntry.setDate(request.getDate());
 
-        // Start- und Endzeiten setzen
         setTimesFromRequest(timeEntry, request);
 
-        // Pausen hinzufügen
         if (request.getBreaks() != null) {
             for (TimeEntryRequest.BreakTime breakTime : request.getBreaks()) {
                 try {
@@ -92,10 +82,8 @@ public class TimeEntryServiceImpl implements TimeEntryService {
             }
         }
 
-        // Arbeitszeiten berechnen
         calculateWorkingHours(timeEntry, currentUser);
 
-        // Projekt zuweisen, falls vorhanden
         if (request.getProjectId() != null) {
             Project project = projectRepository.findById(request.getProjectId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -117,23 +105,19 @@ public class TimeEntryServiceImpl implements TimeEntryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Zeiteintrag nicht gefunden"));
 
-        // Berechtigung prüfen
         if (!timeEntry.getUser().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Sie können nur Ihre eigenen Zeiteinträge bearbeiten");
         }
 
-        // Validierung der neuen Zeitangaben
         validateTimeData(request);
 
-        // Zeiten aktualisieren
         timeEntry.getStartTimes().clear();
         timeEntry.getEndTimes().clear();
         timeEntry.getBreaks().clear();
 
         setTimesFromRequest(timeEntry, request);
 
-        // Pausen hinzufügen
         if (request.getBreaks() != null) {
             for (TimeEntryRequest.BreakTime breakTime : request.getBreaks()) {
                 try {
@@ -147,10 +131,8 @@ public class TimeEntryServiceImpl implements TimeEntryService {
             }
         }
 
-        // Arbeitszeiten neu berechnen
         calculateWorkingHours(timeEntry, currentUser);
 
-        // Projekt aktualisieren
         if (request.getProjectId() != null) {
             Project project = projectRepository.findById(request.getProjectId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -169,8 +151,7 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         TimeEntry timeEntry = timeEntryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Zeiteintrag nicht gefunden"));
-
-        timeEntryRepository.delete(timeEntry);
+       timeEntryRepository.delete(timeEntry);
     }
 
     @Override
@@ -184,12 +165,9 @@ public class TimeEntryServiceImpl implements TimeEntryService {
 
     @Override
     public List<TimeEntryResponse> getUserTimeEntries(Long userId) {
-        User user = securityUtils.getCurrentUser();
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht authentifiziert");
-        }
-
-        List<TimeEntry> entries = timeEntryRepository.findByUser(user);
+        User userToFetch = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benutzer mit ID " + userId + " nicht gefunden"));
+        List<TimeEntry> entries = timeEntryRepository.findByUser(userToFetch);
         return entries.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -201,33 +179,32 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
 
-         Optional<TimeEntry> existingEntry = timeEntryRepository.findByUserAndDate(currentUser, today);
+        Optional<TimeEntry> existingEntryOpt = timeEntryRepository.findByUserAndDate(currentUser, today);
         TimeEntry timeEntry;
 
-        if (existingEntry.isPresent()) {
-            timeEntry = existingEntry.get();
-            // Prüfen, ob bereits eine Zeiterfassung läuft
+        if (existingEntryOpt.isPresent()) {
+            timeEntry = existingEntryOpt.get();
             if (timeEntry.isActive()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Zeiterfassung läuft bereits");
+                        "Zeiterfassung läuft bereits für diesen Eintrag");
             }
         } else {
-            // Neuen Eintrag erstellen
             timeEntry = new TimeEntry();
             timeEntry.setUser(currentUser);
             timeEntry.setDate(today);
             timeEntry.setCreatedAt(LocalDateTime.now());
+            calculateWorkingHours(timeEntry, currentUser); // Initialwerte setzen
         }
 
-        // Projekt zuweisen, falls angegeben
         if (projectId != null) {
             Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "Projekt nicht gefunden"));
             timeEntry.setProject(project);
+        } else if (existingEntryOpt.isEmpty()) {
+            timeEntry.setProject(null);
         }
 
-        // Startzeit hinzufügen
         timeEntry.addStartTime(now);
         timeEntry.setUpdatedAt(LocalDateTime.now());
 
@@ -237,7 +214,13 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         response.put("entryId", savedEntry.getId());
         response.put("startTime", LocalDateTime.of(today, now).toString());
         response.put("message", "Zeiterfassung gestartet");
-
+        if (savedEntry.getProject() != null) {
+            response.put("projectId", savedEntry.getProject().getId());
+            response.put("projectName", savedEntry.getProject().getName());
+        } else {
+            response.put("projectId", null);
+            response.put("projectName", null);
+        }
         return response;
     }
 
@@ -248,13 +231,11 @@ public class TimeEntryServiceImpl implements TimeEntryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Zeiteintrag nicht gefunden"));
 
-        // Berechtigung prüfen
         if (!timeEntry.getUser().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Sie können nur Ihre eigenen Zeiteinträge stoppen");
         }
 
-        // Prüfen, ob Zeiterfassung aktiv ist
         if (!timeEntry.isActive()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Keine aktive Zeiterfassung für diesen Eintrag");
@@ -263,7 +244,6 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         LocalTime now = LocalTime.now();
         timeEntry.addEndTime(now);
 
-        // Arbeitszeiten berechnen
         calculateWorkingHours(timeEntry, currentUser);
         timeEntry.setUpdatedAt(LocalDateTime.now());
 
@@ -273,7 +253,11 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         response.put("message", "Zeiterfassung gestoppt");
         response.put("endTime", LocalDateTime.of(timeEntry.getDate(), now).toString());
         response.put("actualHours", timeEntry.getActualHours());
-
+        response.put("difference", timeEntry.getDifference());
+        if (timeEntry.getProject() != null) {
+            response.put("projectId", timeEntry.getProject().getId());
+            response.put("projectName", timeEntry.getProject().getName());
+        }
         return response;
     }
 
@@ -296,16 +280,14 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         timeEntryRepository.save(timeEntry);
     }
 
-    /**
-     * Hilfsmethoden
-     */
-
     private User getCurrentUserOrThrow() {
         User currentUser = securityUtils.getCurrentUser();
         if (currentUser == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Nicht authentifiziert");
         }
-        return currentUser;
+        // Optional: Benutzer neu aus der DB laden, um sicherzustellen, dass er aktuell ist
+        return userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Benutzer nicht in DB gefunden"));
     }
 
     private void validateTimeData(TimeEntryRequest request) {
@@ -313,61 +295,65 @@ public class TimeEntryServiceImpl implements TimeEntryService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Mindestens eine Startzeit ist erforderlich");
         }
-
-        if (request.getEndTimes() == null || request.getEndTimes().size() > request.getStartTimes().size()) {
+        if (request.getEndTimes() != null && request.getEndTimes().size() > request.getStartTimes().size()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Ungültige Anzahl von Endzeiten");
+                    "Ungültige Anzahl von Endzeiten im Verhältnis zu Startzeiten");
         }
-
-        // Zeitformat validieren
         for (String timeStr : request.getStartTimes()) {
             try {
                 LocalTime.parse(timeStr, TIME_FORMATTER);
             } catch (DateTimeParseException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Ungültiges Startzeit-Format: " + timeStr);
+                        "Ungültiges Startzeit-Format: " + timeStr + ". Erwartet HH:mm");
             }
         }
-
-        for (String timeStr : request.getEndTimes()) {
-            try {
-                LocalTime.parse(timeStr, TIME_FORMATTER);
-            } catch (DateTimeParseException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Ungültiges Endzeit-Format: " + timeStr);
+        if (request.getEndTimes() != null) {
+            for (String timeStr : request.getEndTimes()) {
+                if (timeStr != null && !timeStr.isEmpty()) {
+                    try {
+                        LocalTime.parse(timeStr, TIME_FORMATTER);
+                    } catch (DateTimeParseException e) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Ungültiges Endzeit-Format: " + timeStr + ". Erwartet HH:mm");
+                    }
+                }
             }
         }
     }
 
     private void setTimesFromRequest(TimeEntry timeEntry, TimeEntryRequest request) {
-        // Startzeiten setzen
-        for (String timeStr : request.getStartTimes()) {
-            LocalTime time = LocalTime.parse(timeStr, TIME_FORMATTER);
-            timeEntry.addStartTime(time);
+        if (request.getStartTimes() != null) {
+            timeEntry.setStartTimes(request.getStartTimes().stream()
+                    .map(timeStr -> LocalTime.parse(timeStr, TIME_FORMATTER))
+                    .collect(Collectors.toSet()));
+        } else {
+            timeEntry.setStartTimes(new HashSet<>());
         }
 
-        // Endzeiten setzen
-        for (String timeStr : request.getEndTimes()) {
-            LocalTime time = LocalTime.parse(timeStr, TIME_FORMATTER);
-            timeEntry.addEndTime(time);
+        if (request.getEndTimes() != null) {
+            timeEntry.setEndTimes(request.getEndTimes().stream()
+                    .filter(s -> s != null && !s.isEmpty()) // Nur nicht-leere Strings parsen
+                    .map(timeStr -> LocalTime.parse(timeStr, TIME_FORMATTER))
+                    .collect(Collectors.toSet()));
+        } else {
+            timeEntry.setEndTimes(new HashSet<>());
         }
     }
 
     private void calculateWorkingHours(TimeEntry timeEntry, User user) {
-        // Geplante Stunden pro Tag
         double plannedHoursPerDay = user.getPlannedHoursPerDay();
-
-        // Tatsächliche Arbeitszeit berechnen
         double totalMinutes = 0;
 
-        List<LocalTime> startTimes = new ArrayList<>(timeEntry.getStartTimes());
-        List<LocalTime> endTimes = new ArrayList<>(timeEntry.getEndTimes());
+        List<LocalTime> startTimes = (timeEntry.getStartTimes() != null)
+                ? new ArrayList<>(timeEntry.getStartTimes())
+                : new ArrayList<>();
+        List<LocalTime> endTimes = (timeEntry.getEndTimes() != null)
+                ? new ArrayList<>(timeEntry.getEndTimes())
+                : new ArrayList<>();
 
-        // Zeiten sortieren
         startTimes.sort(LocalTime::compareTo);
         endTimes.sort(LocalTime::compareTo);
 
-        // Arbeitszeit zwischen Start- und Endzeiten berechnen
         int pairs = Math.min(startTimes.size(), endTimes.size());
         for (int i = 0; i < pairs; i++) {
             LocalTime start = startTimes.get(i);
@@ -377,30 +363,28 @@ public class TimeEntryServiceImpl implements TimeEntryService {
             }
         }
 
-        // Pausenzeiten abziehen
-        for (TimeEntry.Break breakTime : timeEntry.getBreaks()) {
-            if (breakTime.getEnd().isAfter(breakTime.getStart())) {
-                totalMinutes -= java.time.Duration.between(breakTime.getStart(), breakTime.getEnd()).toMinutes();
+        if (timeEntry.getBreaks() != null) {
+            for (TimeEntry.Break breakTime : timeEntry.getBreaks()) {
+                if (breakTime.getStart() != null && breakTime.getEnd() != null && breakTime.getEnd().isAfter(breakTime.getStart())) {
+                    totalMinutes -= java.time.Duration.between(breakTime.getStart(), breakTime.getEnd()).toMinutes();
+                }
             }
         }
 
-        // In Stunden und Minuten formatieren
         long hours = (long) (totalMinutes / 60);
-        long minutes = (long) (totalMinutes % 60);
+        long minutes = (long) (Math.round(totalMinutes) % 60);
         String actualHours = String.format("%02d:%02d", hours, minutes);
 
-        // Geplante Stunden formatieren
         long plannedHours = (long) plannedHoursPerDay;
-        long plannedMinutes = (long) ((plannedHoursPerDay - plannedHours) * 60);
+        long plannedMinutes = (long) Math.round((plannedHoursPerDay - plannedHours) * 60);
         String plannedHoursStr = String.format("%02d:%02d", plannedHours, plannedMinutes);
 
-        // Differenz berechnen
-        double totalActualHours = totalMinutes / 60.0;
-        double difference = totalActualHours - plannedHoursPerDay;
-        long diffHours = (long) Math.abs(difference);
-        long diffMinutes = (long) ((Math.abs(difference) - diffHours) * 60);
+        double differenceInMinutes = totalMinutes - (plannedHoursPerDay * 60);
+        long diffAbsMinutes = (long) Math.abs(Math.round(differenceInMinutes));
+        long diffH = diffAbsMinutes / 60;
+        long diffM = diffAbsMinutes % 60;
         String differenceStr = String.format("%s%02d:%02d",
-                difference >= 0 ? "+" : "-", diffHours, diffMinutes);
+                differenceInMinutes >= 0 ? "+" : "-", diffH, diffM);
 
         timeEntry.setActualHours(actualHours);
         timeEntry.setPlannedHours(plannedHoursStr);
@@ -417,38 +401,47 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         response.setUserId(timeEntry.getUser().getId());
         response.setUser(timeEntry.getUser().getFirstName() + " " + timeEntry.getUser().getLastName());
 
-        // Start- und Endzeiten konvertieren
-        List<String> startTimes = timeEntry.getStartTimes().stream()
-                .sorted()
-                .map(time -> time.format(TIME_FORMATTER))
-                .collect(Collectors.toList());
-        response.setStartTimes(startTimes);
+        if (timeEntry.getStartTimes() != null) {
+            response.setStartTimes(timeEntry.getStartTimes().stream()
+                    .sorted()
+                    .map(time -> time.format(TIME_FORMATTER))
+                    .collect(Collectors.toList()));
+        } else {
+            response.setStartTimes(Collections.emptyList());
+        }
 
-        List<String> endTimes = timeEntry.getEndTimes().stream()
-                .sorted()
-                .map(time -> time.format(TIME_FORMATTER))
-                .collect(Collectors.toList());
-        response.setEndTimes(endTimes);
+        if (timeEntry.getEndTimes() != null) {
+            response.setEndTimes(timeEntry.getEndTimes().stream()
+                    .sorted()
+                    .map(time -> time.format(TIME_FORMATTER))
+                    .collect(Collectors.toList()));
+        } else {
+            response.setEndTimes(Collections.emptyList());
+        }
 
-        // Pausen konvertieren
-        List<TimeEntryResponse.BreakTime> breaks = timeEntry.getBreaks().stream()
-                .map(breakTime -> {
-                    TimeEntryResponse.BreakTime bt = new TimeEntryResponse.BreakTime();
-                    bt.setStart(breakTime.getStart().format(TIME_FORMATTER));
-                    bt.setEnd(breakTime.getEnd().format(TIME_FORMATTER));
-                    return bt;
-                })
-                .collect(Collectors.toList());
-        response.setBreaks(breaks);
+        if (timeEntry.getBreaks() != null) {
+            response.setBreaks(timeEntry.getBreaks().stream()
+                    .map(breakTime -> {
+                        TimeEntryResponse.BreakTime bt = new TimeEntryResponse.BreakTime();
+                        if (breakTime.getStart() != null) {
+                            bt.setStart(breakTime.getStart().format(TIME_FORMATTER));
+                        }
+                        if (breakTime.getEnd() != null) {
+                            bt.setEnd(breakTime.getEnd().format(TIME_FORMATTER));
+                        }
+                        return bt;
+                    })
+                    .collect(Collectors.toList()));
+        } else {
+            response.setBreaks(Collections.emptyList());
+        }
 
-        // Projekt hinzufügen, falls vorhanden
         if (timeEntry.getProject() != null) {
             response.setProject(new TimeEntryResponse.ProjectDto(
                     timeEntry.getProject().getId(),
                     timeEntry.getProject().getName()
             ));
         }
-
         return response;
     }
 }

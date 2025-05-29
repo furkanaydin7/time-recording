@@ -18,11 +18,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import ch.fhnw.timerecordingbackend.model.SystemLog;
+import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 /**
  * REST Controller für Administratoren
@@ -30,9 +34,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
  */
+
 @RestController
 @RequestMapping("/api/admin")
-// Quelle: https://docs-spring-io.translate.goog/spring-security/reference/servlet/authorization/method-security.html?_x_tr_sl=en&_x_tr_tl=de&_x_tr_hl=de&_x_tr_pto=sge#use-preauthorize
 @PreAuthorize("hasAuthority('ADMIN')")
 public class AdminController {
 
@@ -40,10 +44,9 @@ public class AdminController {
     private final PasswordEncoder passwordEncoder;
     private final RegistrationService registrationService;
 
-    /**
-     * Konstruktor für AdminController
-     * @param userService
-     */
+    @Autowired
+    private SystemLogRepository systemLogRepository;
+
     @Autowired
     public AdminController(UserService userService, PasswordEncoder passwordEncoder, RegistrationService registrationService) {
         this.userService = userService;
@@ -51,26 +54,15 @@ public class AdminController {
         this.registrationService = registrationService;
     }
 
-    /**
-     * Gibt eine Liste aller UserResponse-DTOs zurück
-     * @return ResponseEntity mit Liste aller UserResponse-DTOs
-     */
     @GetMapping("/users")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
-
         List<User> users = userService.findAllUsers();
         List<UserResponse> responses = users.stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * Gibt ein UserResponse-DTO zurück, wenn ein User mit der übergebenen ID existiert
-     * @param id
-     * @return ResponseEntity mit UserResponse-DTO oder ResponseEntity.notFound() wenn kein User mit der übergebenen ID existiert
-     */
     @GetMapping("/users/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return userService.findById(id)
@@ -79,10 +71,6 @@ public class AdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Gibt eine Liste aller Rollen zurück
-     * @return ResponseEntity mit Liste aller Rollen
-     */
     @GetMapping("/roles")
     public ResponseEntity<List<Role>> getAllRoles() {
         List<Role> roles = userService.getAllRoles();
@@ -126,28 +114,19 @@ public class AdminController {
         user.setEmail(request.getEmail());
         user.setPlannedHoursPerDay(request.getPlannedHoursPerDay());
 
-        // Passwort setzten
         String passwordToEncode = request.getPassword();
         if (passwordToEncode == null || passwordToEncode.isEmpty()) {
-            passwordToEncode = request.getLastName().toLowerCase(); // Nachname als Standardpasswort
+            passwordToEncode = request.getLastName().toLowerCase();
         }
         user.setPassword(passwordEncoder.encode(passwordToEncode));
 
         User createdUser = userService.createUser(user, request.getRole());
-
-        // Ausgabe des Passworts zur Kontrolle
         UserResponse response = convertToUserResponse(createdUser);
-        response.setTemporaryPassword(passwordToEncode);
+        response.setTemporaryPassword(passwordToEncode); // Das unverschlüsselte Passwort für die Anzeige
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    /**
-     * Aktualisiert einen bestehenden User mit den übergebenen Daten
-     * @param id
-     * @param request
-     * @return ResponseEntity mit dem aktualisierten UserResponse-DTO
-     */
     @PutMapping("/users/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRegistrationRequest request) {
         User user = new User();
@@ -157,15 +136,9 @@ public class AdminController {
         user.setPlannedHoursPerDay(request.getPlannedHoursPerDay());
 
         User updatedUser = userService.updateUser(id, user);
-
         return ResponseEntity.ok(convertToUserResponse(updatedUser));
     }
 
-    /**
-     * Deaktiviert einen bestehenden User
-     * @param id
-     * @return ResponseEntity mit dem deaktivierten UserResponse-DTO
-     */
     @PatchMapping("/user/{id}/deactivate")
     public ResponseEntity<UserResponse> deactivateUser(@PathVariable Long id) {
         User deactivatedUser = userService.deactivateUser(id);
@@ -220,68 +193,39 @@ public class AdminController {
      * @param id
      * @return ResponseEntity mit dem aktivierten UserResponse-DTO
      */
-    @DeleteMapping("/users/{id}/activate")
+    @PatchMapping("/users/{id}/activate")
     public ResponseEntity<UserResponse> activateUser(@PathVariable Long id) {
         User activatedUser = userService.activateUser(id);
         return ResponseEntity.ok(convertToUserResponse(activatedUser));
     }
 
-    /**
-     * Ändert den Status eines bestehenden Users
-     * @param id
-     * @param status
-     * @return ResponseEntity mit dem aktualisierten UserResponse-DTO
-     */
     @PatchMapping("/users/{id}/status")
     public ResponseEntity<UserResponse> changeUserStatus(@PathVariable Long id, @RequestParam UserStatus status) {
         User updatedUser = userService.updateUserStatus(id, status);
         return ResponseEntity.ok(convertToUserResponse(updatedUser));
     }
 
-    /**
-     * Fügt dem bestehenden User eine Rolle hinzu
-     * @param id
-     * @param roleName
-     * @return ResponseEntity mit dem aktualisierten UserResponse-DTO
-     */
     @PostMapping("/users/{id}/roles")
     public ResponseEntity<UserResponse> addRoleToUser(@PathVariable Long id, @RequestParam String roleName) {
         User updatedUser = userService.addRoleToUser(id, roleName);
         return ResponseEntity.ok(convertToUserResponse(updatedUser));
     }
 
-    /**
-     * Entfernt eine Rolle aus dem bestehenden User
-     * @param id
-     * @param roleName
-     * @return ResponseEntity mit dem aktualisierten UserResponse-DTO
-     */
     @DeleteMapping("/users/{id}/roles")
     public ResponseEntity<UserResponse> removeRoleFromUser(@PathVariable Long id, @RequestParam String roleName) {
-        User updatedUser = userService.removeRoleFromUser(id, roleName); // <-- Korrigierter Methodenname
+        User updatedUser = userService.removeRoleFromUser(id, roleName);
         return ResponseEntity.ok(convertToUserResponse(updatedUser));
     }
 
-    /**
-     * Sucht User mit Suchbegriff
-     * @param searchTerm Suchbegriff
-     * @return ResponseEntity mit Liste mit gefundenen UserResponse-DTOs
-     */
     @GetMapping("/users/search")
     public ResponseEntity<List<UserResponse>> searchUsers(@RequestParam String searchTerm) {
         List<User> users = userService.searchUsers(searchTerm);
         List<UserResponse> responses = users.stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * Setzt das Passwort eines bestehenden Users zurück
-     * @param id
-     * @return ResponseEntity mit Meldung und temporären Passwort
-     */
     @PostMapping("/users/{id}/reset-password")
     public ResponseEntity<?> resetUserPassword(@PathVariable Long id) {
         String tempPassword = userService.resetPasswordToTemporary(id);
@@ -292,18 +236,15 @@ public class AdminController {
         ));
     }
 
-    /**
-     * Konvertiert ein User-Objekt in ein UserResponse-DTO
-     * @param user
-     * @return UserResponse-DTO mit Daten aus dem User-Objekt
-     * Quelle: https://www.geeksforgeeks.org/spring-boot-map-entity-to-dto-using-modelmapper/
-     * Quelle: https://techkluster.com/2023/08/21/dto-for-a-java-spring-application/
-     * Quelle: https://medium.com/paysafe-bulgaria/springboot-dto-validation-good-practices-and-breakdown-fee69277b3b0
-     */
+    // NEUER ENDPUNKT zum Abrufen von System-Logs
+    @GetMapping("/logs")
+    public ResponseEntity<?> getSystemLogs() {
+        List<SystemLog> logs = systemLogRepository.findAll(Sort.by(Sort.Direction.DESC, "timestamp"));
+        return ResponseEntity.ok(Map.of("logs", logs));
+    }
+
     private UserResponse convertToUserResponse(User user) {
         UserResponse response = new UserResponse();
-
-        // Daten von Quellobjekt auf Zielobjekt kopieren
         response.setId(user.getId());
         response.setFirstName(user.getFirstName());
         response.setLastName(user.getLastName());
@@ -311,16 +252,11 @@ public class AdminController {
         response.setActive(user.isActive());
         response.setStatus(user.getStatus());
         response.setPlannedHoursPerDay(user.getPlannedHoursPerDay());
-
-        // Rollen Name extrahieren und in Set speichern, keine Mehrfachnennung möglich
-        // Quelle ChatGPT.com
         response.setRoles(user.getRoles().stream()
-                .map(role -> role.getName())
+                .map(Role::getName)
                 .collect(Collectors.toSet()));
-
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
-
         return response;
     }
 }

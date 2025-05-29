@@ -30,7 +30,6 @@ public class WebSecurityConfig {
         return new JwtAuthenticationFilter();
     }
 
-    // Stellt den AuthenticationManager bereit
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authConfig
@@ -38,7 +37,6 @@ public class WebSecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    // Passwort-Kodierung
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -63,12 +61,12 @@ public class WebSecurityConfig {
                                 "/api/public/registration-requests",
                                 "/api/public/managers",
                                 "/favicon.ico",
-                                "/api/users/reset-password"
+                                "/api/users/request-password-reset"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/users/change-password").authenticated()
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/users/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/projects/manage/**").hasAnyAuthority("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/change-password").authenticated() // Passwort ändern nur für authentifizierte User
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Alle /api/admin/** Endpunkte nur für Admins
+                        // .requestMatchers("/api/users/**").hasAuthority("ADMIN") // Diese Zeile entfernen oder anpassen, da /api/users/request-password-reset öffentlich ist
+                        .requestMatchers("/api/projects/manage/**").hasAnyAuthority("ADMIN", "MANAGER") // Beispiel für Manager-Rechte
                         .requestMatchers(
                                 "/api/time-entries/**",
                                 "/api/projects/**",
@@ -77,9 +75,9 @@ public class WebSecurityConfig {
                         ).hasAnyAuthority("ADMIN", "MANAGER", "EMPLOYEE")
                         .anyRequest().authenticated()
                 )
-                .formLogin(formLogin -> formLogin.disable())
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .addFilterBefore(
+                .formLogin(formLogin -> formLogin.disable()) // Standard-Form-Login deaktivieren, da JWT verwendet wird
+                .httpBasic(httpBasic -> httpBasic.disable()) // HTTP Basic Auth deaktivieren
+                .addFilterBefore( // JWT-Filter vor dem Standard-Username/Password-Filter einfügen
                         jwtAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class
                 );

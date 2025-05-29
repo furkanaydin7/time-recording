@@ -1,9 +1,12 @@
-let selectedUserForDetails = null;
+// * @author EK
+
+console.log('admin.js geladen');
+window.selectedUserForDetails = null;
+console.log('Initial window.selectedUserForDetails:', window.selectedUserForDetails);
 
 async function viewUsers() {
     try {
         const response = await apiCall('/api/admin/users');
-
         if (response && Array.isArray(response)) {
             displayData('Alle Benutzer', formatUsersTable(response));
         } else {
@@ -139,7 +142,7 @@ async function checkSystemStatus() {
         console.log('🔍 Prüfe System-Status...');
         await apiCall('/api/time-entries');
         console.log('✅ API Verbindung OK');
-        debugToken(); // Test Token
+        debugToken();
         showSuccess('✅ System-Status: Alles scheint zu funktionieren.');
     } catch (error) {
         showError('❌ System-Problem: ' + (error.message || "Unbekannt").replace('DUPLICATE_ENTRY|', ''));
@@ -149,8 +152,10 @@ async function checkSystemStatus() {
 async function openCreateUserModal() {
     const createUserForm = document.getElementById('createUserForm');
     if (createUserForm) createUserForm.reset();
-    document.getElementById('createUserFeedback').style.display = 'none';
-    document.getElementById('createUserError').style.display = 'none';
+    const feedbackDiv = document.getElementById('createUserFeedback');
+    const errorDiv = document.getElementById('createUserError');
+    if (feedbackDiv) feedbackDiv.style.display = 'none';
+    if (errorDiv) errorDiv.style.display = 'none';
 
     const newUserRoleSelect = document.getElementById('newUserRole');
     try {
@@ -167,27 +172,34 @@ async function openCreateUserModal() {
             }
         }
     } catch (error) {
-        document.getElementById('createUserError').textContent = 'Fehler beim Laden der Rollen: ' + (error.message || "Unbekannt");
-        document.getElementById('createUserError').style.display = 'block';
+        if (errorDiv) {
+            errorDiv.textContent = 'Fehler beim Laden der Rollen: ' + (error.message || "Unbekannt");
+            errorDiv.style.display = 'block';
+        } else {
+            showError('Fehler beim Laden der Rollen für neuen Benutzer.');
+        }
     }
     openModal('createUserModal');
-
 }
+
 async function showUserDetails(userId) {
+    console.log('showUserDetails aufgerufen für User ID:', userId);
     try {
-        const user = await apiCall(`/api/admin/users/${userId}`); // apiCall muss global sein
+        const user = await apiCall(`/api/admin/users/${userId}`);
+        console.log('User-Daten von API erhalten:', user);
         if (!user) {
             showError('Benutzerdetails nicht gefunden.');
             return;
         }
-        selectedUserForDetails = user; // Wichtig für andere Aktionen im Modal
+        window.selectedUserForDetails = user;
+        console.log('window.selectedUserForDetails gesetzt auf:', window.selectedUserForDetails);
 
         document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
         document.getElementById('detailUserEmail').textContent = user.email;
-        document.getElementById('detailUserStatus').textContent = user.status || (user.active ? 'Aktiv' : 'Inaktiv');
+        document.getElementById('detailUserStatus').textContent = user.status ? String(user.status) : (user.active ? 'Aktiv' : 'Inaktiv');
         document.getElementById('detailUserPlannedHours').textContent = user.plannedHoursPerDay ? user.plannedHoursPerDay.toFixed(1) : 'N/A';
-        document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt); // formatDateTimeDisplay aus uiHelpers.js
-        document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt); // formatDateTimeDisplay aus uiHelpers.js
+        document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt);
+        document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt);
 
         const userRolesListDiv = document.getElementById('userRolesList');
         if (userRolesListDiv) {
@@ -195,7 +207,7 @@ async function showUserDetails(userId) {
                 userRolesListDiv.innerHTML = user.roles.map(role =>
                     `<span class="user-role-tag">
                         ${String(role).replace('ROLE_', '')}
-                        <button class="remove-role-btn" data-role="${role}" title="Rolle '${String(role).replace('ROLE_', '')}' entfernen" onclick="handleRemoveRole('${role}')">&times;</button>
+                        <button class="remove-role-btn" data-role="${role}" title="Rolle '${String(role).replace('ROLE_', '')}' entfernen" onclick="handleRemoveRole('${String(role)}')">&times;</button>
                     </span>`
                 ).join(' ');
             } else {
@@ -203,82 +215,199 @@ async function showUserDetails(userId) {
             }
         }
 
-        // Dropdown für das Hinzufügen von Rollen vorbereiten
-        await loadRolesForAddDropdown(user.roles || []); // loadRolesForAddDropdown muss global sein
+        await loadRolesForAddDropdown(user.roles || []);
 
-        // Status im Dropdown für "Status ändern" setzen
         const userStatusSelect = document.getElementById('userStatusSelect');
         if (userStatusSelect) {
-            userStatusSelect.value = user.status || (user.active ? 'ACTIVE' : 'INACTIVE');
+            const statusValue = user.status ? String(user.status).toUpperCase() : (user.active ? 'ACTIVE' : 'INACTIVE');
+            if (Array.from(userStatusSelect.options).some(opt => opt.value === statusValue)) {
+                userStatusSelect.value = statusValue;
+            } else {
+                console.warn(`Status "${statusValue}" nicht in Select-Optionen gefunden. Fallback auf ersten Wert.`);
+                userStatusSelect.selectedIndex = 0;
+            }
         }
 
-        openModal('userDetailModal'); // openModal muss global sein
+        openModal('userDetailModal');
+        console.log('userDetailModal geöffnet');
     } catch (error) {
-        showError('Fehler beim Laden der Benutzerdetails: ' + (error.message || "Unbekannt")); // showError muss global sein
+        console.error('Fehler in showUserDetails:', error);
+        showError('Fehler beim Laden der Benutzerdetails: ' + (error.message || "Unbekannt"));
     }
 }
 
 async function handleRemoveRole(roleName) {
-    if (!selectedUserForDetails || !selectedUserForDetails.id) {
+    if (!window.selectedUserForDetails || !window.selectedUserForDetails.id) {
         showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
         return;
     }
-
-    const user = selectedUserForDetails;
+    const user = window.selectedUserForDetails;
     if (confirm(`Möchten Sie die Rolle '${String(roleName).replace('ROLE_', '')}' von ${user.firstName} ${user.lastName} wirklich entfernen?`)) {
         try {
-            // API-Aufruf zum Entfernen der Rolle
-            // Der Endpoint in AdminController ist DELETE /api/admin/users/{id}/roles?roleName=THE_ROLE_NAME
             await apiCall(`/api/admin/users/${user.id}/roles?roleName=${roleName}`, { method: 'DELETE' });
             showSuccess(`Rolle '${String(roleName).replace('ROLE_', '')}' erfolgreich von ${user.firstName} ${user.lastName} entfernt.`);
-
-            // Benutzerdetails und Rollen im Modal neu laden/aktualisieren
-            // Am einfachsten ist es, showUserDetails erneut aufzurufen
             await showUserDetails(user.id);
-
-            // Optional: Wenn die Benutzerliste im Hintergrund (dataDisplay) sichtbar ist und Rollen anzeigt, diese auch aktualisieren
-            if (document.getElementById('dataDisplay') && document.getElementById('dataDisplay').style.display === 'block' && document.getElementById('dataTitle') && document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
-                viewUsers(); // Lädt die Benutzertabelle neu
+            if (document.getElementById('dataDisplay')?.style.display === 'block' && document.getElementById('dataTitle')?.textContent === 'Alle Benutzer') {
+                viewUsers();
             }
-
         } catch (error) {
             showError('Fehler beim Entfernen der Rolle: ' + (error.message || "Unbekannt"));
-            console.error("Fehler beim Entfernen der Rolle:", error);
         }
     }
 }
 
 async function loadRolesForAddDropdown(currentUserRoles) {
     try {
-        const allRolesResponse = await apiCall('/api/admin/roles'); // apiCall muss global sein
+        const allRolesResponse = await apiCall('/api/admin/roles');
         const addRoleSelect = document.getElementById('addRoleSelect');
         if (!addRoleSelect) return;
         addRoleSelect.innerHTML = '<option value="">Rolle auswählen</option>';
-
         const currentRoleNamesSet = new Set((currentUserRoles || []).map(r => String(r)));
 
         if (allRolesResponse && Array.isArray(allRolesResponse)) {
             allRolesResponse.forEach(roleObj => {
-                // Zeige nur Rollen, die der Benutzer noch nicht hat
                 if (!currentRoleNamesSet.has(roleObj.name)) {
                     const option = document.createElement('option');
-                    option.value = roleObj.name; // Sendet den Rollennamen an das Backend
+                    option.value = roleObj.name;
                     option.textContent = String(roleObj.name).replace('ROLE_', '');
                     addRoleSelect.appendChild(option);
                 }
             });
         }
     } catch (error) {
-        console.error('Fehler beim Laden der Rollen für Dropdown:', error);
-        showError('Fehler beim Laden der Rollen für das Hinzufügen-Dropdown: ' + (error.message || "Unbekannt")); // showError muss global sein
+        showError('Fehler beim Laden der Rollen für Dropdown: ' + (error.message || "Unbekannt"));
+    }
+}
+async function viewSystemLogs() {
+    try {
+        hideDataDisplay();
+        const response = await apiCall('/api/admin/logs');
+
+        if (response && Array.isArray(response.logs)) {
+            let html = '<h2>System-Logs</h2>';
+            if (response.logs.length === 0) {
+                html += '<p>Keine System-Logs gefunden.</p>';
+            } else {
+                // Status Spalte hinzugefügt für bessere Übersicht
+                html += '<table class="data-table"><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Details</th><th>Status</th></tr></thead><tbody>';
+                response.logs.forEach(logEntry => { // Hier logEntry statt log, um Verwechslung zu vermeiden, aber log ist auch ok
+                    html += `<tr>
+                                <td>${logEntry.timestamp ? formatDateTimeDisplay(logEntry.timestamp) : '-'}</td>
+                                <td>${logEntry.userEmail || (logEntry.userId ? `ID: ${logEntry.userId}` : 'System')}</td>
+                                <td>${logEntry.action || '-'}</td>
+                                <td style="word-break: break-all;">${logEntry.details || '-'}</td>
+                                <td>${logEntry.processedStatus || '-'}</td> 
+                             </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            displayData('System-Logs', html);
+        } else {
+            displayData('System-Logs', '<p>System-Logs konnten nicht geladen werden oder haben ein unerwartetes Format.</p>');
+        }
+    } catch (error) {
+        showError('Fehler beim Laden der System-Logs: ' + (error.message || "Unbekannt"));
     }
 }
 
-//async function testDuplicateHandling() {
+async function viewPasswordResetRequests() {
+    try {
+        hideDataDisplay();
+        const response = await apiCall('/api/admin/logs');
 
-  //  showWarning('Duplikat-Test wird ausgeführt. Siehe Konsole.');
-    // ... (Rest der Logik aus dashboard.html) ...
-//}
+        if (response && Array.isArray(response.logs)) {
+
+            const resetRequests = response.logs.filter(log =>
+                log.action && log.action.toLowerCase() === "passwort reset angefordert" &&
+                (!log.processedStatus || log.processedStatus.toUpperCase() === "PENDING")
+            );
+
+            let html = '<h2>Ausstehende Passwort-Reset-Anfragen</h2>';
+            if (resetRequests.length === 0) {
+                html += '<p>Keine offenen Passwort-Reset-Anfragen gefunden.</p>';
+            } else {
+                html += '<ul id="passwordResetList" style="list-style: none; padding: 0;">';
+                resetRequests.forEach(req => {
+                    const userId = req.userId || 'N/A';
+                    const userEmail = req.userEmail || 'E-Mail nicht im Log';
+                    const escapedUserEmail = userEmail.replace(/'/g, "\\'");
+                    const logEntryId = req.id;
+
+                    html += `<li id="reset-request-${logEntryId}" style="padding: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px; background-color: #f9f9f9; border-radius: 4px;">
+                                <strong>E-Mail:</strong> ${userEmail}<br>
+                                <strong>User ID:</strong> ${userId}<br>
+                                <strong>Angefordert am:</strong> ${req.timestamp ? formatDateTimeDisplay(req.timestamp) : '-'}<br> 
+                                <button class="btn btn-warning btn-small reset-user-password-btn" 
+                                        onclick="handleResetPasswordFromAdminView(${userId}, '${escapedUserEmail}', ${logEntryId})" 
+                                        ${userId === 'N/A' ? 'disabled title="User ID nicht verfügbar"' : ''}
+                                        style="margin-top: 5px;">
+                                    Passwort für User zurücksetzen
+                                </button>
+                             </li>`;
+                });
+                html += '</ul>';
+            }
+            displayData('Passwort-Reset-Anfragen', html);
+        } else {
+            showWarning("System-Logs konnten nicht geladen werden. Passwort-Reset-Anfragen können nicht angezeigt werden.");
+        }
+    } catch (error) {
+        // Der Fehler "log is not defined" wird hier abgefangen.
+        console.error("Fehlerdetails in viewPasswordResetRequests:", error); // Zusätzliches Logging des Fehlers selbst
+        showError('Fehler beim Laden der Passwort-Reset-Anfragen: ' + (error.message || "Unbekannt"));
+    }
+}
+
+// Die Funktion handleResetPasswordFromAdminView (mit dem erweiterten Logging für den confirm-Dialog)
+async function handleResetPasswordFromAdminView(userId, userEmail, logId) {
+    console.log(`[DEBUG Admin.js] handleResetPasswordFromAdminView: Start.`);
+    console.log(`[DEBUG Admin.js] Übergebene userId: ${userId} (Typ: ${typeof userId}), userEmail: ${userEmail}, logId: ${logId}`); // Wichtig!
+
+    const numUserId = parseInt(userId, 10);
+    if (isNaN(numUserId)) {
+        showError("Ungültige Benutzer-ID für Reset.");
+        console.error(`[DEBUG Admin.js] handleResetPasswordFromAdminView: Invalid userId. Konnte nicht zu Zahl geparst werden. Value: ${userId}`);
+        return;
+    }
+    console.log(`[DEBUG Admin.js] Parsed numUserId: ${numUserId} (Typ: ${typeof numUserId})`); // Wichtig!
+
+    const confirmMsg = `Möchten Sie das Passwort für ${userEmail} (ID: ${numUserId}) wirklich zurücksetzen? Der Benutzer wird darüber nicht automatisch benachrichtigt.`;
+    //
+    let userConfirmed;
+    try {
+        userConfirmed = confirm(confirmMsg);
+        console.log(`[DEBUG] confirm() Dialog hat zurückgegeben: ${userConfirmed} (Typ: ${typeof userConfirmed})`);
+    } catch (e) {
+        console.error("[DEBUG] Fehler während confirm() Dialog:", e);
+        showError("Fehler bei der Bestätigungsabfrage.");
+        return;
+    }
+
+    if (userConfirmed === true) {
+        console.log(`[DEBUG] User ID ${numUserId}: Passwort-Reset bestätigt. Starte API-Call.`);
+        try {
+            const response = await apiCall(`/api/admin/users/${numUserId}/reset-password`, { method: 'POST' });
+            console.log(`[DEBUG] API-Call /api/admin/users/${numUserId}/reset-password - Antwort:`, response);
+
+            if (response && response.temporaryPassword) {
+                showSuccess(`Passwort für ${userEmail || `ID ${numUserId}`} erfolgreich zurückgesetzt. Temporäres Passwort: <strong>${response.temporaryPassword}</strong>. Bitte teilen Sie dieses Passwort dem Benutzer sicher mit.`);
+                console.log(`[DEBUG] Passwort erfolgreich zurückgesetzt für User ID ${numUserId}. Temporäres Passwort: ${response.temporaryPassword}`);
+                viewPasswordResetRequests();
+            } else {
+                showError('Passwort-Reset durchgeführt, aber kein temporäres Passwort erhalten oder Antwort war unerwartet.');
+                console.error(`[DEBUG] Kein temporäres Passwort in der Antwort oder unerwartete Antwort für User ID ${numUserId}:`, response);
+            }
+        } catch (error) {
+            showError('Fehler beim Zurücksetzen des Passworts via API: ' + (error.message || "Unbekannt"));
+            console.error(`[DEBUG] Fehler beim API-Call für Passwort-Reset für User ID ${numUserId}:`, error);
+        }
+    } else {
+        console.log(`[DEBUG] User ID ${numUserId}: Passwort-Reset durch Benutzer abgebrochen (confirm_result: ${userConfirmed}).`);
+    }
+    console.log(`[DEBUG] handleResetPasswordFromAdminView: Ende. UserID: ${numUserId}`);
+}
+
+
 
 function initializeAdminFeatures() {
     const userEmail = localStorage.getItem('userEmail');
@@ -301,7 +430,20 @@ function initializeAdminFeatures() {
     const viewTeamOrAllApprovedAbsencesBtn = document.getElementById('viewTeamOrAllApprovedAbsencesBtn');
 
     if (isAdmin) {
-        if (adminCard) adminCard.style.display = 'block';
+        if (adminCard) {
+            adminCard.style.display = 'block';
+            const adminActionButtons = adminCard.querySelector('.action-buttons');
+            if (adminActionButtons && !document.getElementById('viewPasswordResetRequestsBtn')) {
+                const resetButton = document.createElement('button');
+                resetButton.className = 'btn btn-info';
+                resetButton.id = 'viewPasswordResetRequestsBtn';
+                resetButton.textContent = 'Passwort-Resets';
+                resetButton.style.marginTop = '0.5rem';
+                resetButton.style.marginLeft = '0.5rem'; // Für besseres Layout
+                adminActionButtons.appendChild(resetButton);
+                // Der Event-Listener wird in dashboard.js hinzugefügt
+            }
+        }
         if (createProjectBtn) createProjectBtn.style.display = 'inline-block';
     } else {
         if (adminCard) adminCard.style.display = 'none';
@@ -316,15 +458,10 @@ function initializeAdminFeatures() {
         if (viewTeamOrAllApprovedAbsencesBtn) viewTeamOrAllApprovedAbsencesBtn.style.display = 'none';
     }
 
-    if (DEBUG_MODE) {
-        console.log('👤 User Info (Admin Check):', { email: userEmail, roles: userRoles, isAdmin: isAdmin });
-        const debugInfoDiv = document.getElementById('debugInfo');
-        if (debugInfoDiv) debugInfoDiv.style.display = 'block';
+    if (typeof DEBUG_MODE !== 'undefined' && DEBUG_MODE) {
+        console.log('👤 User Info (Admin Check):', { email: userEmail, roles: userRoles, isAdmin: isAdmin, isManager: isManager });
     }
 }
-
-function debugAdminStatus() { }
-function forceShowAdminPanel(){}
 
 async function handleCreateUserSubmit(event) {
     event.preventDefault();
@@ -337,8 +474,9 @@ async function handleCreateUserSubmit(event) {
 
     const feedbackDiv = document.getElementById('createUserFeedback');
     const errorDiv = document.getElementById('createUserError');
-    feedbackDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
+    if(feedbackDiv) feedbackDiv.style.display = 'none';
+    if(errorDiv) errorDiv.style.display = 'none';
+
     const submitBtn = document.getElementById('createUserSubmitBtn');
     if (submitBtn) {
         submitBtn.disabled = true;
@@ -346,29 +484,37 @@ async function handleCreateUserSubmit(event) {
     }
 
     try {
-
         const userData = {
-            firstName: firstName, lastName: lastName, email: email,
-            role: role, // Der AdminController erwartet den Rollennamen
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            role: role,
             plannedHoursPerDay: plannedHours
         };
-        const response = await apiCall('/api/admin/users', {method: 'POST', body: userData});
-        if (response && response.id) { // Backend gibt UserResponse zurück
-            feedbackDiv.textContent = `✅ Benutzer "${response.firstName} ${response.lastName}" erfolgreich erstellt! Initialpasswort: ${response.temporaryPassword || lastName.toLowerCase()}`;
-            feedbackDiv.style.display = 'block';
+        const response = await apiCall('/api/admin/users', { method: 'POST', body: userData });
+
+        if (response && response.id) {
+            if(feedbackDiv) {
+                feedbackDiv.innerHTML = `✅ Benutzer "${response.firstName} ${response.lastName}" erfolgreich erstellt! Initialpasswort: <strong>${response.temporaryPassword || lastName.toLowerCase()}</strong>. Bitte teilen Sie dies dem Benutzer mit.`;
+                feedbackDiv.style.display = 'block';
+            }
             document.getElementById('createUserForm').reset();
             setTimeout(() => {
                 closeModal('createUserModal');
-                viewUsers(); // Benutzerliste aktualisieren
-                loadDashboardPageData(true); // Dashboard Stats aktualisieren
-            }, 5000);
+                viewUsers();
+                if (typeof loadDashboardPageData === 'function') loadDashboardPageData(true);
+            }, 7000);
         } else {
-            errorDiv.textContent = '❌ Fehler: Benutzer konnte nicht erstellt werden. Unerwartete Antwort.';
-            errorDiv.style.display = 'block';
+            if(errorDiv) {
+                errorDiv.textContent = '❌ Fehler: Benutzer konnte nicht erstellt werden. Unerwartete Antwort.';
+                errorDiv.style.display = 'block';
+            }
         }
     } catch (error) {
-        errorDiv.textContent = '❌ Fehler beim Erstellen des Benutzers: ' + (error.message || "Unbekannt");
-        errorDiv.style.display = 'block';
+        if(errorDiv) {
+            errorDiv.textContent = '❌ Fehler beim Erstellen des Benutzers: ' + (error.message || "Unbekannt");
+            errorDiv.style.display = 'block';
+        }
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -376,5 +522,3 @@ async function handleCreateUserSubmit(event) {
         }
     }
 }
-
-
