@@ -142,4 +142,6 @@ public interface UserService {
      * @return Liste mit allen Rollen
      */
     List<Role> getAllRoles();
+    boolean requestPasswordReset(String email); // <-- Stelle sicher, dass diese Zeile genau so existiert
+
 }

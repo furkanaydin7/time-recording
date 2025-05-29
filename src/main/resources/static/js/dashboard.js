@@ -1,6 +1,6 @@
 // * @author EK
 
-window.projects = [];
+window.projects = []; // Globale Variable für Projekte
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Dashboard wird initialisiert (aus dashboard.js)...');
@@ -18,15 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
         userEmailSpan.textContent = userEmailFromStorage;
     }
 
+    // Admin-Features initialisieren (zeigt/versteckt Admin-Karte etc.)
     if (typeof initializeAdminFeatures === 'function') {
         initializeAdminFeatures();
     } else {
         console.warn("initializeAdminFeatures ist nicht definiert. Stelle sicher, dass admin.js korrekt geladen wurde.");
     }
 
+    // Dashboard-Daten laden (Statistiken etc.)
     loadDashboardPageData();
 
-
+    // Alle Event-Listener binden
     bindDashboardEventListeners();
 
     console.log('🎉 Dashboard initialisiert und Event Listener gebunden!');
@@ -34,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function bindDashboardEventListeners() {
     // Logout Button
-    const logoutButton = document.querySelector('.logout-btn');
+    const logoutButton = document.querySelector('.logout-btn'); // Besser über ID, falls vorhanden
     if (logoutButton) logoutButton.addEventListener('click', logout);
 
     // Passwort ändern Icon
@@ -45,50 +47,75 @@ function bindDashboardEventListeners() {
     const changePwdForm = document.getElementById('changePasswordForm');
     if (changePwdForm) changePwdForm.addEventListener('submit', handleChangePasswordSubmit);
 
-    // Zeiterfassung Karte
+    // --- Zeiterfassung Karte ---
     document.getElementById('startTimer')?.addEventListener('click', startTimeTracking);
     document.getElementById('stopTimer')?.addEventListener('click', stopTimeTracking);
-    document.querySelector('button[onclick="openManualEntryModal()"]')?.setAttribute('id', 'openManualEntryModalBtn');
-    document.getElementById('openManualEntryModalBtn')?.addEventListener('click', openManualEntryModal);
-    document.querySelector('button[onclick="viewTimeEntries()"]')?.setAttribute('id', 'viewTimeEntriesBtn');
-    document.getElementById('viewTimeEntriesBtn')?.addEventListener('click', viewTimeEntries);
+    // Die Buttons mit onclick im HTML werden hier mit IDs versehen und Listener gebunden
+    // Wenn du `document.querySelector('button[onclick="..."]'` verwendest, stelle sicher, dass
+    // das onclick-Attribut im HTML bleibt oder entferne es und verlasse dich nur auf die ID.
+    // Es ist sauberer, onclick-Attribute zu entfernen und alles über addEventListener zu machen.
+
+    const openManualEntryModalBtn = document.getElementById('openManualEntryModalBtn');
+    if (openManualEntryModalBtn) openManualEntryModalBtn.addEventListener('click', openManualEntryModal);
+
+    const viewTimeEntriesBtn = document.getElementById('viewTimeEntriesBtn');
+    if (viewTimeEntriesBtn) viewTimeEntriesBtn.addEventListener('click', viewTimeEntries);
 
 
-    // Projekte Karte
-    document.querySelector('button[onclick="viewProjects()"]')?.setAttribute('id', 'viewProjectsBtn');
-    document.getElementById('viewProjectsBtn')?.addEventListener('click', viewProjects);
-    document.getElementById('createProjectBtn')?.addEventListener('click', openCreateProjectModal);
+    // --- Projekte Karte ---
+    const viewProjectsBtn = document.getElementById('viewProjectsBtn');
+    if (viewProjectsBtn) viewProjectsBtn.addEventListener('click', viewProjects);
 
-    // Abwesenheiten Karte
-    document.querySelector('button[onclick="viewAbsences()"]')?.setAttribute('id', 'viewAbsencesBtn');
-    document.getElementById('viewAbsencesBtn')?.addEventListener('click', viewAbsences);
-    document.querySelector('button[onclick="openCreateAbsenceModal()"]')?.setAttribute('id', 'openCreateAbsenceModalBtn');
-    document.getElementById('openCreateAbsenceModalBtn')?.addEventListener('click', openCreateAbsenceModal);
-    document.getElementById('viewPendingAbsencesBtn')?.addEventListener('click', viewPendingAbsencesForApproval);
-    document.getElementById('viewTeamOrAllApprovedAbsencesBtn')?.addEventListener('click', viewTeamOrAllApprovedAbsencesHandler);
+    const createProjectBtn = document.getElementById('createProjectBtn');
+    if (createProjectBtn) createProjectBtn.addEventListener('click', openCreateProjectModal);
 
 
-    // Admin Panel Buttons
-    document.querySelector('button[onclick="viewUsers()"]')?.setAttribute('id', 'viewUsersBtn');
-    document.getElementById('viewUsersBtn')?.addEventListener('click', viewUsers);
-    document.querySelector('button[onclick="openCreateUserModal()"]')?.setAttribute('id', 'openCreateUserModalBtn');
-    document.getElementById('openCreateUserModalBtn')?.addEventListener('click', openCreateUserModal);
-    document.querySelector('button[onclick="viewSystemLogs()"]')?.setAttribute('id', 'viewSystemLogsBtn');
-    document.getElementById('viewSystemLogsBtn')?.addEventListener('click', viewSystemLogs);
-    document.querySelector('button[onclick="debugToken()"]')?.setAttribute('id', 'debugTokenBtn');
-    document.getElementById('debugTokenBtn')?.addEventListener('click', debugToken);
-    document.querySelector('button[onclick="checkSystemStatus()"]')?.setAttribute('id', 'checkSystemStatusBtn');
-    document.getElementById('checkSystemStatusBtn')?.addEventListener('click', checkSystemStatus);
+    // --- Abwesenheiten Karte ---
+    const viewAbsencesBtn = document.getElementById('viewAbsencesBtn');
+    if (viewAbsencesBtn) viewAbsencesBtn.addEventListener('click', viewAbsences);
+
+    const openCreateAbsenceModalBtn = document.getElementById('openCreateAbsenceModalBtn');
+    if (openCreateAbsenceModalBtn) openCreateAbsenceModalBtn.addEventListener('click', openCreateAbsenceModal);
+
+    const viewPendingAbsencesBtn = document.getElementById('viewPendingAbsencesBtn');
+    if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.addEventListener('click', viewPendingAbsencesForApproval);
+
+    const viewTeamOrAllApprovedAbsencesBtn = document.getElementById('viewTeamOrAllApprovedAbsencesBtn');
+    if (viewTeamOrAllApprovedAbsencesBtn) viewTeamOrAllApprovedAbsencesBtn.addEventListener('click', viewTeamOrAllApprovedAbsencesHandler);
+
+
+    // --- Admin Panel Buttons ---
+    const viewUsersBtn = document.getElementById('viewUsersBtn');
+    if (viewUsersBtn) viewUsersBtn.addEventListener('click', viewUsers);
+
+    const openCreateUserModalBtn = document.getElementById('openCreateUserModalBtn');
+    if (openCreateUserModalBtn) openCreateUserModalBtn.addEventListener('click', openCreateUserModal);
+
+    const viewSystemLogsBtn = document.getElementById('viewSystemLogsBtn');
+    if (viewSystemLogsBtn) viewSystemLogsBtn.addEventListener('click', viewSystemLogs);
+
+    const debugTokenBtn = document.getElementById('debugTokenBtn');
+    if (debugTokenBtn) debugTokenBtn.addEventListener('click', debugToken);
+
+    const checkSystemStatusBtn = document.getElementById('checkSystemStatusBtn');
+    if (checkSystemStatusBtn) checkSystemStatusBtn.addEventListener('click', checkSystemStatus);
+
+    // NEUER Listener für den "Passwort-Resets anzeigen" Button (ID aus admin.js)
+    const viewPasswordResetRequestsBtn = document.getElementById('viewPasswordResetRequestsBtn');
+    if (viewPasswordResetRequestsBtn) {
+        viewPasswordResetRequestsBtn.addEventListener('click', viewPasswordResetRequests);
+    }
 
 
     // Data Display Schließen Button
-    const closeDataDisplayBtn = document.querySelector('#dataDisplay .btn-secondary[onclick="hideDataDisplay()"]');
-    if(closeDataDisplayBtn) {
-        closeDataDisplayBtn.removeAttribute('onclick'); // Altes onclick entfernen
-        closeDataDisplayBtn.addEventListener('click', hideDataDisplay);
+    const hideDataDisplayBtn = document.getElementById('hideDataDisplayBtn'); // ID ist besser
+    if (hideDataDisplayBtn) {
+        // Falls noch ein onclick-Attribut im HTML ist, kann es hier entfernt werden
+        // hideDataDisplayBtn.removeAttribute('onclick');
+        hideDataDisplayBtn.addEventListener('click', hideDataDisplay);
     }
 
-    // Formular-Listener für Modals
+    // --- Formular-Listener für Modals (Submit-Handler) ---
     document.getElementById('manualEntryForm')?.addEventListener('submit', handleManualEntrySubmit);
     document.getElementById('editTimeEntryForm')?.addEventListener('submit', handleEditTimeEntrySubmit);
     document.getElementById('createProjectForm')?.addEventListener('submit', handleCreateProjectSubmit);
@@ -98,17 +125,30 @@ function bindDashboardEventListeners() {
     document.getElementById('deleteProjectBtn')?.addEventListener('click', handleDeleteProject);
     document.getElementById('createUserForm')?.addEventListener('submit', handleCreateUserSubmit);
 
-    // Event Listener für Zeitberechnung im manuellen Eintrag
+    // Event Listener für Zeitberechnung im manuellen Eintrag Modal
     document.getElementById('manualStartTime')?.addEventListener('change', calculateWorkTime);
     document.getElementById('manualEndTime')?.addEventListener('change', calculateWorkTime);
     document.getElementById('manualBreakStartTime')?.addEventListener('change', calculateWorkTime);
     document.getElementById('manualBreakEndTime')?.addEventListener('change', calculateWorkTime);
 
-    // Event Listener für Start-/Enddatum bei Abwesenheiten
-    const startDateAbsence = document.getElementById('startDate');
-    if (startDateAbsence) {
-        startDateAbsence.addEventListener('change', function() {
-            const endDateInput = document.getElementById('endDate');
+    // Event Listener für Start-/Enddatum Validierung bei Abwesenheiten (Create Modal)
+    const createAbsenceStartDate = document.getElementById('startDate'); // ID aus createAbsenceModal
+    if (createAbsenceStartDate) {
+        createAbsenceStartDate.addEventListener('change', function() {
+            const endDateInput = document.getElementById('endDate'); // ID aus createAbsenceModal
+            if (endDateInput) {
+                endDateInput.min = this.value;
+                if (endDateInput.value && new Date(endDateInput.value) < new Date(this.value)) {
+                    endDateInput.value = this.value;
+                }
+            }
+        });
+    }
+    // Event Listener für Start-/Enddatum Validierung bei Abwesenheiten (Edit Modal)
+    const editAbsenceStartDate = document.getElementById('editAbsenceStartDate');
+    if (editAbsenceStartDate) {
+        editAbsenceStartDate.addEventListener('change', function() {
+            const endDateInput = document.getElementById('editAbsenceEndDate');
             if (endDateInput) {
                 endDateInput.min = this.value;
                 if (endDateInput.value && new Date(endDateInput.value) < new Date(this.value)) {
@@ -118,11 +158,12 @@ function bindDashboardEventListeners() {
         });
     }
 
-    // Listener für Benutzerdetails-Modal auf dashboard.html
+
+    // --- Listener für Benutzerdetails-Modal (userDetailModal) ---
     const updateUserStatusBtn = document.getElementById('updateUserStatusBtn');
     if (updateUserStatusBtn) {
         updateUserStatusBtn.addEventListener('click', async function() {
-            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+            if (!window.selectedUserForDetails || !window.selectedUserForDetails.id) {
                 showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
                 return;
             }
@@ -133,15 +174,13 @@ function bindDashboardEventListeners() {
             }
             const newStatus = statusSelect.value;
             try {
-                await apiCall(`/api/admin/users/${selectedUserForDetails.id}/status?status=${newStatus}`, { method: 'PATCH' });
-                showSuccess(`Status für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} erfolgreich auf ${newStatus} aktualisiert.`);
-                // Benutzerdetails neu laden oder zumindest den Status im Modal aktualisieren
-                const user = await apiCall(`/api/admin/users/${selectedUserForDetails.id}`);
-                if(user) {
-                    selectedUserForDetails = user; // selectedUserForDetails aktualisieren
-                    document.getElementById('detailUserStatus').textContent = user.status;
-                    // Ggf. die Benutzerliste neu laden, falls sie sichtbar ist und den Status anzeigt
-                    if (document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
+                await apiCall(`/api/admin/users/${window.selectedUserForDetails.id}/status?status=${newStatus}`, { method: 'PATCH' });
+                showSuccess(`Status für ${window.selectedUserForDetails.firstName} ${window.selectedUserForDetails.lastName} erfolgreich auf ${newStatus} aktualisiert.`);
+                const user = await apiCall(`/api/admin/users/${window.selectedUserForDetails.id}`);
+                if (user) {
+                    window.selectedUserForDetails = user;
+                    document.getElementById('detailUserStatus').textContent = user.status ? String(user.status) : (user.active ? 'Aktiv' : 'Inaktiv');
+                    if (document.getElementById('dataTitle')?.textContent === 'Alle Benutzer') {
                         viewUsers();
                     }
                 }
@@ -154,7 +193,7 @@ function bindDashboardEventListeners() {
     const addRoleBtn = document.getElementById('addRoleBtn');
     if (addRoleBtn) {
         addRoleBtn.addEventListener('click', async function() {
-            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+            if (!window.selectedUserForDetails || !window.selectedUserForDetails.id) {
                 showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
                 return;
             }
@@ -169,19 +208,16 @@ function bindDashboardEventListeners() {
                 return;
             }
             try {
-                await apiCall(`/api/admin/users/${selectedUserForDetails.id}/roles?roleName=${roleName}`, { method: 'POST' });
-                showSuccess(`Rolle ${roleName} erfolgreich zu ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} hinzugefügt.`);
-                // Benutzerdetails neu laden, um die aktualisierte Rollenliste anzuzeigen
-                const user = await apiCall(`/api/admin/users/${selectedUserForDetails.id}`);
-                if(user) {
-                    selectedUserForDetails = user; // selectedUserForDetails aktualisieren
-
+                await apiCall(`/api/admin/users/${window.selectedUserForDetails.id}/roles?roleName=${roleName}`, { method: 'POST' });
+                showSuccess(`Rolle ${roleName} erfolgreich zu ${window.selectedUserForDetails.firstName} ${window.selectedUserForDetails.lastName} hinzugefügt.`);
+                const user = await apiCall(`/api/admin/users/${window.selectedUserForDetails.id}`);
+                if (user) {
+                    window.selectedUserForDetails = user;
                     await loadRolesForAddDropdown(user.roles || []);
-                    // Benutzerliste neu laden
-                    if (document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
+                    document.getElementById('userRolesList').innerHTML = (user.roles?.map(r => `<span class="user-role-tag">${String(r).replace('ROLE_', '')} <button class="remove-role-btn" data-role="${r}" onclick="handleRemoveRole('${String(r)}')">&times;</button></span>`).join(' ') || 'Keine Rollen');
+                    if (document.getElementById('dataTitle')?.textContent === 'Alle Benutzer') {
                         viewUsers();
                     }
-                    document.getElementById('userRolesList').innerHTML = (user.roles.map(r => `<span class="user-role-tag">${String(r).replace('ROLE_', '')} <button class="remove-role-btn" data-role="${r}" onclick="handleRemoveRole('${r}')">&times;</button></span>`).join(' ') || 'Keine Rollen');
                 }
             } catch (error) {
                 showError('Fehler beim Hinzufügen der Rolle: ' + (error.message || "Unbekannt"));
@@ -189,64 +225,59 @@ function bindDashboardEventListeners() {
         });
     }
 
-    // Hinzufügen eines Event-Listeners für den "Passwort zurücksetzen"-Button, falls noch nicht vorhanden
     const resetPasswordBtn = document.getElementById('resetPasswordBtn');
     if (resetPasswordBtn && !resetPasswordBtn.getAttribute('data-listener-attached')) {
         resetPasswordBtn.addEventListener('click', async function() {
-            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+            console.log('Passwort zurücksetzen Button geklickt (aus dashboard.js).');
+            console.log('Aktueller Wert von window.selectedUserForDetails beim Klick:', window.selectedUserForDetails);
+
+            if (!window.selectedUserForDetails || !window.selectedUserForDetails.id) {
+                console.log('Bedingung (!window.selectedUserForDetails || !window.selectedUserForDetails.id) ist WAHR');
                 showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
                 return;
             }
-            if (confirm(`Möchten Sie das Passwort für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} wirklich zurücksetzen?`)) {
+            console.log('Benutzer für Reset ausgewählt:', window.selectedUserForDetails.firstName, window.selectedUserForDetails.lastName);
+
+            if (confirm(`Möchten Sie das Passwort für ${window.selectedUserForDetails.firstName} ${window.selectedUserForDetails.lastName} wirklich zurücksetzen?`)) {
+                console.log('Passwort-Reset bestätigt.');
                 try {
-                    const response = await apiCall(`/api/admin/users/${selectedUserForDetails.id}/reset-password`, { method: 'POST' });
-                    alert(`✅ Passwort zurückgesetzt. Temporäres Passwort für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName}: ${response.temporaryPassword}`);
+                    const response = await apiCall(`/api/admin/users/${window.selectedUserForDetails.id}/reset-password`, { method: 'POST' });
+                    console.log('Antwort vom Passwort-Reset API-Call:', response);
+                    alert(`✅ Passwort zurückgesetzt. Temporäres Passwort für ${window.selectedUserForDetails.firstName} ${window.selectedUserForDetails.lastName}: ${response.temporaryPassword}`);
                 } catch (error) {
+                    console.error('Fehler beim API-Call zum Passwort-Reset:', error);
                     showError('Fehler beim Zurücksetzen des Passworts: ' + (error.message || "Unbekannt"));
                 }
+            } else {
+                console.log('Passwort-Reset abgebrochen.');
             }
         });
         resetPasswordBtn.setAttribute('data-listener-attached', 'true');
     }
 
-    const duplicateInfoModal = document.getElementById('duplicateInfoModal');
-    if (duplicateInfoModal) {
-        duplicateInfoModal.querySelector('button[onclick^="viewTimeEntries()"]')?.addEventListener('click', function() {
-            viewTimeEntries();
-            closeModal('duplicateInfoModal');
-        });
-        duplicateInfoModal.querySelector('button[onclick^="openManualEntryModal()"]')?.addEventListener('click', function() {
-            openManualEntryModal(); // Öffnet das Modal für ein anderes Datum
-            closeModal('duplicateInfoModal');
-        });
-        duplicateInfoModal.querySelector('button[onclick^="closeModal(\'duplicateInfoModal\')"]')?.addEventListener('click', function() {
-            closeModal('duplicateInfoModal');
-        });
-    }
 
-
+    // --- Globale Modal-Schließmechanismen ---
+    // Schließen bei Klick außerhalb des Modal-Contents
     window.addEventListener('click', function(event) {
         document.querySelectorAll('.modal').forEach(modal => {
-            if (event.target === modal) closeModal(modal.id);
-        });
-    });
-
-    document.querySelectorAll('.modal .close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const modalId = this.getAttribute('data-modal-id-to-close');
-            if (modalId) {
-                closeModal(modalId);
-            } else {
-                // Fallback: Finde das übergeordnete Modal
-                const modal = this.closest('.modal');
-                if (modal && modal.id) {
-                    closeModal(modal.id);
-                }
+            if (event.target === modal) { // Nur wenn direkt auf das Modal-Overlay geklickt wird
+                closeModal(modal.id);
             }
         });
     });
 
+    // Schließen bei Klick auf .close Buttons (X)
+    document.querySelectorAll('.modal .close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const modalId = this.getAttribute('data-modal-id-to-close') || this.closest('.modal')?.id;
+            if (modalId) {
+                closeModal(modalId);
+            }
+        });
+    });
+
+    // --- Schließen-Buttons für spezifische Modals (Cancel-Buttons) ---
     const cancelButtons = [
         { id: 'cancelManualEntryBtn', modal: 'manualEntryModal' },
         { id: 'cancelEditTimeEntryBtn', modal: 'editTimeEntryModal' },
@@ -256,9 +287,8 @@ function bindDashboardEventListeners() {
         { id: 'cancelCreateUserBtn', modal: 'createUserModal' },
         { id: 'cancelChangePasswordBtn', modal: 'changePasswordModal' },
         { id: 'closeProjectDetailModalBtn', modal: 'projectDetailModal' },
-        { id: 'closeUserDetailModalBtn', modal: 'userDetailModal' },
-        { id: 'hideDataDisplayBtn', action: 'hideDataDisplay' } // Spezialfall
-    ];
+        { id: 'closeUserDetailModalBtn', modal: 'userDetailModal' }
+          ];
 
     cancelButtons.forEach(buttonConfig => {
         const button = document.getElementById(buttonConfig.id);
@@ -274,54 +304,56 @@ function bindDashboardEventListeners() {
         }
     });
 
-    const duplicateInfoButtons = [
-        { id: 'duplicateInfoViewEntriesBtn', action: () => { viewTimeEntries(); closeModal('duplicateInfoModal'); } },
-        { id: 'duplicateInfoChangeDateBtn', action: () => { openManualEntryModal(); closeModal('duplicateInfoModal'); } },
-        { id: 'duplicateInfoCloseBtn', action: () => closeModal('duplicateInfoModal') }
-    ];
+    // --- Buttons im Duplikat-Info Modal ---
+    const duplicateInfoModal = document.getElementById('duplicateInfoModal');
+    if (duplicateInfoModal) {
+        document.getElementById('duplicateInfoViewEntriesBtn')?.addEventListener('click', function() {
+            viewTimeEntries(); closeModal('duplicateInfoModal');
+        });
+        document.getElementById('duplicateInfoChangeDateBtn')?.addEventListener('click', function() {
+            openManualEntryModal(); closeModal('duplicateInfoModal');
+        });
+        document.getElementById('duplicateInfoCloseBtn')?.addEventListener('click', function() {
+            closeModal('duplicateInfoModal');
+        });
+    }
 
-    duplicateInfoButtons.forEach(buttonConfig => {
-        const button = document.getElementById(buttonConfig.id);
-        if (button) {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                buttonConfig.action();
-            });
-        }
-    });
-
+    // --- Dynamisch hinzugefügte Elemente (z.B. Time/Break Slots) ---
     document.getElementById('addEditTimeSlotBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        addEditTimeSlot();
+        e.preventDefault(); addEditTimeSlot();
     });
-
     document.getElementById('addEditBreakSlotBtn')?.addEventListener('click', function(e) {
-        e.preventDefault();
-        addEditBreakSlot();
+        e.preventDefault(); addEditBreakSlot();
     });
 
-    // Keyboard Shortcuts
+
+    // --- Keyboard Shortcuts ---
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal').forEach(modal => {
-                if (modal.style.display === 'block') closeModal(modal.id);
-            });
-            if (document.getElementById('dataDisplay').style.display === 'block') hideDataDisplay();
+            // Schließe das oberste offene Modal
+            const openModals = document.querySelectorAll('.modal[style*="display: block"], .modal[style*="display:block"]');
+            if (openModals.length > 0) {
+                closeModal(openModals[openModals.length - 1].id); // Schließe das letzte/oberste
+            } else if (document.getElementById('dataDisplay')?.style.display === 'block') {
+                hideDataDisplay(); // Wenn kein Modal offen, schließe dataDisplay
+            }
         }
         // STRG + Enter für Start/Stop Timer
         if (e.ctrlKey && e.key === 'Enter') {
-            e.preventDefault();
+            e.preventDefault(); // Verhindert Standardverhalten (z.B. Formular absenden)
+            const startTimerBtn = document.getElementById('startTimer');
+            const stopTimerBtn = document.getElementById('stopTimer');
 
-            if (typeof activeTimeEntry !== 'undefined' && activeTimeEntry) {
+            if (stopTimerBtn && stopTimerBtn.style.display !== 'none') { // Wenn Stop-Button sichtbar ist
                 stopTimeTracking();
-            } else {
+            } else if (startTimerBtn && startTimerBtn.style.display !== 'none') { // Wenn Start-Button sichtbar ist
                 startTimeTracking();
             }
         }
         // STRG + SHIFT + D für Debug Token
-        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
             e.preventDefault();
-            if(typeof debugToken === 'function') debugToken();
+            if (typeof debugToken === 'function') debugToken();
         }
     });
 }
@@ -335,6 +367,7 @@ async function loadDashboardPageData(forceRefresh = false) {
     try {
         const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
 
+        // Zeiteinträge für Statistiken (Wochenstunden, Einträge heute)
         const timeEntriesResponse = await apiCall(`/api/time-entries${cacheBuster}`);
         if (timeEntriesResponse && timeEntriesResponse.entries) {
             const today = new Date();
@@ -349,20 +382,19 @@ async function loadDashboardPageData(forceRefresh = false) {
             if (totalHoursEl) totalHoursEl.textContent = calculateWeekHoursForDashboard(timeEntriesResponse.entries);
         }
 
+        // Aktive Projekte für Statistik und Dropdowns
         const projectsResponse = await apiCall(`/api/projects/active${cacheBuster}`);
         if (projectsResponse && projectsResponse.projects) {
-            window.projects = projectsResponse.projects;
+            window.projects = projectsResponse.projects; // Globale Variable aktualisieren
             const projectCountEl = document.getElementById('projectCount');
             if (projectCountEl) projectCountEl.textContent = window.projects.length;
 
             populateProjectDropdown(document.getElementById('manualProject'), window.projects);
             populateProjectDropdown(document.getElementById('editProject'), window.projects);
-
         }
-
         const absencesResponse = await apiCall(`/api/absences${cacheBuster}`);
         if (absencesResponse && absencesResponse.absences) {
-            const pending = absencesResponse.absences.filter(absence => !absence.approved);
+            const pending = absencesResponse.absences.filter(absence => absence.status === 'PENDING'); // Annahme: Status ist PENDING
             const pendingAbsencesEl = document.getElementById('pendingAbsences');
             if (pendingAbsencesEl) pendingAbsencesEl.textContent = pending.length;
         }
@@ -377,15 +409,15 @@ async function loadDashboardPageData(forceRefresh = false) {
 
 function calculateWeekHoursForDashboard(entries) {
     const now = new Date();
-    const currentDayOfWeek = now.getDay(); // 0 (Sonntag) bis 6 (Samstag)
 
-    const diff = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
+    const currentDayOfWeek = now.getDay() === 0 ? 6 : now.getDay() -1; // 0 (Mo) bis 6 (So)
+
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() + diff);
+    weekStart.setDate(now.getDate() - currentDayOfWeek); // Gehe zum Montag zurück
     weekStart.setHours(0, 0, 0, 0);
 
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6); // Sonntag dieser Woche
     weekEnd.setHours(23, 59, 59, 999);
 
     let totalMinutes = 0;
@@ -403,22 +435,21 @@ function calculateWeekHoursForDashboard(entries) {
 }
 
 setInterval(() => {
-
     let isTimerCurrentlyActive = false;
-    if (typeof getIsTimerActive === 'function') {
-        isTimerCurrentlyActive = getIsTimerActive();
-    } else if (typeof activeTimeEntry !== 'undefined') {
-        isTimerCurrentlyActive = activeTimeEntry != null;
+    if (typeof activeTimeEntry !== 'undefined' && activeTimeEntry != null) {
+        isTimerCurrentlyActive = true;
     }
 
     if (document.visibilityState === 'visible' && !isTimerCurrentlyActive) {
-        loadDashboardPageData();
+        console.log('Automatisches Neuladen der Dashboard-Daten...');
+        loadDashboardPageData(true); // true für forceRefresh (neue Daten vom Server)
     }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000); // 5 Minuten
 
+// Service Worker Registrierung (optional, für Offline-Fähigkeiten oder Caching)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        console.log('🔧 Service Worker support detected in dashboard.js');
+        console.log('🔧 Service Worker Unterstützung im Browser erkannt.');
 
     });
 }

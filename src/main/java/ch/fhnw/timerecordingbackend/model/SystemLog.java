@@ -1,15 +1,14 @@
-package ch.fhnw.timerecordingbackend.model;
-
-import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
-
 /**
  * Entität Klasse für System Logs
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
  * @version 1.0
  */
+package ch.fhnw.timerecordingbackend.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "system_logs")
 public class SystemLog {
@@ -42,31 +41,14 @@ public class SystemLog {
     @Column(name = "target_id")
     private Long targetId;
 
-    /**
-     * Konstruktor
-     */
+    // NEUES FELD für den Status der Anfrage
+    @Column(name = "processed_status", length = 20) // z.B. "PENDING", "COMPLETED"
+    private String processedStatus;
+
     public SystemLog() {}
 
-    public SystemLog(String action, LocalDateTime timestamp) {
-        this.action = action;
-        this.timestamp = timestamp;
-    }
+    // Getter und Setter für alle Felder, inklusive processedStatus
 
-    public SystemLog(String action, LocalDateTime timestamp, String details, Long userId,
-                     String userEmail, String ipAddress, String targetEntity, Long targetId) {
-        this.action = action;
-        this.timestamp = timestamp;
-        this.details = details;
-        this.userId = userId;
-        this.userEmail = userEmail;
-        this.ipAddress = ipAddress;
-        this.targetEntity = targetEntity;
-        this.targetId = targetId;
-    }
-
-    /**
-     * Getter und Setter
-     */
     public Long getId() {
         return id;
     }
@@ -139,6 +121,14 @@ public class SystemLog {
         this.targetId = targetId;
     }
 
+    public String getProcessedStatus() {
+        return processedStatus;
+    }
+
+    public void setProcessedStatus(String processedStatus) {
+        this.processedStatus = processedStatus;
+    }
+
     @Override
     public String toString() {
         return "SystemLog{" +
@@ -148,7 +138,7 @@ public class SystemLog {
                 ", details='" + details + '\'' +
                 ", userId=" + userId +
                 ", userEmail='" + userEmail + '\'' +
+                ", processedStatus='" + processedStatus + '\'' + // Hinzugefügt für Debugging
                 '}';
     }
-
 }

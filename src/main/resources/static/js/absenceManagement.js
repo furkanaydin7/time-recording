@@ -53,13 +53,12 @@ function openEditAbsenceModal(absence) {
     document.getElementById('editAbsenceType').value = absence.type;
     document.getElementById('editAbsenceStartDate').value = absence.startDate;
     document.getElementById('editAbsenceEndDate').value = absence.endDate;
-    document.getElementById('editAbsenceComment').value = absence.comment || ''; // Kommentar, falls vorhanden
+    document.getElementById('editAbsenceComment').value = absence.comment || '';
 
-    // Sicherstellen, dass das Startdatum nicht in der Vergangenheit liegt (außer es war schon so)
     const today = new Date().toISOString().split('T')[0];
     const startDateInput = document.getElementById('editAbsenceStartDate');
     if (absence.startDate < today) {
-        startDateInput.min = absence.startDate; // Erlaube das ursprüngliche Datum
+        startDateInput.min = absence.startDate;
     } else {
         startDateInput.min = today;
     }
@@ -90,18 +89,13 @@ async function handleEditAbsenceSubmit(event) {
         return;
     }
 
-    // Backend erwartet eventuell, dass das Startdatum nicht in der Vergangenheit liegt,
-    // außer es ist das ursprüngliche Startdatum. Diese Logik ist primär im Backend.
-    // Hier eine einfache Prüfung für neue Daten:
     const today = new Date().toISOString().split('T')[0];
     if (startDate < today && startDate !== currentEditingAbsence.startDate) {
         showWarning('Das Startdatum für eine neue oder geänderte Abwesenheit darf nicht in der Vergangenheit liegen, es sei denn, es ist das ursprünglich erfasste Datum.');
-        // return; // Man könnte hier abbrechen oder es dem Backend überlassen
-    }
+          }
 
 
     const absenceData = {
-        // Die User-ID wird vom Backend anhand des eingeloggten Benutzers oder für Admins explizit gesetzt
         type: type,
         startDate: startDate,
         endDate: endDate,
@@ -144,16 +138,7 @@ async function cancelAbsenceHandler(absenceId) {
         return;
     }
 
-    // Eine zusätzliche Abfrage im Frontend ist sinnvoll, obwohl das Backend die letzte Autorität ist.
-    // Die `formatAbsencesTable` sollte den Button idealerweise gar nicht erst anzeigen, wenn der Status nicht PENDING ist.
-    // Diese Abfrage hier dient als Fallback oder falls die Tabelle nicht immer aktuell ist.
     const absenceToCancel = await apiCall(`/api/absences/${absenceId}`).catch(() => null); // Hilfsaufruf um aktuellen Status zu holen
-    // Besser wäre, wenn der Status schon im UI Element wäre
-    // Für diese Implementierung gehen wir davon aus,
-    // dass der Button nur bei PENDING sichtbar ist.
-
-    // In einer realen Anwendung würde man den Status direkt aus der Tabelle oder dem Event ziehen,
-    // statt einen extra API Call zu machen. Da wir ihn nicht direkt haben, fragen wir den Benutzer.
     if (confirm('Sind Sie sicher, dass Sie diesen Abwesenheitsantrag stornieren möchten?')) {
         try {
             await apiCall(`/api/absences/${absenceId}`, { method: 'DELETE' });
@@ -168,8 +153,6 @@ async function cancelAbsenceHandler(absenceId) {
     }
 }
 
-
-// Event Listener für dynamische Datumsvalidierung im Edit-Modal
 document.addEventListener('DOMContentLoaded', function() {
     validateAbsenceDates(); // Für das "Create Absence" Modal
 
@@ -286,18 +269,16 @@ async function viewPendingAbsencesForApproval() {
 async function viewTeamOrAllApprovedAbsencesHandler() {
     try {
         console.log('📋 Lade genehmigte Abwesenheiten für Admin/Manager Ansicht...');
-        hideDataDisplay(); // Vorherige Ansicht schließen, falls offen
-        // Der neue Endpunkt gibt sowohl 'absences' als auch 'title' zurück
-        const response = await apiCall(`/api/absences/view/approved?_t=${Date.now()}`); // Cache-Buster
+        hideDataDisplay();
+        const response = await apiCall(`/api/absences/view/approved?_t=${Date.now()}`);
 
         if (response && response.absences) {
             console.log(`✅ ${response.absences.length} genehmigte Abwesenheiten geladen.`);
-            const tableTitle = response.title || 'Genehmigte Abwesenheiten'; // Fallback-Titel
+            const tableTitle = response.title || 'Genehmigte Abwesenheiten';
             if (response.absences.length === 0) {
                 displayData(tableTitle, '<p>Keine genehmigten Abwesenheiten gefunden.</p>'); //
             } else {
-                // formatAbsencesTable sollte bereits den Namen des Antragstellers anzeigen können
-                displayData(tableTitle, formatAbsencesTable(response.absences)); //
+                displayData(tableTitle, formatAbsencesTable(response.absences));
             }
         } else {
             displayData('Genehmigte Abwesenheiten', '<p>Keine Anträge gefunden oder Fehler beim Laden.</p>');

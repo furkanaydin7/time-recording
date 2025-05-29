@@ -9,7 +9,9 @@ import ch.fhnw.timerecordingbackend.repository.RoleRepository;
 import ch.fhnw.timerecordingbackend.repository.SystemLogRepository;
 import ch.fhnw.timerecordingbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.ValidationException;
+import jakarta.validation.ValidationException; // Import für ValidationException
+import org.slf4j.Logger; // Import für Logger
+import org.slf4j.LoggerFactory; // Import für LoggerFactory
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.Random; // Import für Random
 
 /**
  * Implementierung UserService Interface
@@ -30,10 +32,13 @@ import java.util.Random;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final SystemLogRepository systemLogRepository;
     private final PasswordEncoder passwordEncoder;
+
 
     /**
      * Konstruktor mit Dependency Injection
@@ -47,6 +52,26 @@ public class UserServiceImpl implements UserService {
         this.systemLogRepository = systemLogRepository;
         this.passwordEncoder = passwordEncoder;
     }
+    @Override // <-- Stelle sicher, dass @Override hier steht und keinen Fehler wirft
+    @Transactional
+    public boolean requestPasswordReset(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            SystemLog log = new SystemLog();
+            log.setAction("Passwort Reset angefordert");
+            log.setTimestamp(LocalDateTime.now());
+            log.setUserEmail(user.getEmail());
+            log.setUserId(user.getId());
+            log.setDetails("Benutzer " + user.getEmail() + " hat einen Passwort-Reset angefordert.");
+            systemLogRepository.save(log);
+            logger.info("Passwort-Reset angefordert für Benutzer: {}", email);
+            return true;
+        }
+        logger.warn("Passwort-Reset für unbekannte E-Mail angefordert: {}", email);
+        return false;
+    }
+
 
     /**
      * Suchmethoden
@@ -228,18 +253,51 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        // Log erstellen
-        SystemLog log = new SystemLog();
-        log.setUserId(user.getId());
-        log.setUserEmail(user.getEmail());
-        log.setAction("Admin hat Passwort zurückgesetzt");
-        log.setDetails("Temporäres Passwort generiert für User ID: " + userId);
-        log.setTimestamp(LocalDateTime.now());
-        systemLogRepository.save(log);
+        SystemLog adminActionLog = new SystemLog();
+        adminActionLog.setUserId(user.getId());
+        adminActionLog.setUserEmail(user.getEmail());
+        adminActionLog.setAction("Admin hat Passwort zurückgesetzt");
+        adminActionLog.setDetails("Temporäres Passwort generiert für User ID: " + userId + " (" + user.getEmail() + ")");
+        adminActionLog.setTimestamp(LocalDateTime.now());
+        systemLogRepository.save(adminActionLog);
 
+        System.out.println("DEBUG UserServiceImpl: ----- Start Log-Suche für Passwort-Reset-Anfrage (Workaround) -----");
+        System.out.println("DEBUG UserServiceImpl: Suche für userId = " + userId);
+        final String targetAction = "Passwort Reset angefordert";
+        System.out.println("DEBUG UserServiceImpl: Suche nach action = \"" + targetAction + "\" und Status IS NULL oder PENDING");
+
+        // Zuerst nach Status IS NULL suchen, da deine Logs das zeigen
+        List<SystemLog> requestLogs = systemLogRepository.findByUserIdAndActionAndProcessedStatusIsNullOrderByTimestampDesc(userId, targetAction);
+
+        if (requestLogs.isEmpty()) {
+            // Falls nichts mit NULL gefunden wurde, sicherheitshalber nochmal nach PENDING suchen
+            System.out.println("DEBUG UserServiceImpl: Kein Log mit Status NULL gefunden für Action \"" + targetAction + "\". Suche nach Status PENDING.");
+            requestLogs = systemLogRepository.findByUserIdAndActionAndProcessedStatusOrderByTimestampDesc(
+                    userId,
+                    targetAction,
+                    "PENDING"
+            );
+        }
+
+        if (!requestLogs.isEmpty()) {
+            SystemLog requestLogToUpdate = requestLogs.get(0);
+            System.out.println("DEBUG UserServiceImpl: GEFUNDEN! Log-Eintrag ID " + requestLogToUpdate.getId() + " mit Status \"" + requestLogToUpdate.getProcessedStatus() + "\". Wird auf COMPLETED gesetzt.");
+            requestLogToUpdate.setProcessedStatus("COMPLETED");
+            systemLogRepository.save(requestLogToUpdate);
+            System.out.println("DEBUG UserServiceImpl: SystemLog ID " + requestLogToUpdate.getId() + " wurde auf PROCESSED_STATUS = COMPLETED gesetzt für User ID: " + userId);
+        } else {
+            System.out.println("DEBUG UserServiceImpl: FEHLER (Workaround): Kein passender SystemLog (Status NULL oder PENDING) mit Action '" + targetAction + "' für User ID " + userId + " gefunden.");
+            List<SystemLog> logsByAction = systemLogRepository.findByUserIdAndActionOrderByTimestampDesc(userId, targetAction);
+            if (!logsByAction.isEmpty()) {
+                System.out.println("DEBUG UserServiceImpl (Workaround): Logs für userId " + userId + " und Action '" + targetAction + "' (unabhängig vom Status) GEFUNDEN:");
+                logsByAction.forEach(log -> System.out.println("  -> Log ID: " + log.getId() + ", Action: \"" + log.getAction() + "\", Status: \"" + log.getProcessedStatus() + "\", Timestamp: " + log.getTimestamp()));
+            } else {
+                System.out.println("DEBUG UserServiceImpl (Workaround): Auch KEINE Logs für userId " + userId + " und Action '" + targetAction + "' (unabhängig vom Status) gefunden.");
+            }
+        }
+        System.out.println("DEBUG UserServiceImpl: ----- Ende Log-Suche (Workaround) -----");
         return tempPassword;
     }
-
     /**
      * Generiert ein zufälliges Passwort.
      * @return zufälliges Passwort
@@ -428,4 +486,5 @@ public class UserServiceImpl implements UserService {
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
+
 }

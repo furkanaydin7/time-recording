@@ -53,7 +53,7 @@ async function handleChangePasswordSubmit(event) {
 
     try {
         console.log('🔑 Ändere Passwort mit Daten:', changePasswordData);
-        const response = await apiCall('/api/users/change-password', { // UserController, nicht AuthController für diese Aktion
+        const response = await apiCall('/api/users/change-password', {
             method: 'PUT',
             body: JSON.stringify(changePasswordData)
         });
