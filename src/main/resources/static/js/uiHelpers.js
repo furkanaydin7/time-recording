@@ -148,7 +148,7 @@ function showSuccess(message) {
     successDiv.style.display = 'block';
     setTimeout(() => {
         if (successDiv) successDiv.style.display = 'none';
-    }, 5000);
+    }, 10000);
 }
 
 function showWarning(message) {

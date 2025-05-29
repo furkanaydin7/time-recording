@@ -173,11 +173,9 @@ function bindDashboardEventListeners() {
                 const user = await apiCall(`/api/admin/users/${selectedUserForDetails.id}`);
                 if(user) {
                     selectedUserForDetails = user; // selectedUserForDetails aktualisieren
-                    // Hier Logik zum Aktualisieren der Rollenanzeige im Modal, falls benötigt
-                    // z.B. die Funktion showUserDetails erneut aufrufen oder gezielt das Rollen-Div aktualisieren.
-                    // Fürs Erste reicht es, die Rollen im Add-Dropdown neu zu laden, damit die hinzugefügte Rolle verschwindet
-                    await loadRolesForAddDropdown(user.roles || []); // Annahme: diese Funktion existiert in admin.js und ist global
-                    // Ggf. die Benutzerliste neu laden
+
+                    await loadRolesForAddDropdown(user.roles || []);
+                    // Benutzerliste neu laden
                     if (document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
                         viewUsers();
                     }
@@ -200,7 +198,7 @@ function bindDashboardEventListeners() {
             if (confirm(`Möchten Sie das Passwort für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} wirklich zurücksetzen?`)) {
                 try {
                     const response = await apiCall(`/api/admin/users/${selectedUserForDetails.id}/reset-password`, { method: 'POST' });
-                    showSuccess(`Passwort zurückgesetzt. Temporäres Passwort: ${response.temporaryPassword}`);
+                    alert(`✅ Passwort zurückgesetzt. Temporäres Passwort für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName}: ${response.temporaryPassword}`);
                 } catch (error) {
                     showError('Fehler beim Zurücksetzen des Passworts: ' + (error.message || "Unbekannt"));
                 }
