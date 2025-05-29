@@ -89,17 +89,78 @@ async function openCreateUserModal() {
 async function showUserDetails(userId) {
     try {
         const user = await apiCall(`/api/admin/users/${userId}`); // apiCall muss global sein
-        selectedUserForDetails = user;
+        if (!user) {
+            showError('Benutzerdetails nicht gefunden.');
+            return;
+        }
+        selectedUserForDetails = user; // Wichtig für andere Aktionen im Modal
+
         document.getElementById('detailUserName').textContent = `${user.firstName} ${user.lastName}`;
         document.getElementById('detailUserEmail').textContent = user.email;
-        // ... (Rest der Logik zum Befüllen des userDetailModal) ...
+        document.getElementById('detailUserStatus').textContent = user.status || (user.active ? 'Aktiv' : 'Inaktiv');
+        document.getElementById('detailUserPlannedHours').textContent = user.plannedHoursPerDay ? user.plannedHoursPerDay.toFixed(1) : 'N/A';
+        document.getElementById('detailUserCreatedAt').textContent = formatDateTimeDisplay(user.createdAt); // formatDateTimeDisplay aus uiHelpers.js
+        document.getElementById('detailUserUpdatedAt').textContent = formatDateTimeDisplay(user.updatedAt); // formatDateTimeDisplay aus uiHelpers.js
 
+        const userRolesListDiv = document.getElementById('userRolesList');
+        if (userRolesListDiv) {
+            if (user.roles && user.roles.length > 0) {
+                userRolesListDiv.innerHTML = user.roles.map(role =>
+                    `<span class="user-role-tag">
+                        ${String(role).replace('ROLE_', '')}
+                        <button class="remove-role-btn" data-role="${role}" title="Rolle '${String(role).replace('ROLE_', '')}' entfernen" onclick="handleRemoveRole('${role}')">&times;</button>
+                    </span>`
+                ).join(' ');
+            } else {
+                userRolesListDiv.innerHTML = 'Keine Rollen zugewiesen.';
+            }
+        }
+
+        // Dropdown für das Hinzufügen von Rollen vorbereiten
         await loadRolesForAddDropdown(user.roles || []); // loadRolesForAddDropdown muss global sein
+
+        // Status im Dropdown für "Status ändern" setzen
+        const userStatusSelect = document.getElementById('userStatusSelect');
+        if (userStatusSelect) {
+            userStatusSelect.value = user.status || (user.active ? 'ACTIVE' : 'INACTIVE');
+        }
+
         openModal('userDetailModal'); // openModal muss global sein
     } catch (error) {
         showError('Fehler beim Laden der Benutzerdetails: ' + (error.message || "Unbekannt")); // showError muss global sein
     }
 }
+
+async function handleRemoveRole(roleName) {
+    if (!selectedUserForDetails || !selectedUserForDetails.id) {
+        showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
+        return;
+    }
+
+    const user = selectedUserForDetails;
+    if (confirm(`Möchten Sie die Rolle '${String(roleName).replace('ROLE_', '')}' von ${user.firstName} ${user.lastName} wirklich entfernen?`)) {
+        try {
+            // API-Aufruf zum Entfernen der Rolle
+            // Der Endpoint in AdminController ist DELETE /api/admin/users/{id}/roles?roleName=THE_ROLE_NAME
+            await apiCall(`/api/admin/users/${user.id}/roles?roleName=${roleName}`, { method: 'DELETE' });
+            showSuccess(`Rolle '${String(roleName).replace('ROLE_', '')}' erfolgreich von ${user.firstName} ${user.lastName} entfernt.`);
+
+            // Benutzerdetails und Rollen im Modal neu laden/aktualisieren
+            // Am einfachsten ist es, showUserDetails erneut aufzurufen
+            await showUserDetails(user.id);
+
+            // Optional: Wenn die Benutzerliste im Hintergrund (dataDisplay) sichtbar ist und Rollen anzeigt, diese auch aktualisieren
+            if (document.getElementById('dataDisplay') && document.getElementById('dataDisplay').style.display === 'block' && document.getElementById('dataTitle') && document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
+                viewUsers(); // Lädt die Benutzertabelle neu
+            }
+
+        } catch (error) {
+            showError('Fehler beim Entfernen der Rolle: ' + (error.message || "Unbekannt"));
+            console.error("Fehler beim Entfernen der Rolle:", error);
+        }
+    }
+}
+
 async function loadRolesForAddDropdown(currentUserRoles) {
     try {
         const allRolesResponse = await apiCall('/api/admin/roles'); // apiCall muss global sein

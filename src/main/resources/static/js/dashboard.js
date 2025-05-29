@@ -116,6 +116,99 @@ function bindDashboardEventListeners() {
         });
     }
 
+    // Listener für Benutzerdetails-Modal auf dashboard.html
+    const updateUserStatusBtn = document.getElementById('updateUserStatusBtn');
+    if (updateUserStatusBtn) {
+        updateUserStatusBtn.addEventListener('click', async function() {
+            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+                showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
+                return;
+            }
+            const statusSelect = document.getElementById('userStatusSelect');
+            if (!statusSelect) {
+                showError('Status-Auswahlfeld nicht gefunden.');
+                return;
+            }
+            const newStatus = statusSelect.value;
+            try {
+                await apiCall(`/api/admin/users/${selectedUserForDetails.id}/status?status=${newStatus}`, { method: 'PATCH' });
+                showSuccess(`Status für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} erfolgreich auf ${newStatus} aktualisiert.`);
+                // Benutzerdetails neu laden oder zumindest den Status im Modal aktualisieren
+                const user = await apiCall(`/api/admin/users/${selectedUserForDetails.id}`);
+                if(user) {
+                    selectedUserForDetails = user; // selectedUserForDetails aktualisieren
+                    document.getElementById('detailUserStatus').textContent = user.status;
+                    // Ggf. die Benutzerliste neu laden, falls sie sichtbar ist und den Status anzeigt
+                    if (document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
+                        viewUsers();
+                    }
+                }
+            } catch (error) {
+                showError('Fehler beim Aktualisieren des Status: ' + (error.message || "Unbekannt"));
+            }
+        });
+    }
+
+    const addRoleBtn = document.getElementById('addRoleBtn');
+    if (addRoleBtn) {
+        addRoleBtn.addEventListener('click', async function() {
+            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+                showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
+                return;
+            }
+            const roleSelect = document.getElementById('addRoleSelect');
+            if (!roleSelect) {
+                showError('Rollen-Auswahlfeld nicht gefunden.');
+                return;
+            }
+            const roleName = roleSelect.value;
+            if (!roleName) {
+                showError('Bitte wählen Sie eine Rolle zum Hinzufügen aus.');
+                return;
+            }
+            try {
+                await apiCall(`/api/admin/users/${selectedUserForDetails.id}/roles?roleName=${roleName}`, { method: 'POST' });
+                showSuccess(`Rolle ${roleName} erfolgreich zu ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} hinzugefügt.`);
+                // Benutzerdetails neu laden, um die aktualisierte Rollenliste anzuzeigen
+                const user = await apiCall(`/api/admin/users/${selectedUserForDetails.id}`);
+                if(user) {
+                    selectedUserForDetails = user; // selectedUserForDetails aktualisieren
+                    // Hier Logik zum Aktualisieren der Rollenanzeige im Modal, falls benötigt
+                    // z.B. die Funktion showUserDetails erneut aufrufen oder gezielt das Rollen-Div aktualisieren.
+                    // Fürs Erste reicht es, die Rollen im Add-Dropdown neu zu laden, damit die hinzugefügte Rolle verschwindet
+                    await loadRolesForAddDropdown(user.roles || []); // Annahme: diese Funktion existiert in admin.js und ist global
+                    // Ggf. die Benutzerliste neu laden
+                    if (document.getElementById('dataTitle').textContent === 'Alle Benutzer') {
+                        viewUsers();
+                    }
+                    document.getElementById('userRolesList').innerHTML = (user.roles.map(r => `<span class="user-role-tag">${String(r).replace('ROLE_', '')} <button class="remove-role-btn" data-role="${r}" onclick="handleRemoveRole('${r}')">&times;</button></span>`).join(' ') || 'Keine Rollen');
+                }
+            } catch (error) {
+                showError('Fehler beim Hinzufügen der Rolle: ' + (error.message || "Unbekannt"));
+            }
+        });
+    }
+
+    // Hinzufügen eines Event-Listeners für den "Passwort zurücksetzen"-Button, falls noch nicht vorhanden
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    if (resetPasswordBtn && !resetPasswordBtn.getAttribute('data-listener-attached')) {
+        resetPasswordBtn.addEventListener('click', async function() {
+            if (!selectedUserForDetails || !selectedUserForDetails.id) {
+                showError('Kein Benutzer ausgewählt oder Benutzer-ID fehlt.');
+                return;
+            }
+            if (confirm(`Möchten Sie das Passwort für ${selectedUserForDetails.firstName} ${selectedUserForDetails.lastName} wirklich zurücksetzen?`)) {
+                try {
+                    const response = await apiCall(`/api/admin/users/${selectedUserForDetails.id}/reset-password`, { method: 'POST' });
+                    showSuccess(`Passwort zurückgesetzt. Temporäres Passwort: ${response.temporaryPassword}`);
+                } catch (error) {
+                    showError('Fehler beim Zurücksetzen des Passworts: ' + (error.message || "Unbekannt"));
+                }
+            }
+        });
+        resetPasswordBtn.setAttribute('data-listener-attached', 'true');
+    }
+
     const duplicateInfoModal = document.getElementById('duplicateInfoModal');
     if (duplicateInfoModal) {
         duplicateInfoModal.querySelector('button[onclick^="viewTimeEntries()"]')?.addEventListener('click', function() {
