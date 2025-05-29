@@ -58,6 +58,8 @@ public class WebSecurityConfig {
                                 "/js/**",
                                 "/images/**",
                                 "/api/auth/**",
+                                "/api/public/registration-requests",
+                                "/api/public/managers",
                                 "/favicon.ico",
                                 "/api/users/request-password-reset"
                         ).permitAll()
