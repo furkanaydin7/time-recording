@@ -15,7 +15,11 @@ function closeModal(modalId) {
     // Formulare zurücksetzen
     const forms = modal.querySelectorAll('form');
     forms.forEach(form => {
-        if (!form.id.includes('edit') || confirm('Änderungen speichern?')) {
+        if (modalId !== 'projectDetailModal' && form.id.includes('edit')) {
+            if (confirm('Änderungen speichern?')) {
+                form.reset();
+            }
+        } else {
             form.reset();
         }
     });
