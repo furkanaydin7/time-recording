@@ -18,7 +18,7 @@ import java.util.Set;
  * DataInitializer für Initialdaten beim Start der Anwendung
  * Erstellt Standard-Rollen, Admin-Benutzer und Beispieldaten
  * @author PD
- * @version 1.1
+ * Quelle: ChatGPT.com
  */
 @Component
 public class DataInitializer implements CommandLineRunner {

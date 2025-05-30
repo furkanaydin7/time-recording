@@ -11,7 +11,6 @@ import java.util.Map;
  * DTO Antwort für Zeitreports
  * @author PD
  * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.0
  * Quelle: https://techkluster.com/2023/08/21/dto-for-a-java-spring-application/
  */
 public class TimeReportResponse {
