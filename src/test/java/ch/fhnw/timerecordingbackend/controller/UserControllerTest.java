@@ -31,6 +31,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * @author EK
+ * Quelle: ChatGPT.com
+ */
 
 @WebMvcTest(UserController.class)
 @Import({WebSecurityConfig.class, UserDetailsServiceImpl.class, JwtTokenProvider.class})

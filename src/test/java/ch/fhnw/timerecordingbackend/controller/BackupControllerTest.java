@@ -27,6 +27,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
+/**
+ * @author EK
+ * Quelle: ChatGPT.com
+ */
+
 
 @WebMvcTest(BackupController.class)
 @Import({WebSecurityConfig.class, UserDetailsServiceImpl.class, JwtTokenProvider.class})
