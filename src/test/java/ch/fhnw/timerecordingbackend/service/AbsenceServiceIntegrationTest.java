@@ -106,7 +106,7 @@ class AbsenceServiceIntegrationTest {
     }
 
     @Test
-    void updateAbsence_Success() { /
+    void updateAbsence_Success() {
         Absence existingAbsence = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().plusDays(7), AbsenceType.VACATION);
         absenceService.createAbsence(existingAbsence);
 
