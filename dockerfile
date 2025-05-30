@@ -1,5 +1,5 @@
- Stage 1: Build the Java application
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
+# Stage 1: Build the Java application
+FROM maven:3.9.6-sapmachine-17-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
