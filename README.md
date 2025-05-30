@@ -11,8 +11,8 @@ Das Time Recording System ist eine webbasierte Anwendung zur Erfassung von Arbei
 
 **Zielgruppen:**
 * **Mitarbeiter:** Erfassen Arbeitszeiten und beantragen Abwesenheiten. [cite: 18]
-* **Manager:** Sehen Zeiten und Abwesenheiten ihrer Teammitglieder ein, verwalten Projekte und genehmigen Abwesenheitsanträge. [cite: 19]
-* **Administratoren:** Haben vollen Zugriff auf alle Systemfunktionen, einschliesslich Benutzerverwaltung, Systemkonfiguration und Datensicherung. [cite: 19]
+* **Manager:** Sehen Zeiten und Abwesenheiten ihrer Teammitglieder ein, verwalten Projekte und genehmigen Abwesenheitsanträge. 
+* **Administratoren:** Haben vollen Zugriff auf alle Systemfunktionen, einschliesslich Benutzerverwaltung, Systemkonfiguration und Datensicherung. 
 
 ## 2. Installationsanweisung
 
@@ -85,7 +85,7 @@ Diese Option nutzt ein vorgefertigtes Docker-Image der Anwendung. Ein Docker Acc
             ```
         * **Linux/Mac:**
             ```bash
-            docker pull --platform linux/amd64 pdunkel/kernalpanic-timerecording:latest [cite: 27]
+            docker pull --platform linux/amd64 pdunkel/kernalpanic-timerecording:latest 
             ```
     * **Schritt 3: Docker Container starten (Backend-Anwendung)**
         * **Windows:**
@@ -94,7 +94,7 @@ Diese Option nutzt ein vorgefertigtes Docker-Image der Anwendung. Ein Docker Acc
             SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/timerecording" \
             -e SPRING_DATASOURCE_USERNAME="timerecording_user" \
             -e SPRING_DATASOURCE_PASSWORD="secure_password123" \
-            --name kernelpanic pdunkel/kernalpanic-timerecording:latest [cite: 27]
+            --name kernelpanic pdunkel/kernalpanic-timerecording:latest 
             ```
         * **Linux/Mac:**
             ```bash
@@ -104,14 +104,14 @@ Diese Option nutzt ein vorgefertigtes Docker-Image der Anwendung. Ein Docker Acc
             -e SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/timerecording" \
             -e SPRING_DATASOURCE_USERNAME="timerecording_user" \
             -e SPRING_DATASOURCE_PASSWORD="secure_password123" \
-            --name kernelpanic pdunkel/kernalpanic-timerecording:latest [cite: 27]
+            --name kernelpanic pdunkel/kernalpanic-timerecording:latest 
             ```
     * **Schritt 4: Docker Compose Up (falls vorhanden und genutzt)**
         ```bash
         docker compose up [cite: 27]
         ```
         *(Dieser Schritt ist nur relevant, falls eine `docker-compose.yml` Datei im Projekt existiert und verwendet wird, um mehrere Dienste gleichzeitig zu starten. Das vorherige `docker run` startet nur den Backend-Container.)*
-    * **Schritt 5: Im Webbrowser auf localhost:8080 navigieren.** [cite: 27]
+    * **Schritt 5: Im Webbrowser auf localhost:8080 navigieren.** 
 
 **Option B: Ausführung aus einer Entwicklungsumgebung (IDE) (für Code-Inspektion)**
 
@@ -119,33 +119,33 @@ Diese Option ermöglicht es Ihnen, den Code direkt in einer IDE zu prüfen und d
 
 1.  **Entwicklungsumgebung (IDE) installieren:** Eine IDE wie IntelliJ IDEA, Eclipse oder VS-Code mit Java- und Maven-Unterstützung ist erforderlich.
 2.  **Projekt öffnen:** Öffnen Sie das Projekt in Ihrer bevorzugten IDE. [cite: 29]
-3.  **Hauptklasse finden:** Suchen Sie die Hauptklasse `TimeRecordingBackendApplication.java` (typischerweise im Verzeichnis `src/main/java/ch/fhnw/timerecordingbackend/`). [cite: 29]
+3.  **Hauptklasse finden:** Suchen Sie die Hauptklasse `TimeRecordingBackendApplication.java` (typischerweise im Verzeichnis `src/main/java/ch/fhnw/timerecordingbackend/`). 
 4.  **Anwendung starten:** Klicken Sie mit der rechten Maustaste auf die Datei und wählen Sie "Run 'TimeRecordingBackendApplication.main()'". Ihre IDE kompiliert dann den Code und startet die Anwendung. [cite: 30, 31]
 5.  **Im Webbrowser auf localhost:8080 navigieren.**
 
 #### 2.3.3 Auf die Anwendung im Browser zugreifen
 
-Nachdem sowohl der PostgreSQL-Container als auch die Time Recording Backend-Anwendung erfolgreich gestartet wurden, öffnen Sie einen Webbrowser und geben Sie die folgende Adresse in die Adresszeile ein: `http://localhost:8080`[cite: 32].
+Nachdem sowohl der PostgreSQL-Container als auch die Time Recording Backend-Anwendung erfolgreich gestartet wurden, öffnen Sie einen Webbrowser und geben Sie die folgende Adresse in die Adresszeile ein: `http://localhost:8080`
 
-Sie sollten nun die Login-Seite des Time Recording Systems sehen. [cite: 33]
+Sie sollten nun die Login-Seite des Time Recording Systems sehen. 
 
 ### 2.4 Demo-Anmeldedaten
 
-Für Testzwecke können folgende Demo-Anmeldedaten verwendet werden, die durch Klick auf die Rolle auf der Login-Seite automatisch in die Felder übernommen werden können: [cite: 47]
+Für Testzwecke können folgende Demo-Anmeldedaten verwendet werden, die durch Klick auf die Rolle auf der Login-Seite automatisch in die Felder übernommen werden können: 
 
-* **Admin:** `admin@timerecording.ch` / `admin123` [cite: 47]
-* **Manager:** `manager@timerecording.ch` / `manager123` [cite: 47]
-* **Mitarbeiter:** `anna.schmidt@timerecording.ch` / `employee123` [cite: 47]
+* **Admin:** `admin@timerecording.ch` / `admin123` 
+* **Manager:** `manager@timerecording.ch` / `manager123` 
+* **Mitarbeiter:** `anna.schmidt@timerecording.ch` / `employee123` 
 
 ## 3. Projektdetails & Kernfunktionen
 
 Das Time Recording System bietet folgende Hauptfunktionen:
 
-* **Zeiterfassung:** Live-Zeiterfassung per Timer und manuelle Nacherfassung von Arbeitszeiten. [cite: 15]
-* **Abwesenheiten:** Beantragung und Genehmigung von Abwesenheitsanträgen (Urlaub, Krankheit, etc.). [cite: 16]
-* **Projektverwaltung:** Zuordnung von Arbeitszeiten zu Projekten, Erstellung und Bearbeitung von Projekten. [cite: 16]
-* **Benutzerverwaltung:** Registrierung, Anmeldung, Passwortänderung, Benutzer- und globale Abwesenheitsverwaltung (für Admins). [cite: 16]
-* **Datensicherung (Backup):** Manuelle und automatisierte Backups im JSON-Format, täglich um 02:00 Uhr nachts. [cite: 17, 140, 144]
+* **Zeiterfassung:** Live-Zeiterfassung per Timer und manuelle Nacherfassung von Arbeitszeiten. 
+* **Abwesenheiten:** Beantragung und Genehmigung von Abwesenheitsanträgen (Urlaub, Krankheit, etc.). 
+* **Projektverwaltung:** Zuordnung von Arbeitszeiten zu Projekten, Erstellung und Bearbeitung von Projekten. 
+* **Benutzerverwaltung:** Registrierung, Anmeldung, Passwortänderung, Benutzer- und globale Abwesenheitsverwaltung (für Admins). 
+* **Datensicherung (Backup):** Manuelle und automatisierte Backups im JSON-Format, täglich um 02:00 Uhr nachts. 
 
 ---
 
