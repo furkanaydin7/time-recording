@@ -125,7 +125,7 @@ class AbsenceServiceIntegrationTest {
 
     @Test
     void deleteAbsence_Success() {
-        Absence absenceToDelete = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().minusDays(3), AbsenceType.OTHER);
+        Absence absenceToDelete = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().plusDays(10), AbsenceType.OTHER);
         absenceService.createAbsence(absenceToDelete);
 
         absenceService.deleteAbsence(absenceToDelete.getId());
