@@ -1,4 +1,4 @@
-// src/test/java/ch/fhnw/timerecordingbackend/service/AbsenceServiceIntegrationTest.java
+
 package ch.fhnw.timerecordingbackend.service;
 
 import ch.fhnw.timerecordingbackend.model.Absence;
@@ -45,12 +45,10 @@ class AbsenceServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Ensure roles exist
         roleRepository.findByName("EMPLOYEE").orElseGet(() -> roleRepository.save(new Role("EMPLOYEE")));
         roleRepository.findByName("MANAGER").orElseGet(() -> roleRepository.save(new Role("MANAGER")));
         roleRepository.findByName("ADMIN").orElseGet(() -> roleRepository.save(new Role("ADMIN")));
 
-        // Create users
         employeeUser = userRepository.findByEmail("absencetest.employee@example.com").orElseGet(() -> {
             User user = new User("Absence", "Employee", "absencetest.employee@example.com", passwordEncoder.encode("password"));
             user.addRole(roleRepository.findByName("EMPLOYEE").get());
@@ -81,7 +79,7 @@ class AbsenceServiceIntegrationTest {
     }
 
     @Test
-    void createAbsence_Success() { // Testfall für A42
+    void createAbsence_Success() {
         Absence newAbsence = new Absence(employeeUser, LocalDate.now().plusDays(1), LocalDate.now().plusDays(3), AbsenceType.VACATION);
         Absence createdAbsence = absenceService.createAbsence(newAbsence);
 
@@ -95,9 +93,9 @@ class AbsenceServiceIntegrationTest {
     }
 
     @Test
-    void createAbsence_OverlappingDates_ThrowsException() { // Testfall für A14
+    void createAbsence_OverlappingDates_ThrowsException() {
         Absence existingAbsence = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().plusDays(10), AbsenceType.VACATION);
-        absenceService.createAbsence(existingAbsence); // Create one absence
+        absenceService.createAbsence(existingAbsence);
 
         Absence overlappingAbsence = new Absence(employeeUser, LocalDate.now().plusDays(7), LocalDate.now().plusDays(12), AbsenceType.ILLNESS);
 
@@ -108,7 +106,7 @@ class AbsenceServiceIntegrationTest {
     }
 
     @Test
-    void updateAbsence_Success() { // Testfall für A42
+    void updateAbsence_Success() { /
         Absence existingAbsence = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().plusDays(7), AbsenceType.VACATION);
         absenceService.createAbsence(existingAbsence);
 
@@ -126,7 +124,7 @@ class AbsenceServiceIntegrationTest {
     }
 
     @Test
-    void deleteAbsence_Success() { // Testfall für A42
+    void deleteAbsence_Success() {
         Absence absenceToDelete = new Absence(employeeUser, LocalDate.now().plusDays(5), LocalDate.now().minusDays(3), AbsenceType.OTHER);
         absenceService.createAbsence(absenceToDelete);
 
