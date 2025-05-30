@@ -379,13 +379,12 @@ async function viewPasswordResetRequests() {
             showWarning("System-Logs konnten nicht geladen werden. Passwort-Reset-Anfragen können nicht angezeigt werden.");
         }
     } catch (error) {
-        // Der Fehler "log is not defined" wird hier abgefangen.
         console.error("Fehlerdetails in viewPasswordResetRequests:", error); // Zusätzliches Logging des Fehlers selbst
         showError('Fehler beim Laden der Passwort-Reset-Anfragen: ' + (error.message || "Unbekannt"));
     }
 }
 
-// Die Funktion handleResetPasswordFromAdminView (mit dem erweiterten Logging für den confirm-Dialog)
+// Die Funktion handleResetPasswordFromAdminView
 async function handleResetPasswordFromAdminView(userId, userEmail, logId) {
     console.log(`[DEBUG Admin.js] handleResetPasswordFromAdminView: Start.`);
     console.log(`[DEBUG Admin.js] Übergebene userId: ${userId} (Typ: ${typeof userId}), userEmail: ${userEmail}, logId: ${logId}`); // Wichtig!
@@ -399,7 +398,7 @@ async function handleResetPasswordFromAdminView(userId, userEmail, logId) {
     console.log(`[DEBUG Admin.js] Parsed numUserId: ${numUserId} (Typ: ${typeof numUserId})`); // Wichtig!
 
     const confirmMsg = `Möchten Sie das Passwort für ${userEmail} (ID: ${numUserId}) wirklich zurücksetzen? Der Benutzer wird darüber nicht automatisch benachrichtigt.`;
-    //
+
     let userConfirmed;
     try {
         userConfirmed = confirm(confirmMsg);
@@ -419,6 +418,7 @@ async function handleResetPasswordFromAdminView(userId, userEmail, logId) {
             if (response && response.temporaryPassword) {
                 showSuccess(`Passwort für ${userEmail || `ID ${numUserId}`} erfolgreich zurückgesetzt. Temporäres Passwort: <strong>${response.temporaryPassword}</strong>. Bitte teilen Sie dieses Passwort dem Benutzer sicher mit.`);
                 console.log(`[DEBUG] Passwort erfolgreich zurückgesetzt für User ID ${numUserId}. Temporäres Passwort: ${response.temporaryPassword}`);
+                alert(`Das temporäre Passwort für ${userEmail || `ID ${numUserId}`} lautet: ${response.temporaryPassword}\nBitte teilen Sie es dem Benutzer sicher mit.`);
                 viewPasswordResetRequests();
             } else {
                 showError('Passwort-Reset durchgeführt, aber kein temporäres Passwort erhalten oder Antwort war unerwartet.');
