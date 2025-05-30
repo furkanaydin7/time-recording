@@ -60,6 +60,27 @@ public class TimeEntryController {
         List<TimeEntryResponse> entries = timeEntryService.getUserTimeEntries(userId);
         return ResponseEntity.ok(entries);
     }
+
+    /**
+     * Zeiteinträge des Teams eines Managers abrufen (Nur Manager)
+     */
+    @GetMapping("/team")
+    @PreAuthorize("hasAuthority('MANAGER')")
+    public ResponseEntity<Map<String, List<TimeEntryResponse>>> getTeamTimeEntries() {
+        List<TimeEntryResponse> entries = timeEntryService.getTeamTimeEntries();
+        return ResponseEntity.ok(Map.of("entries", entries));
+    }
+
+    /**
+     * Alle Zeiteinträge abrufen (Nur Admin)
+     */
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Map<String, List<TimeEntryResponse>>> getAllTimeEntries() {
+        List<TimeEntryResponse> entries = timeEntryService.getAllTimeEntries();
+        return ResponseEntity.ok(Map.of("entries", entries));
+    }
+
     @PostMapping("/start")
     public ResponseEntity<?> startTimeTracking(@RequestBody(required = false) Map<String, Long> body) {
         Long projectId = body != null ? body.get("projectId") : null;

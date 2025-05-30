@@ -1,10 +1,3 @@
-
-/*
- * REST Controller für Benutzer
- * @author FA
- * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
- * @version 1.1 - sendpasswortresetlink entfernt - PD
- */
 package ch.fhnw.timerecordingbackend.controller;
 
 import ch.fhnw.timerecordingbackend.dto.authentication.ChangePasswordRequest;
@@ -22,6 +15,12 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * REST Controller für Benutzer
+ * @author FA
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * @version 1.1 - sendpasswortresetlink entfernt - PD
+ */
 @RestController
 @RequestMapping("/api/users")
 public class UserController {

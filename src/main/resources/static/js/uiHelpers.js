@@ -175,11 +175,20 @@ function formatTimeEntriesTable(entries) {
     if (!entries || entries.length === 0) {
         return '<p>Keine Zeiteinträge gefunden.</p>';
     }
-    entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Ensure sorting happens correctly, especially if entries come from different sources
+    entries.sort((a, b) => {
+        const dateComparison = new Date(b.date) - new Date(a.date);
+        if (dateComparison !== 0) return dateComparison;
+        // If dates are the same, sort by user name if available
+        if (a.user && b.user) return String(a.user).localeCompare(String(b.user)); //
+        return 0;
+    });
+
     let tableHtml = `<table class="data-table">
                      <thead>
                        <tr>
                          <th>Datum</th>
+                         <th>Benutzer</th>
                          <th>Projekt</th>
                          <th>Start</th>
                          <th>Ende</th>
@@ -191,20 +200,51 @@ function formatTimeEntriesTable(entries) {
                        </tr>
                      </thead>
                      <tbody>`;
+
+    const currentUserRolesString = localStorage.getItem('userRoles');
+    let currentUserRoles = [];
+    try {
+        if (currentUserRolesString) currentUserRoles = JSON.parse(currentUserRolesString);
+    } catch(e) { console.error("Error parsing roles for table formatting", e); }
+
+    const currentUserId = parseInt(localStorage.getItem('userId')); // Make sure userId is stored and retrieved correctly
+    const isAdmin = currentUserRoles.some(role => String(role).toUpperCase() === 'ADMIN' || String(role).toUpperCase() === 'ROLE_ADMIN');
+
+
     entries.forEach(entry => {
         const startTimesDisplay = entry.startTimes && entry.startTimes.length > 0
-            ? entry.startTimes.map(t => t ? String(t).substring(0,5) : '-').join(', ')
+            ? entry.startTimes.map(t => t ? String(t).substring(0,5) : '-').join(', ') //
             : '-';
         const endTimesDisplay = entry.endTimes && entry.endTimes.length > 0
-            ? entry.endTimes.map(t => t ? String(t).substring(0,5) : '(läuft)').join(', ')
-            : (entry.startTimes && entry.startTimes.length > 0 ? '(läuft)' : '-');
+            ? entry.endTimes.map(t => t ? String(t).substring(0,5) : '(läuft)').join(', ') //
+            : (entry.startTimes && entry.startTimes.length > 0 ? '(läuft)' : '-'); //
         const breaksFormatted = entry.breaks && entry.breaks.length > 0
-            ? entry.breaks.map(b => `${b.start ? String(b.start).substring(0,5) : '??'}-${b.end ? String(b.end).substring(0,5) : '??'}`).join('<br>')
+            ? entry.breaks.map(b => `${b.start ? String(b.start).substring(0,5) : '??'}-${b.end ? String(b.end).substring(0,5) : '??'}`).join('<br>') //
             : '-';
-        const entryJsonString = JSON.stringify(entry).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+        const entryJsonString = JSON.stringify(entry).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); //
 
+        // START: Logik für Bearbeiten-Button
+        const isOwner = entry.userId === currentUserId; // Prüft, ob der aktuelle Benutzer der Eigentümer des Eintrags ist
+        let actionsHtml = '';
+
+        // Bearbeiten-Button: Sichtbar für Eigentümer oder Admin
+        if (isOwner || isAdmin) {
+            actionsHtml += `<button class="btn btn-secondary btn-small" onclick='openEditTimeEntryModal(${entryJsonString})'>Bearbeiten</button>`; //
+        }
+        // Löschen-Button: Sichtbar für Eigentümer oder Admin
+        if (isOwner || isAdmin) {
+            actionsHtml += `<button class="btn btn-danger btn-small" onclick='deleteTimeEntryHandler(${entry.id})' style="margin-left:5px;">Löschen</button>`; //
+        }
+        if (actionsHtml === '') {
+            actionsHtml = '-'; // Zeigt einen Bindestrich an, wenn keine Aktionen verfügbar sind
+        }
+        // ENDE: Logik für Bearbeiten-Button
+
+
+        // Die Spalte 'Benutzer' wird hier gefüllt. Das 'entry.user' Feld sollte den Namen des Benutzers enthalten.
         tableHtml += `<tr>
-                      <td>${formatDate(entry.date)}</td>
+                      <td>${formatDate(entry.date)}</td> 
+                      <td>${entry.user || 'N/A'}</td> 
                       <td>${entry.project ? entry.project.name : 'Kein Projekt'}</td>
                       <td>${startTimesDisplay}</td>
                       <td>${endTimesDisplay}</td>
@@ -212,10 +252,7 @@ function formatTimeEntriesTable(entries) {
                       <td>${entry.actualHours || '-'}</td>
                       <td>${entry.plannedHours || '-'}</td>
                       <td>${entry.difference || '-'}</td>
-                      <td class="actions-cell">
-                          <button class="btn btn-secondary btn-small" onclick='openEditTimeEntryModal(${entryJsonString})'>Bearbeiten</button>
-                          <button class="btn btn-danger btn-small" onclick='deleteTimeEntryHandler(${entry.id})' style="margin-left:5px;">Löschen</button>
-                      </td>
+                      <td class="actions-cell">${actionsHtml}</td>
                     </tr>`;
     });
     tableHtml += '</tbody></table>';

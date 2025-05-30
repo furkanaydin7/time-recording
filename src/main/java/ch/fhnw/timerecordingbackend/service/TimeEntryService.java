@@ -12,6 +12,8 @@ public interface TimeEntryService {
     void deleteTimeEntry(Long id);
     List<TimeEntryResponse> getCurrentUserTimeEntries();
     List<TimeEntryResponse> getUserTimeEntries(Long userId);
+    List<TimeEntryResponse> getTeamTimeEntries();
+    List<TimeEntryResponse> getAllTimeEntries();
     Map<String, Object> startTimeTracking(Long projectId);
     Map<String, Object> stopTimeTracking(Long entryId);
     void assignProject(Long timeEntryId, Long projectId);

@@ -289,7 +289,7 @@
                         localStorage.setItem('jwtToken', token);
                         localStorage.setItem('tokenType', data.tokenType || 'Bearer');
                         localStorage.setItem('userEmail', data.email || email);
-                        localStorage.setItem('userId', data.user ? data.user.id : data.userId);
+                        localStorage.setItem('userId', data.user.id);
                         localStorage.setItem('userRoles', JSON.stringify(data.user ? data.user.roles || [] : []));
                     }
                     displayMessage(loginSuccessMessage, 'Anmeldung erfolgreich! Sie werden weitergeleitet...', true);

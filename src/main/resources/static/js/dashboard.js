@@ -60,6 +60,7 @@ function bindDashboardEventListeners() {
 
     const viewTimeEntriesBtn = document.getElementById('viewTimeEntriesBtn');
     if (viewTimeEntriesBtn) viewTimeEntriesBtn.addEventListener('click', viewTimeEntries);
+    document.getElementById('viewEmployeeTimeEntriesBtn')?.addEventListener('click', viewEmployeeTimeEntriesHandler);
 
 
     // --- Projekte Karte ---
@@ -288,7 +289,7 @@ function bindDashboardEventListeners() {
         { id: 'cancelChangePasswordBtn', modal: 'changePasswordModal' },
         { id: 'closeProjectDetailModalBtn', modal: 'projectDetailModal' },
         { id: 'closeUserDetailModalBtn', modal: 'userDetailModal' }
-          ];
+    ];
 
     cancelButtons.forEach(buttonConfig => {
         const button = document.getElementById(buttonConfig.id);
@@ -404,6 +405,39 @@ async function loadDashboardPageData(forceRefresh = false) {
         showError('Fehler beim Laden der Dashboard-Daten: ' + (error.message || "Unbekannt").replace('DUPLICATE_ENTRY|', ''));
     } finally {
         if (loadingDiv) loadingDiv.style.display = 'none';
+    }
+}
+
+async function viewEmployeeTimeEntriesHandler() {
+    try {
+        hideDataDisplay();
+        const userRolesString = localStorage.getItem('userRoles');
+        let userRoles = [];
+        if (userRolesString) userRoles = JSON.parse(userRolesString);
+
+        let response;
+        let title = "Zeiteinträge Mitarbeiter";
+
+        if (userRoles.some(role => String(role).toUpperCase() === 'ADMIN')) {
+            response = await apiCall(`/api/time-entries/all?_t=${Date.now()}`);
+            title = "Alle Zeiteinträge (Admin)";
+        } else if (userRoles.some(role => String(role).toUpperCase() === 'MANAGER')) {
+            response = await apiCall(`/api/time-entries/team?_t=${Date.now()}`);
+            title = "Zeiteinträge Team (Manager)";
+        } else {
+            showError("Keine Berechtigung, diese Einträge anzuzeigen.");
+            return;
+        }
+
+        if (response && response.entries) {
+            console.log(`✅ <span class="math-inline">\{response\.entries\.length\} Zeiteinträge für '</span>{title}' geladen`);
+            displayData(title, formatTimeEntriesTable(response.entries));
+        } else {
+            displayData(title, '<p>Keine Zeiteinträge gefunden.</p>');
+        }
+    } catch (error) {
+        console.error('❌ Fehler beim Laden der Mitarbeiter-Zeiteinträge:', error);
+        showError('Fehler beim Laden der Mitarbeiter-Zeiteinträge: ' + (error.message || "Unbekannt"));
     }
 }
 

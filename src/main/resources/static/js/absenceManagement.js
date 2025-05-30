@@ -92,7 +92,7 @@ async function handleEditAbsenceSubmit(event) {
     const today = new Date().toISOString().split('T')[0];
     if (startDate < today && startDate !== currentEditingAbsence.startDate) {
         showWarning('Das Startdatum für eine neue oder geänderte Abwesenheit darf nicht in der Vergangenheit liegen, es sei denn, es ist das ursprünglich erfasste Datum.');
-          }
+    }
 
 
     const absenceData = {

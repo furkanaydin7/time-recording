@@ -23,6 +23,13 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Service-Implementierung für Zeiterfassung und Zeiteintragsverwaltung
+ * Stellt alle Funktionen für CRUD-Operationen und Start/Stopp-Tracking bereit
+ * @author FA
+ * Code von anderen Teammitgliedern oder Quellen wird durch einzelne Kommentare deklariert
+ * Quelle: ChatGPT
+ */
 @Service
 @Transactional
 public class TimeEntryServiceImpl implements TimeEntryService {
@@ -105,19 +112,29 @@ public class TimeEntryServiceImpl implements TimeEntryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Zeiteintrag nicht gefunden"));
 
-        if (!timeEntry.getUser().getId().equals(currentUser.getId())) {
+        // Berechtigung prüfen
+        // Ein Admin kann jeden Eintrag bearbeiten.
+        // Ein normaler Benutzer kann nur seine eigenen Einträge bearbeiten.
+        boolean isAdmin = currentUser.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ADMIN")); //
+
+        if (!timeEntry.getUser().getId().equals(currentUser.getId()) && !isAdmin) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Sie können nur Ihre eigenen Zeiteinträge bearbeiten");
+                    "Sie können nur Ihre eigenen Zeiteinträge bearbeiten oder benötigen Admin-Rechte.");
         }
 
+
+        // Validierung der neuen Zeitangaben
         validateTimeData(request);
 
+        // Zeiten aktualisieren
         timeEntry.getStartTimes().clear();
         timeEntry.getEndTimes().clear();
         timeEntry.getBreaks().clear();
 
         setTimesFromRequest(timeEntry, request);
 
+        // Pausen hinzufügen
         if (request.getBreaks() != null) {
             for (TimeEntryRequest.BreakTime breakTime : request.getBreaks()) {
                 try {
@@ -130,9 +147,9 @@ public class TimeEntryServiceImpl implements TimeEntryService {
                 }
             }
         }
+        calculateWorkingHours(timeEntry, timeEntry.getUser()); //
 
-        calculateWorkingHours(timeEntry, currentUser);
-
+        // Projekt aktualisieren
         if (request.getProjectId() != null) {
             Project project = projectRepository.findById(request.getProjectId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -151,7 +168,7 @@ public class TimeEntryServiceImpl implements TimeEntryService {
         TimeEntry timeEntry = timeEntryRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Zeiteintrag nicht gefunden"));
-       timeEntryRepository.delete(timeEntry);
+        timeEntryRepository.delete(timeEntry);
     }
 
     @Override
@@ -165,11 +182,37 @@ public class TimeEntryServiceImpl implements TimeEntryService {
 
     @Override
     public List<TimeEntryResponse> getUserTimeEntries(Long userId) {
-        User userToFetch = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benutzer mit ID " + userId + " nicht gefunden"));
-        List<TimeEntry> entries = timeEntryRepository.findByUser(userToFetch);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benutzer nicht gefunden: " + userId));
+        List<TimeEntry> entries = timeEntryRepository.findByUser(user); //
         return entries.stream()
                 .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TimeEntryResponse> getTeamTimeEntries() {
+        User currentManager = getCurrentUserOrThrow();
+        List<User> teamMembers = userRepository.findByManager(currentManager); //
+        if (teamMembers.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<TimeEntry> teamEntries = new ArrayList<>();
+        for (User member : teamMembers) {
+            teamEntries.addAll(timeEntryRepository.findByUser(member)); //
+        }
+        return teamEntries.stream()
+                .map(this::convertToResponse)
+                .sorted(Comparator.comparing(TimeEntryResponse::getDate).reversed().thenComparing(TimeEntryResponse::getUser))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TimeEntryResponse> getAllTimeEntries() {
+        List<TimeEntry> allEntries = timeEntryRepository.findAll();
+        return allEntries.stream()
+                .map(this::convertToResponse)
+                .sorted(Comparator.comparing(TimeEntryResponse::getDate).reversed().thenComparing(TimeEntryResponse::getUser))
                 .collect(Collectors.toList());
     }
 
