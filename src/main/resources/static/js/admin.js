@@ -1,4 +1,6 @@
 // * @author EK
+//Kommentare erstellt mit @ChatGPT
+//Code bereinigt mit ChatGPT
 
 console.log('admin.js geladen');
 window.selectedUserForDetails = null;
@@ -315,9 +317,8 @@ async function viewSystemLogs() {
             if (response.logs.length === 0) {
                 html += '<p>Keine System-Logs gefunden.</p>';
             } else {
-                // Status Spalte hinzugefügt für bessere Übersicht
                 html += '<table class="data-table"><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Details</th><th>Status</th></tr></thead><tbody>';
-                response.logs.forEach(logEntry => { // Hier logEntry statt log, um Verwechslung zu vermeiden, aber log ist auch ok
+                response.logs.forEach(logEntry => {
                     html += `<tr>
                                 <td>${logEntry.timestamp ? formatDateTimeDisplay(logEntry.timestamp) : '-'}</td>
                                 <td>${logEntry.userEmail || (logEntry.userId ? `ID: ${logEntry.userId}` : 'System')}</td>
@@ -384,7 +385,6 @@ async function viewPasswordResetRequests() {
     }
 }
 
-// Die Funktion handleResetPasswordFromAdminView
 async function handleResetPasswordFromAdminView(userId, userEmail, logId) {
     console.log(`[DEBUG Admin.js] handleResetPasswordFromAdminView: Start.`);
     console.log(`[DEBUG Admin.js] Übergebene userId: ${userId} (Typ: ${typeof userId}), userEmail: ${userEmail}, logId: ${logId}`); // Wichtig!
