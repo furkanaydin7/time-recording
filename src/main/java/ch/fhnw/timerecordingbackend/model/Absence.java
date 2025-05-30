@@ -36,7 +36,7 @@ public class Absence {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AbsenceStatus status = AbsenceStatus.PENDING; // Standardwert ist PENDING
+    private AbsenceStatus status = AbsenceStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approver_id")
