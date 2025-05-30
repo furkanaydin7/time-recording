@@ -440,11 +440,17 @@ function initializeAdminFeatures() {
                 // Der Event-Listener wird in dashboard.js hinzugefügt
             }
         }
-        if (createProjectBtn) createProjectBtn.style.display = 'inline-block';
-    } else {
+    } else { // Wenn nicht Admin
         if (adminCard) adminCard.style.display = 'none';
-        if (createProjectBtn) createProjectBtn.style.display = 'none';
     }
+
+    // Zeigt den "Neues Projekt" Button für Admins UND Manager an
+    if (createProjectBtn && (isAdmin || isManager)) {
+        createProjectBtn.style.display = 'inline-block';
+    } else if (createProjectBtn) {
+        createProjectBtn.style.display = 'none';
+    }
+
 
     if (isAdmin || isManager) {
         if (viewPendingAbsencesBtn) viewPendingAbsencesBtn.style.display = 'inline-block';

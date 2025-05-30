@@ -64,8 +64,10 @@ public class WebSecurityConfig {
                                 "/api/users/request-password-reset"
                         ).permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/users/change-password").authenticated() // Passwort ändern nur für authentifizierte User
+                        .requestMatchers("/api/admin/users").hasAnyAuthority("ADMIN", "MANAGER")
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Alle /api/admin/** Endpunkte nur für Admins
                         // .requestMatchers("/api/users/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/projects/{id}").hasAnyAuthority("ADMIN", "MANAGER")
                         .requestMatchers("/api/projects/manage/**").hasAnyAuthority("ADMIN", "MANAGER") // Beispiel für Manager-Rechte
                         .requestMatchers(
                                 "/api/time-entries/**",

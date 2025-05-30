@@ -58,6 +58,7 @@ public class AdminController {
      * @return ResponseEntity mit Liste aller UserResponse-DTOs
      */
     @GetMapping("/users")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.findAllUsers();
         List<UserResponse> responses = users.stream()
