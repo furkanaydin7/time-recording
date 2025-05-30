@@ -37,6 +37,8 @@ public class UserRegistrationRequest {
     // Der einfachheit vorerst 8.0 definiert
     private double plannedHoursPerDay = 8.0;
 
+    private Long managerId;
+
     /**
      * Getter und Setter
      */
@@ -86,6 +88,14 @@ public class UserRegistrationRequest {
 
     public void setPlannedHoursPerDay(double plannedHoursPerDay) {
         this.plannedHoursPerDay = plannedHoursPerDay;
+    }
+
+    public Long getManagerId() { // Getter für managerId
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) { // Setter für managerId
+        this.managerId = managerId;
     }
 
     @Override

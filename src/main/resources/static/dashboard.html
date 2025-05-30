@@ -227,7 +227,7 @@
 <div id="userDetailModal" class="modal">
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h2>Benutzerdetails: <span id="detailUserName"></span></h2>
+    <h2>Benutzerdetails:</h2>
     <div id="userDetailContent">
       <div class="form-group">
         <label>Name:</label>
@@ -244,6 +244,10 @@
       <div class="form-group">
         <label>Geplante Stunden/Tag:</label>
         <span id="detailUserPlannedHours"></span>
+      </div>
+      <div class="form-group">
+        <label>Übergeordneter Manager:</label>
+        <span id="detailUserDirectManager">N/A</span>
       </div>
       <div class="form-group">
         <label>Erstellt am:</label>
@@ -296,6 +300,12 @@
       <div class="form-group"><label for="newLastName">Nachname:</label><input type="text" id="newLastName" class="form-input" required></div>
       <div class="form-group"><label for="newEmail">E-Mail:</label><input type="email" id="newEmail" class="form-input" required></div>
       <div class="form-group"><label for="newUserRole">Rolle:</label><select id="newUserRole" class="form-input" required></select></div>
+      <div class="form-group">
+        <label for="newUserParentManager">Übergeordneter Manager (Optional):</label>
+        <select id="newUserParentManager" class="form-input">
+          <option value="">Kein direkter Manager</option>
+        </select>
+      </div>
       <div class="form-group"><label for="newPlannedHours">Sollstd./Tag:</label><input type="number" id="newPlannedHours" class="form-input" value="8.0" min="1" step="0.5" required></div>
       <p class="system-info">ℹ️ Initialpasswort: Nachname (klein).</p>
       <div class="form-actions"><button type="submit" id="createUserSubmitBtn" class="btn btn-primary">Anlegen</button><button type="button" id="cancelCreateUserBtn" class="btn btn-secondary">Abbrechen</button></div>

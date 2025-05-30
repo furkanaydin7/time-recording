@@ -46,9 +46,10 @@ public interface UserService {
      * Neuen User erstellen und mit Rolle verknüpfen
      * @param user
      * @param roleName
+     * @param managerId (Optional) ID des zuzuweisenden Managers
      * @return neuer User mit Rolle und ID
      */
-    User createUser(User user, String roleName);
+    User createUser(User user, String roleName, Long managerId);
 
     /**
      * User aktualisieren

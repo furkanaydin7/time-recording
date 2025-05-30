@@ -134,7 +134,10 @@ public class AdminController {
         }
         user.setPassword(passwordEncoder.encode(passwordToEncode));
 
-        User createdUser = userService.createUser(user, request.getRole());
+        // Manager ID aus dem Request holen
+        Long managerId = request.getManagerId();
+
+        User createdUser = userService.createUser(user, request.getRole(), managerId); // managerId übergeben
         // Ausgabe des Passworts zur Kontrolle
         UserResponse response = convertToUserResponse(createdUser);
         response.setTemporaryPassword(passwordToEncode); // Das unverschlüsselte Passwort für die Anzeige
@@ -324,6 +327,11 @@ public class AdminController {
                 .collect(Collectors.toSet()));
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+        // Manager Info
+        if (user.getManager() != null) {
+            response.setManagerId(user.getManager().getId());
+            response.setManagerName(user.getManager().getFullName());
+        }
         return response;
     }
 }

@@ -28,6 +28,8 @@ public class UserResponse {
     private LocalDateTime updatedAt;
     private String temporaryPassword;
     private String message;
+    private Long managerId;
+    private String managerName;
 
     /**
      * Passwort zurücksetzen
@@ -148,6 +150,23 @@ public class UserResponse {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    public Long getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
+
+    public String getManagerName() {
+        return managerName;
+    }
+
+    public void setManagerName(String managerName) {
+        this.managerName = managerName;
+    }
+
 
     @Override
     public String toString() {

@@ -100,11 +100,12 @@ public class UserServiceImpl implements UserService {
      * Neuen Benutzer erstellen
      * @param user
      * @param roleName
+     * @param managerId (Optional) ID des zuzuweisenden Managers
      * @return
      */
     @Override
     @Transactional
-    public User createUser(User user, String roleName) {
+    public User createUser(User user, String roleName, Long managerId) { // managerId hinzugefügt
         // Prüfen ob Email bereits existiert
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new ValidationException("Email existiert bereits");
@@ -120,6 +121,21 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ValidationException("Rolle nicht gefunden"));
         user.addRole(role);
 
+        // Manager zuweisen, falls managerId angegeben ist
+        if (managerId != null) {
+            User manager = userRepository.findById(managerId)
+                    .orElseThrow(() -> new ValidationException("Manager mit ID " + managerId + " nicht gefunden."));
+            // Sicherstellen, dass der zugewiesene Benutzer auch Manager-Rechte hat (optional, aber gute Praxis)
+            if (!manager.getRoles().stream().anyMatch(r -> r.getName().equals("MANAGER") || r.getName().equals("ADMIN"))) {
+                throw new ValidationException("Der ausgewählte Benutzer mit ID " + managerId + " hat keine Manager- oder Admin-Rolle.");
+            }
+            user.setManager(manager);
+            logger.info("Benutzer {} wird Manager {} zugewiesen.", user.getEmail(), manager.getEmail());
+        } else {
+            logger.info("Benutzer {} wird ohne direkten Manager erstellt.", user.getEmail());
+        }
+
+
         // Speichern
         User savedUser = userRepository.save(user);
 
@@ -127,7 +143,8 @@ public class UserServiceImpl implements UserService {
         SystemLog log = new SystemLog();
         log.setAction("Benutzer erstellt" + user.getEmail());
         log.setTimestamp(now);
-        log.setDetails("Benutzer ID: " + savedUser.getId() + ", Rolle: " + roleName);
+        String managerDetails = managerId != null ? ", Manager ID: " + managerId : "";
+        log.setDetails("Benutzer ID: " + savedUser.getId() + ", Rolle: " + roleName + managerDetails);
         systemLogRepository.save(log);
 
         return savedUser;

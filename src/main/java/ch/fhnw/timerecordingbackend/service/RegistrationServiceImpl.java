@@ -134,7 +134,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         newUser.setPlannedHoursPerDay(8.0);
         newUser.setManager(request.getManager());
 
-        User createdUser = userService.createUser(newUser, roleToAssign);
+        Long managerId = (request.getManager() != null) ? request.getManager().getId() : null;
+        User createdUser = userService.createUser(newUser, roleToAssign, managerId);
 
         request.setStatus("APPROVED");
         registrationRequestRepository.save(request);
