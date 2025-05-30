@@ -98,6 +98,24 @@
             transform: none;
         }
 
+        .register-btn {
+            width: 100%;
+            padding: 0.6rem;
+            background: linear-gradient(135deg, #4CAF50 0%, #689F38 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .register-btn:hover {
+            transform: translateY(-2px);
+        }
+
         /* Gemeinsame Basis für Nachrichten-Divs */
         .message-display {
             padding: 0.75rem;
@@ -179,6 +197,60 @@
             font-size: 1.1rem;
             font-weight: 500;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be responsive */
+            max-width: 500px;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+
+        /* Add Animation */
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group label {
+            margin-top: 1rem;
+        }
+
     </style>
 </head>
 <body>
@@ -201,6 +273,7 @@
             <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
         </div>
         <button type="submit" class="login-btn" id="loginButton">Anmelden</button>
+        <button type="button" class="register-btn" id="openRegisterModalBtn">Registrieren</button>
         <div class="loading" id="loginLoading"><p>🔄 Anmeldung läuft...</p></div>
     </form>
 
@@ -211,6 +284,43 @@
             <li data-email="manager@timerecording.ch" data-password="manager123"><strong>Manager:</strong> manager@timerecording.ch / manager123</li>
             <li data-email="anna.schmidt@timerecording.ch" data-password="employee123"><strong>Mitarbeiter:</strong> anna.schmidt@timerecording.ch / employee123</li>
         </ul>
+    </div>
+
+    <div id="registerUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Registrierungsanfrage</h2> <form id="registerUserForm">
+            <div class="form-group">
+                <label for="regFirstName">Vorname:</label>
+                <input type="text" id="regFirstName" required>
+            </div>
+            <div class="form-group">
+                <label for="regLastName">Nachname:</label>
+                <input type="text" id="regLastName" required>
+            </div>
+            <div class="form-group">
+                <label for="regEmail">E-Mail:</label>
+                <input type="email" id="regEmail" required>
+            </div>
+            <div class="form-group">
+                <label for="regRole">Gewünschte Rolle:</label>
+                <select id="regRole" required>
+                    <option value="EMPLOYEE">Mitarbeiter</option>
+                    <option value="MANAGER">Manager</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="regManager">Manager (optional):</label>
+                <select id="regManager">
+                    <option value="">Kein Manager</option>
+                </select>
+            </div>
+            <button type="submit" class="login-btn">Anfrage senden</button>
+            <button type="button" class="register-btn" id="cancelRegisterBtn" style="background: #ccc; color: #333;">Abbrechen</button>
+        </form>
+            <div id="registerFeedback" class="success-message" style="display: none;"></div>
+            <div id="registerError" class="error-message" style="display: none;"></div>
+        </div>
     </div>
 
     <div class="forgot-password-container">
@@ -237,12 +347,36 @@
         const loginButton = document.getElementById('loginButton');
         const loginLoading = document.getElementById('loginLoading');
 
+        const openRegisterModalBtn = document.getElementById('openRegisterModalBtn');
+        const registerUserModal = document.getElementById('registerUserModal');
+        const closeRegisterModalBtn = registerUserModal.querySelector('.close-button');
+        const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
+        const registerUserForm = document.getElementById('registerUserForm');
+        const regManagerSelect = document.getElementById('regManager');
+        const registerFeedback = document.getElementById('registerFeedback');
+        const registerError = document.getElementById('registerError');
+
         const resetPasswordForm = document.getElementById('resetPasswordForm');
         const resetEmailInput = document.getElementById('resetEmail');
         const resetPasswordButton = document.getElementById('resetPasswordButton');
         const resetErrorMessage = document.getElementById('reset-error-message');
         const resetSuccessMessage = document.getElementById('reset-success-message');
         const resetLoading = document.getElementById('resetLoading');
+
+        let isSubmitting = false;
+
+        function closeRegisterModal() {
+            registerUserModal.style.display = 'none';
+            registerUserForm.reset(); // Formular zurücksetzen
+            registerFeedback.style.display = 'none';
+            registerError.style.display = 'none';
+            const submitButton = registerUserForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Anfrage senden';
+            }
+            isSubmitting = false;
+        }
 
         function displayMessage(element, message, isSuccess) {
             if (!element) return;
@@ -262,6 +396,40 @@
                     document.getElementById('password').value = password;
                 }
             });
+        });
+
+        openRegisterModalBtn.addEventListener('click', async function() {
+            // Manager-Dropdown laden
+            try {
+                const response = await fetch('/api/public/managers', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const managers = await response.json();
+                    regManagerSelect.innerHTML = '<option value="">Kein Manager</option>';
+
+                    managers.forEach(manager => {
+                        const option = document.createElement('option');
+                        option.value = manager.id;
+                        option.textContent = `${manager.firstName} ${manager.lastName} (${manager.email})`;
+                        regManagerSelect.appendChild(option);
+                    });
+                } else {
+                    console.error('Fehler beim Laden der Manager:', response.statusText);
+                    registerError.textContent = 'Fehler beim Laden der Managerliste.';
+                    registerError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Netzwerkfehler beim Laden der Manager:', error);
+                registerError.textContent = 'Netzwerkfehler beim Laden der Managerliste.';
+                registerError.style.display = 'block';
+            }
+
+            registerUserModal.style.display = 'flex'; // Modal anzeigen
         });
 
         loginForm.addEventListener('submit', async function(e) {
@@ -363,6 +531,87 @@
                 resetPasswordButton.textContent = 'Passwort zurücksetzen anfordern';
                 resetLoading.style.display = 'none';
             }
+        });
+
+        // Event Listener für den Schließen-Button im Modal
+        closeRegisterModalBtn.addEventListener('click', closeRegisterModal);
+        cancelRegisterBtn.addEventListener('click', closeRegisterModal);
+
+        // Schließen des Modals, wenn ausserhalb geklickt wird (jetzt ausserhalb der Schleife)
+        window.addEventListener('click', function(event) {
+            if (event.target == registerUserModal) {
+                closeRegisterModal();
+            }
+        });
+
+        // Registrierungsformular absenden (jetzt ausserhalb der Schleife)
+        registerUserForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (isSubmitting) {
+                console.log("Anfrage wird bereits gesendet, zweite Übermittlung verhindert.");
+                return;
+            }
+
+            isSubmitting = true;
+
+            registerFeedback.style.display = 'none';
+            registerError.style.display = 'none';
+
+            const submitButton = registerUserForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Anfrage wird gesendet...';
+            }
+
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const role = document.getElementById('regRole').value;
+            const managerId = regManagerSelect.value ? parseInt(regManagerSelect.value) : null;
+
+            const registrationData = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                role: role,
+                managerId: managerId
+            };
+
+            try {
+                // Senden der Registrierungsanfrage an den öffentlichen Endpunkt
+                const response = await fetch('/api/public/registration-requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    registerFeedback.textContent = '✅ Ihre Registrierungsanfrage wurde erfolgreich gesendet und wird vom Administrator geprüft.';
+                    registerFeedback.style.display = 'block';
+                    registerUserForm.reset();
+                    setTimeout(closeRegisterModal, 5000);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData.message || 'Fehler beim Senden der Registrierungsanfrage.';
+                    registerError.textContent = `❌ ${errorMsg}`;
+                    registerError.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Registrierungsfehler:', error);
+                registerError.textContent = '❌ Verbindungsfehler. Bitte versuchen Sie es später erneut.';
+                registerError.style.display = 'block';
+            } finally {
+                isSubmitting = false;
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Anfrage senden';
+                }
+            }
+
         });
     });
 </script>

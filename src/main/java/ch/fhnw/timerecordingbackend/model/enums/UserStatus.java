@@ -7,5 +7,5 @@ package ch.fhnw.timerecordingbackend.model.enums;
  * @version 1.0
  */
 public enum UserStatus {
-    ACTIVE, INACTIVE, LOCKED, VACATION
+    ACTIVE, INACTIVE
 }

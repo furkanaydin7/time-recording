@@ -92,6 +92,9 @@ function bindDashboardEventListeners() {
     const openCreateUserModalBtn = document.getElementById('openCreateUserModalBtn');
     if (openCreateUserModalBtn) openCreateUserModalBtn.addEventListener('click', openCreateUserModal);
 
+    document.getElementById('viewRegistrationRequestsBtn')?.addEventListener('click', viewRegistrationRequests);
+    document.querySelector('button[onclick="viewSystemLogs()"]')?.setAttribute('id', 'viewSystemLogsBtn');
+
     const viewSystemLogsBtn = document.getElementById('viewSystemLogsBtn');
     if (viewSystemLogsBtn) viewSystemLogsBtn.addEventListener('click', viewSystemLogs);
 
